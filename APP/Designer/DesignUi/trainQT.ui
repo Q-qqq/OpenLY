@@ -1,0 +1,1610 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1057</width>
+    <height>743</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
+  <property name="tabShape">
+   <enum>QTabWidget::Rounded</enum>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout_7">
+    <property name="leftMargin">
+     <number>1</number>
+    </property>
+    <property name="topMargin">
+     <number>1</number>
+    </property>
+    <property name="rightMargin">
+     <number>1</number>
+    </property>
+    <property name="bottomMargin">
+     <number>1</number>
+    </property>
+    <property name="spacing">
+     <number>1</number>
+    </property>
+    <item row="0" column="0">
+     <widget class="QFrame" name="Painter_tool_f">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>40</height>
+       </size>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Box</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <property name="spacing">
+        <number>10</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QPushButton" name="Tool_paint_pb">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Segoe UI</family>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="text">
+          <string>标注</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="line_4">
+         <property name="midLineWidth">
+          <number>10</number>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="Tool_pencil_pb">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Segoe UI</family>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="text">
+          <string>铅笔</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="Tool_pen_pb">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Segoe UI</family>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="text">
+          <string>钢笔</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="line">
+         <property name="midLineWidth">
+          <number>10</number>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="Tool_fast_select_pb">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>80</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Segoe UI</family>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="text">
+          <string>快速选择</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="Tool_levels_augment_pb">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Segoe UI</family>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="text">
+          <string>色阶</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="line_2">
+         <property name="lineWidth">
+          <number>1</number>
+         </property>
+         <property name="midLineWidth">
+          <number>20</number>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="Tool_show_pred_pb">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>30</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Segoe UI</family>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="text">
+          <string>P</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="Tool_show_true_pb">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>30</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Segoe UI</family>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="text">
+          <string>T</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QWidget" name="widget_4" native="true">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <property name="spacing">
+           <number>1</number>
+          </property>
+          <property name="leftMargin">
+           <number>1</number>
+          </property>
+          <property name="topMargin">
+           <number>1</number>
+          </property>
+          <property name="rightMargin">
+           <number>1</number>
+          </property>
+          <property name="bottomMargin">
+           <number>1</number>
+          </property>
+          <item>
+           <widget class="Line" name="line_3">
+            <property name="lineWidth">
+             <number>1</number>
+            </property>
+            <property name="midLineWidth">
+             <number>20</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="Tool_train_rb">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string>train</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="Tool_val_rb">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string>val</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="Tool_no_label_rb">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string>no_label</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="Tool_results_rb">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string>results</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QFrame" name="Source_show_f">
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Box</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <layout class="QGridLayout" name="gridLayout"/>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1057</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>文件</string>
+    </property>
+    <widget class="QMenu" name="menunew">
+     <property name="title">
+      <string>新建</string>
+     </property>
+     <addaction name="New_project_a"/>
+     <addaction name="New_experiment_a"/>
+    </widget>
+    <widget class="QMenu" name="menuopen">
+     <property name="title">
+      <string>打开</string>
+     </property>
+     <addaction name="Open_project_a"/>
+     <addaction name="Open_experiment_a"/>
+    </widget>
+    <widget class="QMenu" name="Settings_menu">
+     <property name="toolTip">
+      <string>Settings</string>
+     </property>
+     <property name="title">
+      <string>设置</string>
+     </property>
+     <widget class="QMenu" name="Styles_menu">
+      <property name="title">
+       <string>主题风格</string>
+      </property>
+      <addaction name="Style_cute_a"/>
+      <addaction name="Style_technology_a"/>
+      <addaction name="Style_light_a"/>
+     </widget>
+     <addaction name="Styles_menu"/>
+    </widget>
+    <addaction name="Back_start_a"/>
+    <addaction name="menunew"/>
+    <addaction name="menuopen"/>
+    <addaction name="Save_a"/>
+    <addaction name="Save_as_a"/>
+    <addaction name="Settings_menu"/>
+    <addaction name="Exit_a"/>
+   </widget>
+   <widget class="QMenu" name="Edit_menu">
+    <property name="title">
+     <string>编辑</string>
+    </property>
+    <widget class="QMenu" name="Classes_menu">
+     <property name="title">
+      <string>种类</string>
+     </property>
+    </widget>
+    <widget class="QMenu" name="Dataset_menu">
+     <property name="title">
+      <string>数据集</string>
+     </property>
+     <addaction name="Load_dataset_a"/>
+     <addaction name="Load_zip_a"/>
+     <addaction name="Add_no_label_a"/>
+    </widget>
+    <widget class="QMenu" name="menu_2">
+     <property name="title">
+      <string>模型</string>
+     </property>
+     <addaction name="Load_model_a"/>
+    </widget>
+    <widget class="QMenu" name="menuargs">
+     <property name="title">
+      <string>参数</string>
+     </property>
+     <addaction name="Show_allargs_a"/>
+     <addaction name="Cfgs_init_a"/>
+    </widget>
+    <addaction name="Dataset_menu"/>
+    <addaction name="menu_2"/>
+    <addaction name="Classes_menu"/>
+    <addaction name="menuargs"/>
+   </widget>
+   <widget class="QMenu" name="menu_3">
+    <property name="title">
+     <string>视图</string>
+    </property>
+    <addaction name="Show_args_a"/>
+    <addaction name="Show_loss_curve_a"/>
+    <addaction name="Show_confusion_a"/>
+    <addaction name="Show_progress_a"/>
+    <addaction name="Show_sift_image_a"/>
+   </widget>
+   <widget class="QMenu" name="menu_4">
+    <property name="title">
+     <string>工具</string>
+    </property>
+    <widget class="QMenu" name="menu_5">
+     <property name="title">
+      <string>数据集转换</string>
+     </property>
+     <addaction name="Voc_to_yolo_a"/>
+     <addaction name="Coco_to_yolo_a"/>
+     <addaction name="Png_to_yolo_a"/>
+    </widget>
+    <addaction name="menu_5"/>
+   </widget>
+   <addaction name="menu"/>
+   <addaction name="Edit_menu"/>
+   <addaction name="menu_3"/>
+   <addaction name="menu_4"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="Train_a"/>
+   <addaction name="Val_a"/>
+   <addaction name="Predict_a"/>
+   <addaction name="Export_a"/>
+  </widget>
+  <widget class="QDockWidget" name="Progress_dw">
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::BottomDockWidgetArea|Qt::TopDockWidgetArea</set>
+   </property>
+   <property name="windowTitle">
+    <string>训练进程显示器</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_3">
+    <layout class="QGridLayout" name="gridLayout_4">
+     <property name="leftMargin">
+      <number>1</number>
+     </property>
+     <property name="topMargin">
+      <number>1</number>
+     </property>
+     <property name="rightMargin">
+      <number>1</number>
+     </property>
+     <property name="bottomMargin">
+      <number>1</number>
+     </property>
+     <property name="spacing">
+      <number>1</number>
+     </property>
+     <item row="0" column="0">
+      <widget class="QSplitter" name="splitter">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <widget class="QTextEdit" name="Tip_te">
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::Box</enum>
+        </property>
+       </widget>
+       <widget class="QFrame" name="frame_3">
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::Box</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QTextEdit" name="Run_mes_te">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="Batch_mes_le">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QProgressBar" name="Train_progressbar">
+       <property name="styleSheet">
+        <string notr="true"/>
+       </property>
+       <property name="maximum">
+        <number>100</number>
+       </property>
+       <property name="value">
+        <number>100</number>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="Loss_curve_dw">
+   <property name="baseSize">
+    <size>
+     <width>0</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="windowTitle">
+    <string>损失曲线显示器</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_4">
+    <layout class="QGridLayout" name="gridLayout_6">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <item row="0" column="0">
+      <widget class="QFrame" name="Show_loss_f">
+       <property name="styleSheet">
+        <string notr="true"/>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Raised</enum>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="Args_dw">
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="floating">
+    <bool>false</bool>
+   </property>
+   <property name="windowTitle">
+    <string>参数编辑器</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="Args_dwc"/>
+  </widget>
+  <widget class="QDockWidget" name="Confusion_dw">
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="windowTitle">
+    <string>混淆矩阵显示器</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_2">
+    <layout class="QGridLayout" name="gridLayout_2">
+     <property name="leftMargin">
+      <number>1</number>
+     </property>
+     <property name="topMargin">
+      <number>1</number>
+     </property>
+     <property name="rightMargin">
+      <number>1</number>
+     </property>
+     <property name="bottomMargin">
+      <number>1</number>
+     </property>
+     <item row="0" column="0">
+      <widget class="QTabWidget" name="tabWidget">
+       <property name="styleSheet">
+        <string notr="true"/>
+       </property>
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <widget class="QWidget" name="Confusion_denorm_w">
+        <attribute name="title">
+         <string>Denormalized</string>
+        </attribute>
+       </widget>
+       <widget class="QWidget" name="Confusion_norm_w">
+        <attribute name="title">
+         <string>Normalized</string>
+        </attribute>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="Sift_image_dw">
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="windowTitle">
+    <string>图像筛选器</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_5">
+    <layout class="QHBoxLayout" name="horizontalLayout_6">
+     <property name="leftMargin">
+      <number>1</number>
+     </property>
+     <property name="topMargin">
+      <number>1</number>
+     </property>
+     <property name="rightMargin">
+      <number>1</number>
+     </property>
+     <property name="bottomMargin">
+      <number>1</number>
+     </property>
+     <item>
+      <widget class="QFrame" name="Sift_f">
+       <property name="frameShape">
+        <enum>QFrame::StyledPanel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Raised</enum>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_8">
+        <property name="leftMargin">
+         <number>1</number>
+        </property>
+        <property name="topMargin">
+         <number>1</number>
+        </property>
+        <property name="rightMargin">
+         <number>1</number>
+        </property>
+        <property name="bottomMargin">
+         <number>1</number>
+        </property>
+        <item row="0" column="0">
+         <widget class="QSplitter" name="Select_image_spliter">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <widget class="QFrame" name="Image_select_f">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">/* 基础框架样式 */
+
+/* 装饰性容器 */
+QFrame[frameShape=&quot;Panel&quot;] {
+    background-color: #FFFFFF;
+    border: 2px solid #CD7F32;
+    border-radius: 10px;
+    padding: 8px;
+    box-shadow: 1px 1px 4px rgba(205,127,50, 0.15);
+}
+
+/* 水平分隔线 */
+QFrame[frameShape=&quot;HLine&quot;] {
+    background-color: transparent;
+    border-top: 2px solid #C8A2C8;
+    margin: 8px 0;
+}
+
+/* 垂直分隔线 */
+QFrame[frameShape=&quot;VLine&quot;] {
+    background-color: transparent;
+    border-left: 2px solid #C8A2C8;
+    margin: 0 8px;
+}
+
+/* 特殊样式-带渐变标题 */
+QFrame[frameShape=&quot;StyledPanel&quot;]::title {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                              stop:0 #D8BFD8, stop:1 #B19CD9);
+    color: #4A4453;
+    padding: 4px 12px;
+    border: 1px solid #CD7F32;
+    border-radius: 5px;
+    margin-bottom: 6px;
+}</string>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::Box</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Raised</enum>
+           </property>
+          </widget>
+          <widget class="QGroupBox" name="Sift_gb">
+           <property name="maximumSize">
+            <size>
+             <width>1677215</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
+           <property name="title">
+            <string>筛选</string>
+           </property>
+           <property name="flat">
+            <bool>true</bool>
+           </property>
+           <property name="checkable">
+            <bool>false</bool>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_3">
+            <property name="sizeConstraint">
+             <enum>QLayout::SetDefaultConstraint</enum>
+            </property>
+            <item row="1" column="0">
+             <widget class="QWidget" name="widget_2" native="true">
+              <layout class="QGridLayout" name="gridLayout_9" columnstretch="1,6">
+               <property name="leftMargin">
+                <number>2</number>
+               </property>
+               <property name="topMargin">
+                <number>2</number>
+               </property>
+               <property name="rightMargin">
+                <number>2</number>
+               </property>
+               <property name="bottomMargin">
+                <number>2</number>
+               </property>
+               <property name="horizontalSpacing">
+                <number>0</number>
+               </property>
+               <property name="verticalSpacing">
+                <number>10</number>
+               </property>
+               <item row="0" column="1">
+                <widget class="QComboBox" name="Select_dataset_cbb">
+                 <property name="font">
+                  <font>
+                   <family>Segoe UI</family>
+                   <pointsize>12</pointsize>
+                  </font>
+                 </property>
+                 <property name="focusPolicy">
+                  <enum>Qt::ClickFocus</enum>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true"/>
+                 </property>
+                 <item>
+                  <property name="text">
+                   <string>总样本集</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>训练集</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>验证集</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>未标注集</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>结果集</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QComboBox" name="Select_class_cbb">
+                 <property name="font">
+                  <font>
+                   <family>Segoe UI</family>
+                   <pointsize>12</pointsize>
+                  </font>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true"/>
+                 </property>
+                 <item>
+                  <property name="text">
+                   <string>all</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="label_4">
+                 <property name="font">
+                  <font>
+                   <family>Segoe UI</family>
+                   <pointsize>12</pointsize>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>种类：</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="0">
+                <widget class="QLabel" name="label_5">
+                 <property name="font">
+                  <font>
+                   <family>Segoe UI</family>
+                   <pointsize>12</pointsize>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>数据集：</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1">
+                <widget class="QLineEdit" name="Select_search_le">
+                 <property name="font">
+                  <font>
+                   <family>Segoe UI</family>
+                   <pointsize>12</pointsize>
+                  </font>
+                 </property>
+                 <property name="inputMask">
+                  <string/>
+                 </property>
+                 <property name="frame">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0">
+                <widget class="QLabel" name="label_6">
+                 <property name="font">
+                  <font>
+                   <family>Segoe UI</family>
+                   <pointsize>12</pointsize>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>搜索：</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QWidget" name="widget" native="true">
+              <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,2,1,1,2">
+               <property name="leftMargin">
+                <number>2</number>
+               </property>
+               <property name="topMargin">
+                <number>2</number>
+               </property>
+               <property name="rightMargin">
+                <number>2</number>
+               </property>
+               <property name="bottomMargin">
+                <number>2</number>
+               </property>
+               <item>
+                <widget class="QLabel" name="label_3">
+                 <property name="font">
+                  <font>
+                   <family>Segoe UI</family>
+                   <pointsize>12</pointsize>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>序号：</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="Image_num_le">
+                 <property name="font">
+                  <font>
+                   <family>Segoe UI</family>
+                   <pointsize>12</pointsize>
+                  </font>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="label">
+                 <property name="font">
+                  <font>
+                   <family>Segoe UI</family>
+                   <pointsize>12</pointsize>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>   /</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="Image_total_l">
+                 <property name="font">
+                  <font>
+                   <family>Segoe UI</family>
+                   <pointsize>12</pointsize>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>nn</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_4">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QWidget" name="widget_5" native="true">
+              <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="10,0,5">
+               <property name="spacing">
+                <number>5</number>
+               </property>
+               <property name="leftMargin">
+                <number>2</number>
+               </property>
+               <property name="topMargin">
+                <number>2</number>
+               </property>
+               <property name="rightMargin">
+                <number>2</number>
+               </property>
+               <property name="bottomMargin">
+                <number>2</number>
+               </property>
+               <item>
+                <widget class="QComboBox" name="Select_ops_cbb">
+                 <property name="font">
+                  <font>
+                   <family>Segoe UI</family>
+                   <pointsize>12</pointsize>
+                  </font>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true"/>
+                 </property>
+                 <item>
+                  <property name="text">
+                   <string>删除</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>转训练集</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>转验证集</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>转未标注集</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="Select_all_pb">
+                 <property name="maximumSize">
+                  <size>
+                   <width>40</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <family>Segoe UI</family>
+                   <pointsize>12</pointsize>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>全选</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="Select_batch_ops_pb">
+                 <property name="font">
+                  <font>
+                   <family>Segoe UI</family>
+                   <pointsize>12</pointsize>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>批量执行</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <action name="Train_a">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/aa/F:/Download_icon/MdiBulma.svg</normaloff>:/aa/F:/Download_icon/MdiBulma.svg</iconset>
+   </property>
+   <property name="text">
+    <string>训练</string>
+   </property>
+   <property name="toolTip">
+    <string>训练</string>
+   </property>
+   <property name="shortcut">
+    <string>Shift+T</string>
+   </property>
+  </action>
+  <action name="Val_a">
+   <property name="text">
+    <string>验证</string>
+   </property>
+   <property name="toolTip">
+    <string>验证</string>
+   </property>
+   <property name="shortcut">
+    <string>Shift+V</string>
+   </property>
+  </action>
+  <action name="Predict_a">
+   <property name="text">
+    <string>预测</string>
+   </property>
+   <property name="toolTip">
+    <string>预测</string>
+   </property>
+   <property name="shortcut">
+    <string>Shift+P</string>
+   </property>
+  </action>
+  <action name="Export_a">
+   <property name="text">
+    <string>导出</string>
+   </property>
+   <property name="toolTip">
+    <string>导出</string>
+   </property>
+   <property name="shortcut">
+    <string>Shift+E</string>
+   </property>
+  </action>
+  <action name="New_project_a">
+   <property name="text">
+    <string>项目</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="Open_project_a">
+   <property name="text">
+    <string>项目</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="Save_a">
+   <property name="text">
+    <string>保存</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="Save_as_a">
+   <property name="text">
+    <string>另存为</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Alt+S</string>
+   </property>
+  </action>
+  <action name="Exit_a">
+   <property name="text">
+    <string>退出</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+T</string>
+   </property>
+  </action>
+  <action name="Back_start_a">
+   <property name="text">
+    <string>返回开始界面</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+M</string>
+   </property>
+  </action>
+  <action name="Show_args_a">
+   <property name="text">
+    <string>参数显示器</string>
+   </property>
+   <property name="toolTip">
+    <string>显示</string>
+   </property>
+  </action>
+  <action name="Show_allargs_a">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>更多参数</string>
+   </property>
+   <property name="toolTip">
+    <string>更多参数</string>
+   </property>
+  </action>
+  <action name="Show_confusion_a">
+   <property name="text">
+    <string>混淆矩阵显示器</string>
+   </property>
+   <property name="toolTip">
+    <string>显示</string>
+   </property>
+  </action>
+  <action name="Show_loss_curve_a">
+   <property name="text">
+    <string>损失曲线显示器</string>
+   </property>
+   <property name="toolTip">
+    <string>显示</string>
+   </property>
+  </action>
+  <action name="Show_progress_a">
+   <property name="text">
+    <string>训练进程显示器</string>
+   </property>
+   <property name="iconText">
+    <string>杂项显示器</string>
+   </property>
+   <property name="toolTip">
+    <string>显示</string>
+   </property>
+  </action>
+  <action name="New_experiment_a">
+   <property name="text">
+    <string>实验</string>
+   </property>
+   <property name="toolTip">
+    <string>新建实验</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+E</string>
+   </property>
+  </action>
+  <action name="Open_experiment_a">
+   <property name="text">
+    <string>实验</string>
+   </property>
+   <property name="toolTip">
+    <string>打开实验</string>
+   </property>
+   <property name="shortcut">
+    <string>Shift+E</string>
+   </property>
+  </action>
+  <action name="Show_sift_image_a">
+   <property name="text">
+    <string>图像筛选器</string>
+   </property>
+   <property name="toolTip">
+    <string>显示</string>
+   </property>
+  </action>
+  <action name="Cfgs_init_a">
+   <property name="text">
+    <string>参数初始化</string>
+   </property>
+   <property name="toolTip">
+    <string>初始化</string>
+   </property>
+  </action>
+  <action name="Load_dataset_a">
+   <property name="text">
+    <string>加载</string>
+   </property>
+   <property name="toolTip">
+    <string>加载</string>
+   </property>
+  </action>
+  <action name="Create_dataset_a">
+   <property name="text">
+    <string>生成</string>
+   </property>
+   <property name="toolTip">
+    <string>生成</string>
+   </property>
+  </action>
+  <action name="Load_zip_a">
+   <property name="text">
+    <string>导入压缩包</string>
+   </property>
+   <property name="toolTip">
+    <string>导入压缩包</string>
+   </property>
+  </action>
+  <action name="Add_no_label_a">
+   <property name="text">
+    <string>添加</string>
+   </property>
+   <property name="toolTip">
+    <string>添加未标注数据</string>
+   </property>
+  </action>
+  <action name="Load_model_a">
+   <property name="text">
+    <string>训练模型</string>
+   </property>
+   <property name="toolTip">
+    <string>加载训练模型</string>
+   </property>
+  </action>
+  <action name="Voc_to_yolo_a">
+   <property name="text">
+    <string>VOC转YOLO</string>
+   </property>
+   <property name="toolTip">
+    <string>voc to yolo</string>
+   </property>
+  </action>
+  <action name="Coco_to_yolo_a">
+   <property name="text">
+    <string>COCO转YOLO</string>
+   </property>
+   <property name="toolTip">
+    <string>coco to yolo</string>
+   </property>
+  </action>
+  <action name="Png_to_yolo_a">
+   <property name="text">
+    <string>PNG转YOLO</string>
+   </property>
+  </action>
+  <action name="Style_cute_a">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>cute</string>
+   </property>
+  </action>
+  <action name="Style_technology_a">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>technology</string>
+   </property>
+  </action>
+  <action name="Style_light_a">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>light</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>Show_args_a</sender>
+   <signal>triggered()</signal>
+   <receiver>Args_dw</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>79</x>
+     <y>310</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Show_progress_a</sender>
+   <signal>triggered()</signal>
+   <receiver>Progress_dw</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>501</x>
+     <y>636</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Show_loss_curve_a</sender>
+   <signal>triggered()</signal>
+   <receiver>Loss_curve_dw</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1056</x>
+     <y>167</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Show_confusion_a</sender>
+   <signal>triggered()</signal>
+   <receiver>Confusion_dw</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1056</x>
+     <y>384</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Show_sift_image_a</sender>
+   <signal>triggered()</signal>
+   <receiver>Sift_image_dw</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>836</x>
+     <y>582</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

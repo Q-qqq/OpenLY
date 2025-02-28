@@ -1,0 +1,429 @@
+/* 基础配色方案 */
+* {
+    font-family: "Segoe UI Light", "Arial Narrow", sans-serif;
+    font-size: 14px;
+    color: #00ffff; /* 科技蓝荧光色 */
+    background-color: #0a192f; /* 深空背景色 */
+}
+
+
+/*===== 基础架构 =====*/
+
+QMainWindow {
+    background: rgba(10,25,47,0.95);
+    border: 3px solid #00ffff;
+}
+ 
+QDockWidget {
+    border: 2px solid #00ffff;
+    titlebar-close-icon: url(close_cyber.png); 
+    titlebar-normal-icon: url(maximize_cyber.png); 
+}
+ 
+QDockWidget::title {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 #1a3b5d, stop:1 transparent);
+    color: #00ff9d;
+    padding-left: 15px;
+}
+ 
+/*===== 导航系统 =====*/
+QTabWidget::pane {
+    border: 1px solid #00ffff;
+    margin-top: -1px;
+}
+
+QTabBar::tab {
+    background: #12283d;
+    border: 1px solid #00ffff;
+    min-width: 90px;
+    padding: 8px 20px;
+    font-family: "Roboto Mono";
+}
+ 
+QTabBar::tab:selected {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #245b78, stop:1 #1a485f);
+    border-bottom: 3px solid #00ff9d;
+}
+ 
+/*===== 交互组件 =====*/
+QMenu {
+    background-color: rgba(10,25,47,0.98);
+    border: 1px solid #00ffff;
+    padding: 5px;
+}
+ 
+QMenu::item {
+    padding: 8px 25px 8px 15px;
+    border-left: 3px solid transparent;
+}
+ 
+QMenu::item:selected {
+    background-color: #245b78;
+    border-left: 3px solid #00ff9d;
+}
+ 
+QToolBar {
+    background: rgba(18,40,61,0.95);
+    border-bottom: 2px solid #00ffff77;
+    spacing: 8px;
+}
+ 
+/*===== 基础态 =====*/
+QLabel {
+    color: #00f3e6;                     /* 量子荧光基色 */
+    font: bold 14pt "Orbitron";         /* 曲率引擎控制台字体 */
+    background: transparent;            /* 真空能背景 */
+    padding: 5px 12px;
+}
+ 
+/*===== 多维增强 =====*/
+QLabel[objectName^="cyber_title_"] {    /* 星舰级标题 */
+    border-bottom: 3px solid qlineargradient(
+        x1:0, y1:0.5,
+        x2:1, y2:0.5,
+        stop:0 #3d7afe,
+        stop:1 #8a2be2 
+    );
+    font-size: 18pt;
+    text-shadow: 0 0 10px #3d7afe66;    /* 引力透镜光晕 */
+}
+ 
+QLabel[objectName^="status_"] {         /* 时空状态指示 */
+    background: #0a0e1755;
+    border: 1px solid #3d7afe33;
+    border-radius: 4px;
+    padding: 8px 15px;
+}
+ 
+/*===== 动态响应 =====*/
+QLabel:hover {
+    color: #3d7afe;
+    text-shadow: 0 0 15px #3d7afe99;
+}
+ 
+QLabel:disabled {                       /* 熵寂灭态 */
+    color: #3d7afe55;
+    text-shadow: none;
+}
+ 
+QStatusBar {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #1a3b5d, stop:1 #12283d);
+    border-top: 1px solid #00ffff;
+    color: #00ff9d;
+}
+ 
+/*===== 基础结构 =====*/
+QGroupBox {
+    background: rgba(10,14,23,0.9);    /* 暗物质背景 */
+    border: 2px solid qlineargradient(  /* 量子纠缠边框 */
+        x1:0, y1:0, 
+        x2:1, y2:1,
+        stop:0 #3d7afe, 
+        stop:0.5 #00f3e6,
+        stop:1 #8a2be2 
+    );
+    border-radius: 6px;
+    margin-top: 1.2em;
+    padding: 15px 10px;
+}
+ 
+/*===== 动态标题系统 =====*/
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 12px;
+    background: qradialgradient(       /* 星云漩涡背景 */
+        cx:0.3, cy:0.5,
+        radius: 0.5,
+        fx:0.3, fy:0.5,
+        stop:0 #3d7afe33, 
+        stop:1 #0a0e17 
+    );
+    color: #00f3e6;
+    font: bold 12pt "Space Mono";
+    border-left: 3px solid #3d7afe;    /* 能量导管 */
+    transform: translate(15px, -8px);  /* 空间错位 */
+}
+ 
+/*===== 状态引擎 =====*/
+QGroupBox:hover {
+    border: 2px solid qlineargradient(
+        x1:0, y1:0,
+        x2:1, y2:1,
+        stop:0 #3d7afe88,
+        stop:1 #00f3e688 
+    );
+    background-color: #0a0e1744;
+}
+ 
+QGroupBox:disabled {
+    border-color: #3d7afe33;
+    background-color: #0a0e1777;
+}
+ 
+/*===== 亚原子粒子特效 =====*/
+QGroupBox::indicator {
+    width: 18px;
+    height: 18px;
+    background: qradialgradient(
+        cx:0.5, cy:0.5,
+        radius: 0.5,
+        stop:0 #00f3e6,
+        stop:0.5 #3d7afe,
+        stop:1 transparent 
+    );
+}
+ 
+/*===== 基础时空容器 =====*/
+QWidget, QFrame {
+    background: #0a0e17;                /* 暗物质基底 */
+}
+ 
+/*===== 量子约束边框系统 =====*/
+QFrame[frameShape="1"] {               /* Box类型容器 */
+    border: 6px solid qlineargradient(  /* 曲率护盾 */
+        x1:0, y1:0, 
+        x2:1, y2:1,
+        stop:0 #3d7afe33, 
+        stop:0.5 rgba(0, 243, 230, 0.9),
+        stop:1 rgba(138, 43, 226, 0.2) 
+    );
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 0 15px #3d7afe22;    /* 场效应辉光 */
+}
+ 
+QFrame[frameShape="4"] {               /* 横向分割线 */
+    border-top: 2px solid qlineargradient(
+        x1:0, y1:0.5,
+        x2:1, y2:0.5,
+        stop:0 #3d7afe,
+        stop:1 #8a2be2 
+    );
+    margin: 15px 0;
+}
+ 
+/*===== 动态维度响应 =====*/
+QWidget:hover {
+    background: #0a0e1744;
+    box-shadow: 0 0 25px #3d7afe44;    /* 量子涨落增强 */
+}
+ 
+QFrame[state="critical"] {             /* 临界态容器 */
+    border-color: qlineargradient(
+        x1:0, y1:0,
+        x2:1, y2:0,
+        stop:0 #ff355e,
+        stop:1 #8a2be2 
+    );
+    animation: pulse-alert 2s infinite;
+}
+ 
+/*===== 时空折叠动画 =====*/
+@keyframes pulse-alert {
+    0% { box-shadow: 0 0 10px #ff355e33; }
+    50% { box-shadow: 0 0 25px #ff355e88; }
+    100% { box-shadow: 0 0 10px #ff355e33; }
+}
+ 
+/*===== 动态响应 =====*/
+QPushButton:hover, QToolButton:hover {
+    background-color:rgb(115, 119, 121);
+    border-color: #00ff9d;
+}
+ 
+QTabBar::tab:hover {
+    background-color: #1a485f;
+    border-color: #00ff9d;
+}
+
+/* 按钮特效 */
+QPushButton {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0rgb(39, 41, 44), stop:1 #12283d); /* 渐变背景 */
+    border: 1px solid #00ffff;
+    min-width: 30px;
+    padding: 2px;
+}
+
+QPushButton:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #245b78, stop:1 #1a485f); /* 悬停渐变 */
+    border-color: #00ff9d; /* 悬停霓虹色 */
+}
+
+/* 输入控件 */
+QLineEdit, QTextEdit, QPlainTextEdit {
+    background: #12283d; /* 深色背景 */
+    border: 1px solid #00ffff;
+    selection-background-color: #00ffff40; /* 半透明选择背景 */
+}
+
+QLineEdit:focus, QTextEdit:focus {
+    border-color: #00ff9d; /* 聚焦霓虹色 */
+}
+
+/* 滚动条 */
+QScrollBar:vertical {
+    background: #0a192f;
+    width: 12px;
+}
+
+QScrollBar::handle:vertical {
+    background: #245b78;
+    min-height: 20px;
+    border-radius: 6px;
+}
+
+/* 复合控件 */
+QComboBox {
+    selection-background-color: #245b78;
+}
+
+QComboBox QAbstractItemView {
+    background: #12283d;
+    border: 1px solid #00ffff;
+}
+
+/* 特殊状态处理 */
+QCheckBox::indicator:checked, QRadioButton::indicator:checked {
+    background-color: #00ff9d;
+    border: 2px solid #00ffff;
+}
+
+/* 进度条 */
+/*===== 核心时空架构 =====*/
+QProgressBar {
+    background: #0a0e17;                /* 暗物质基底层 */
+    border: 1px solid qlineargradient(  /* 曲率引擎护盾 */
+        x1:0, y1:0.5, 
+        x2:1, y2:0.5,
+        stop:0 #3d7afe33, 
+        stop:0.5 #00f3e6aa,
+        stop:1 #8a2be233 
+    );
+    border-radius: 8px;
+    text-align: center;
+    font: bold 12pt "Orbitron";         /* 星舰控制台字体 */
+    color: #00f3e6;                     /* 量子荧光 */
+    padding: 2px;
+}
+ 
+/*===== 能量流动态引擎 =====*/
+QProgressBar::chunk {
+    background: qlineargradient(        /* 超弦振动波纹 */
+        x1:0, y1:0, 
+        x2:1, y2:0,
+        stop:0 #3d7afe,
+        stop:0.3 #8a2be2,
+        stop:0.7 #00f3e6,
+        stop:1 #3d7afe 
+    );
+    border-radius: 6px;
+    border-right: 3px solid #00f3e688;  /* 时空扭曲拖影 */
+    box-shadow: inset 0 0 15px #3d7afe; /* 量子涨落辉光 */
+    margin: 1px;
+}
+ 
+/*===== 多维状态引擎 =====*/
+QProgressBar[value="0"] {               /* 真空零点能态 */
+    border-color: #3d7afe33;
+}
+ 
+QProgressBar[value="100"]::chunk {      /* 奇点坍缩态 */
+    background: qconicalgradient(       /* 事件视界漩涡 */
+        cx:0.5, cy:0.5,
+        angle: 0,
+        stop:0 #3d7afe,
+        stop:0.2 #8a2be2,
+        stop:0.5 #ff355e,
+        stop:0.8 #00f3e6,
+        stop:1 #3d7afe 
+    );
+    border-right: 3px solid #ff355e;
+}
+ 
+QProgressBar:disabled {                 /* 熵寂灭态 */
+    background: #0a0e1777;
+    color: #3d7afe77;
+}
+
+/* 表格增强 */
+QTableView {
+    gridline-color: #00ffff33;
+    alternate-background-color: #12283d;
+}
+
+QHeaderView::section {
+    background-color: #1a3b5d;
+    border: 1px solid #00ffff;
+}
+
+/*===== 基础时空架构 =====*/
+QSlider {
+    background: transparent;          /* 真空量子场背景 */
+}
+ 
+/*===== 曲率滑轨系统 =====*/
+QSlider::groove:horizontal {
+    height: 8px;
+    background: qlineargradient(      /* 翘曲空间基底 */
+        x1:0, y1:0.5,
+        x2:1, y2:0.5,
+        stop:0 #3d7afe33,
+        stop:1 #8a2be233 
+    );
+    border-radius: 4px;
+    margin: 6px 0;
+}
+ 
+QSlider::handle:horizontal {
+    width: 24px;                      /* 奇点控制器尺寸 */
+    height: 24px;
+    background: qradialgradient(      /* 量子泡利排斥效应 */
+        cx:0.3, cy:0.3,
+        radius: 0.5,
+        stop:0 #00f3e6,
+        stop:0.7 #3d7afe,
+        stop:1 transparent 
+    );
+    border: 2px solid #00f3e6;
+    border-radius: 12px;
+    margin: -8px 0;
+    box-shadow: 0 0 10px #3d7afe;     /* 引力透镜光晕 */
+}
+ 
+/*===== 时空反馈机制 =====*/
+QSlider::sub-page:horizontal {
+    background: qlineargradient(      /* 已折叠空间指示 */
+        x1:0, y1:0,
+        x2:1, y2:0,
+        stop:0 #3d7afe,
+        stop:1 #00f3e6 
+    );
+    border-radius: 4px;
+}
+ 
+QSlider::add-page:horizontal {
+    background: #0a0e1744;            /* 未观测时空区域 */
+}
+ 
+/*===== 多维状态引擎 =====*/
+QSlider::handle:horizontal:hover {
+    background: qradialgradient(
+        cx:0.3, cy:0.3,
+        radius: 0.6,
+        stop:0 #ff355e,              /* 湮灭态警告色 */
+        stop:0.7 #3d7afe,
+        stop:1 transparent 
+    );
+    border: 2px solid #ff355e;
+}
+ 
+QSlider::handle:horizontal:pressed {
+    box-shadow: 0 0 15px #ff355e;    /* 临界能量爆发 */
+}
+

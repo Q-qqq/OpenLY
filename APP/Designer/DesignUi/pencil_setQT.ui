@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>316</width>
+    <height>87</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>画笔大小</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_2">
+   <item row="0" column="0" colspan="2">
+    <widget class="QWidget" name="widget" native="true">
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="0">
+       <widget class="QRadioButton" name="Pencil_add_rb">
+        <property name="font">
+         <font>
+          <family>Arial</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>绘制</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>167</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="0" column="2">
+       <widget class="QRadioButton" name="Pencil_sub_pb">
+        <property name="font">
+         <font>
+          <family>Arial</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>擦除</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QSlider" name="Pencil_size_hs">
+     <property name="styleSheet">
+      <string notr="true">/* 基础滑槽 */
+QSlider::groove:horizontal {
+    height: 4px;
+    background: #e0e0e0;
+    border-radius: 2px;
+}
+
+/* 滑动进度指示 */
+QSlider::sub-page:horizontal {
+    background: #000000;
+    border-radius: 2px;
+}
+
+
+/* 极简滑块 */
+QSlider::handle:horizontal {
+    background: #646464;
+    width: 16px;
+	color: rgb(76, 76, 76);
+    height: 16px;
+    border-radius: 8px;
+    margin: -6px 0; /* 垂直居中 */
+}
+
+
+/* 交互反馈 */
+QSlider::handle:hover {
+    background: #232323;
+}
+
+QSlider::handle:pressed {
+    background: #000000;
+}</string>
+     </property>
+     <property name="minimum">
+      <number>1</number>
+     </property>
+     <property name="maximum">
+      <number>10000</number>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QSpinBox" name="Pencil_size_sb">
+     <property name="font">
+      <font>
+       <family>Arial</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="minimum">
+      <number>1</number>
+     </property>
+     <property name="maximum">
+      <number>10000</number>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>Pencil_size_hs</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>Pencil_size_sb</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>330</x>
+     <y>18</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>396</x>
+     <y>21</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Pencil_size_sb</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>Pencil_size_hs</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>395</x>
+     <y>11</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>321</x>
+     <y>13</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

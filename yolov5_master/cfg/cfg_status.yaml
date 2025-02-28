@@ -1,0 +1,161 @@
+基础参数:
+- task
+- mode
+- weights
+- cfg
+- hyp
+- data
+- epochs
+- batch
+- imgsz
+- device
+- optimizer
+- resume
+- entity
+- noval
+- split
+- conf
+- iou
+- source
+- format
+- save_txt
+- lr0
+- lrf
+- hsv_h
+- hsv_s
+- hsv_v
+- degrees
+- translate
+- scale
+- shear
+- perspective
+- flipud
+- fliplr
+- mosaic
+- mixup
+- copy_paste
+可浏览参数:
+- weights
+- cfg
+- hyp
+- data
+- evolve_population
+- resume_evolve
+- source
+全局参数:
+  任务: task：训练任务，可选detect、segment$widgetType~cbb$type~bool$default~True$edit~False$items~detect,segment
+  模式: mode：指示当前运行模式，v5/v8$widgetType~cbb$type~str$default~v5$edit~False$items~v5,v8
+训练参数:
+  预训练模型: weights：后缀pt的模型文件（预训练模型）$widgetType~le$type~str$default~
+  模型: cfg：后缀为yaml的网络层信息文件$widgetType~cbb$type~str$default~$edit~True
+  超参数: hyp：指定超参数文件，当输入为v5_hyp.yaml时，才可自定义超参数$widgetType~cbb$type~str$default~$edit~True
+  数据集: data：数据集参数配置文件（.yaml）,包含训练集、验证集/测试集文件路径、种类数量和种类名称等参数$widgetType~le$type~str$default~
+  学习周期: epochs：训练周期数$widgetType~sb$type~int$default~300$min~0$max~10000
+  早停周期数: patience：当patience个周期模型效果没有明显提高触发早停，停止训练$widgetType~sb$type~int$default~100$min~0$max~10000
+  批大小: batch_size：每一次迭代的样本数量，增多可增强泛化能力，但太大会引起内存爆炸；过小的batch会使得模型梯度下降不准确，需要降低学习率$widgetType~sb$type~int$default~8$min~0$max~10000
+  图像大小: imgsz：模型输入图像的尺寸大小，不是导入图像的尺寸大小；尺寸分宽度和高度，当训练和验证时，尺寸大小取长边，推理和导出时尺寸正常使用（w,h）$widgetType~le$type~int
+    | list$default~640
+  保存最终结果: nosave：只保存最后的训练节点，如果为False, 保存每一个epoch结果$widgetType~cb$type~bool$default~False
+  自定义预选框: noautoanchor：禁用自动预选框$widgetType~cb$type~bool$default~False
+  自动调整超参数: evolve：使用遗传算法每迭代evolve次后对超参数进行一次优化$widgetType~sb$type~int$default~300$min~0$max~10000
+  优化超参数文件: evolve_population：使用evolve优化后的超参数保存路径$widgetType~le$type~str$default~./v5/hyps
+  恢复超参数: resume_evolve：恢复训练使用的超参数文件，使用evolve会导致超参数发生改变，如果使用恢复训练，则需要指定参数$widgetType~le$type~str$default~
+  云盘数据集: bucket：谷歌云盘，用于保存训练节点或加载数据集$widgetType~le$type~str$default~
+  保存周期: save_period：保存周期，每save_period个学习周期单独保存一次训练节点，当小于-1时，不使能此功能。保存周期与每一次epoch保存是分开的$widgetType~sb$type~int$default~-1$min~-1$max~10000
+  缓存: cache：对数据集进行缓存，缓存于ram/disk，默认None，不缓存$widgetType~cbb$type~str$default~None$edit~False$items~None,ram,disk
+  图像选择加权: image_weights：一种训练时图像采样策略，根据所有图像标签种类计算种类权重，数量越多的种类权重越小，再在每一个epoch根据种类权重重新筛选图像索引，旨在解决样本不均衡问题$widgetType~cb$type~bool$default~True
+  驱动: device：运行驱动，可选GPU（0）或CPU，使用多GPU训练时也可自定义0,1,2,3..$widgetType~cbb$type~int | str | list$default~0$edit~True$items~CUDA,CPU，0
+  多卡批量归一化: sync_bn：使用多GPU训练时，每个GPU单独计算BatchNorm（均值与方差）再求和合并，这种方式使得计算的均值和方差出现偏差，并行batchNorm则将所有batch数据合并再计算均值和方差$widgetType~cb$type~bool$default~True
+  加载线程数: workers：数据加载线程数，如果是多GPU训练，则表示每个RANK的数据加载线程数，越大的workers需求内存越多$widgetType~sb$type~int$default~0$min~0$max~10000
+  项目名称: project：项目名称$widgetType~le$type~str,optional$default~
+  实验名称: name：实验名称，训练结果保存于目录‘project/name’$widgetType~le$type~str,optional$default~
+  覆盖已有实验: exist_ok：是否覆盖已存在的实验$widgetType~cb$type~bool$default~True
+  优化器: optimizer：优化器$widgetType~cbb$type~str$default~SGD$edit~False$items~SGD,Adam,AdamW
+  随机种子: seed：使用相同的随机种子，确保可再现性，随机种子固定随机器的初始状态，可获取相同的随机序列$widgetType~sb$type~int$default~0$min~0$max~10000
+  单一种类: single_cls：使用单一种类，将所有种类都默认为种类0$widgetType~cb$type~bool$default~False
+  长边适应: rect：训练时是否对图像缩放使用rect改进算法，不缩放为正方形图像，而是长边适应img_size和stirde，短边适应stride并少量填充$widgetType~cb$type~bool$default~False
+  学习率余弦化: cos_lr：将学习率根据余弦的形状进行变化，使得训练初期学习率高，训练后期学习率低，可快速收敛，训练后期逐渐减低学习率细致调整模型参数$widgetType~cb$type~bool$default~False
+  数据加载增强: quad：使用此参数，batch需为4的倍数，每加载一个batch, 数据集加载器会随机(p=0.5)将4张图像合并为一张，大小变为原图像的两倍，而不合并的图像则直接放大两倍$widgetType~cb$type~bool$default~False
+  恢复训练: resume：从最后一次训练节点中恢复训练$widgetType~cb$type~bool$default~False
+  标签平滑: label_smoothing：往真实种类分数的one-hot加入噪点，正常真实种类分数为0/1，当加入label_smoothing后，正例为1-0.5*label_smoothing，
+    反例为0.5*smoothing$widgetType~dsb$type~float$default~0$min~0.0$max~1.0$decimal~3
+  冻结: freeze：冻结前n网络层，或者指定索引列表进行冻结$widgetType~le$type~int,list,optional$default~None
+  多尺度缩放: multi_scale：训练时对输入图像进行随机多尺度缩放，缩放后尺寸为stride的倍数$widgetType~cb$type~bool$default~False
+  禁用掩膜叠加(seg): no_overlap：只用于分割任务，指示数据集每一个样本的掩膜叠加到一副图像$widgetType~cb$type~bool$default~True
+  掩膜下采样(seg): mask_ratio：掩膜下采样比例，只用于分割任务$widgetType~sb$type~int$default~4$min~0$max~10000
+记录参数:
+  用户名: entity：使用在线模型跟踪与可视化wandb时，wandb的实体或者用户名$widgetType~le$type~str,optional$default~None
+  上传数据集: upload_dataset：是否上传数据集到wandb，上传后可在浏览器查看、分析数据集,若为True,则上传所有数据集，也可指定train、val、test数据集$widgetType~cbb$type~bool,str$default~False$edit~False$items~True,False,train,val,test
+  记录验证图像间隔: bbox_interval：记录验证图像及其标签和预测框的周期间隔，若为-1，则前10个epoch都保存，后面每隔10个epoch保存一次$widgetType~sb$type~int$default~-1$min~-1$max~10000
+  数据集别名: artifact_alias：记录数据的版本$widgetType~cbb$type~str$default~latest$edit~False$items~latest
+验证/测试参数:
+  实时验证: noval：只在最后一个epoch进行验证$widgetType~cb$type~bool$default~False
+  输出控制台: ndjson_console：将验证指标输出到控制台$widgetType~cb$type~bool$default~False
+  指标JSON文件: ndjson_file：将验证指标保存为results.ndjson文件$widgetType~cb$type~bool$default~False
+  标签JSON文件: save_json：将验证结果标签保存至/predictions.json文件$widgetType~cb$type~bool$default~False
+  验证集名称: split：从val、test、train的一部分中选择要验证的数据集，要确保数据集存在$widgetType~cbb$type~bool,str$default~True$edit~False$items~val,train,test
+  混合标签: save_hybrid：验证时将真实目标标签和预测目标标签合并，并经过NMS计算，获得最终的结果；若为False，则只有预测目标标签结果$widgetType~cb$type~bool$default~False
+  置信度: conf_thres：置信度阈值，在YOLOv8中，也表示分类分数，大于conf的预测正确，小于conf的预测错误，用于验证模式(0.001)和预测模式(0.25)$widgetType~dsb$type~float$default~0.5$min~0.0$max~1.0$decimal~4
+  测试Iou: iou_thres：NMS获取最终预测结果的Iou阈值，指示两个框之间得重叠程度，防止预测框出现重叠，用于验证模式和预测模式$widgetType~dsb$type~float$default~0.2$min~0.0$max~1.0$decimal~4
+  最大检测数量: max_det：每张图像最大目标检测数量，用于验证模式和预测模式$widgetType~sb$type~int$default~300$min~0$max~10000
+  半浮点精度: half：使用半浮点精度进行推理（FP16）$widgetType~cb$type~bool$default~False
+  dnn推理: dnn：使用OpenCV的DNN对ONNX模型进行推理$widgetType~cb$type~bool$default~False
+  结果曲线不保存: noplots：不保存训练和验证的指标曲线图像，包含损失、精确率、召回率、map50和map90等曲线$widgetType~cb$type~bool$default~False
+预测参数:
+  预测源: source：指向需要预测的图像或视频的路径或指向USB相机的索引int或指向图像/视频网址的URL$widgetType~cbb$type~str|int$default~选中图像$edit~True$items~选中图像
+  视频帧间隔: vid_stride：视频源预测的帧间隔$widgetType~sb$type~int$default~1$min~0$max~10000
+  可视化: visualize：将模型每一个模块的输出进行图像可视化并存储于特定路径中$widgetType~cb$type~bool$default~False
+  增强: augment：对预测源的图像进行增强后在预测$widgetType~cb$type~bool$default~False
+  NMS无视种类: agnostic_nms：瞎了的NMS，不再对种类进行区分，用于不同种类不可重叠的情况$widgetType~cb$type~bool$default~False
+  使用种类: classes：NMS时只输出所指定的种类，i.e 0或 0,1,2,3$widgetType~le$type~int | list[int],optional$default~None
+  高精度掩膜: retina_mask：如果为True，将输出box和输出mask图像都填充缩放至输入图像大小，在裁剪mask在box内；如果为False，输出掩膜时，将输出box同比适应至输出mask图像大小，再裁剪mask在box内，然后缩放mask和box至输入图像大小$widgetType~cb$type~bool$default~False
+导出参数:
+  导出格式: format：导出模型的格式，详情可见https://docs.ultralytics.com/modes/export/#export-formats$widgetType~cbb$type~str$default~ONNX$edit~False$items~Pytorch,TorchScript,ONNX,OpenVINO,TensorRT,CoreML,TensorFlow SaveModel,TensorFlow GraphDef,TensorFlow Lite,TensorFlow Edge TPU,TensorFlow.js,PaddlePaddle
+  keras: keras：$widgetType~cbb$type~bool$default~False$edit~False
+  optimize: optimize：optimize for mobile$widgetType~cb$type~bool$default~False
+  int8: int8：Core ML/TF INT8 quantization$widgetType~cb$type~bool$default~False
+  dynamic: dynamic：(ONNX/TF/TensorRT)dynamic axes$widgetType~cb$type~bool$default~False
+  simplify: simplify：(ONNX)simplify model$widgetType~cb$type~bool$default~False
+  opset: opset：(ONNX)opset version$widgetType~sb$type~int,optional$default~10$min~1$max~20
+  workspace: workspace：(TensorRT)workspace size (GB)$widgetType~sb$type~int$default~4$min~0$max~10000
+  nms: nms：(CoreML)add NMS$widgetType~cb$type~bool$default~False
+可视化参数:
+  显示预测图像: view_img：使用opencv显示预测的图像$widgetType~cb$type~bool$default~False
+  保存结果文本: save_txt：保存验证/预测结果到txt文件detect（cls,x,y,w,h,id）seg/pose(cls,x,y,x,y,x,y...,id)$widgetType~cb$type~bool$default~False
+  保存置信度: save_conf：保存验证/预测结果时附带置信度detect（cls,x,y,w,h,conf,id）seg/pose(cls,x,y,x,y,x,y...,conf,id)$widgetType~cb$type~bool$default~False
+  推理保存格式: save_format：保存目标检测预测结果格式为YOLO(0)或者VOC(1)$widgetType~sb$type~int$default~0$min~0$max~1
+  保存为csv: save_csv：保存目标检测预测结果到csv表格文件中$widgetType~cb$type~bool$default~False
+  保存目标裁图: save_crop：将预测到的目标从图像上裁取下来进行保存$widgetType~cb$type~bool$default~False
+  隐藏信息标签: hide_labels：隐藏在预测图像上每个目标的id和name$widgetType~cb$type~bool$default~True
+  隐藏置信度: hide_conf：隐藏在预测图像上每个目标的置信度-id name conf$widgetType~cb$type~bool$default~True
+  线宽: line_thickness：目标框的线宽，为0时将自适应图像$widgetType~sb$type~int$default~1$min~0$max~100
+超参数:
+  初始学习率: lr0：初始学习率，表示训练开始的初始速率，例如SGD优化器初始学习率0.01，Adam优化器初始学习率0.001$widgetType~dsb$type~float$default~0.01$min~0.0$max~1.0$decimal~10
+  最终学习率: lrf：最终学习率为lr0*lrf，也决定了学习率的下降速率$widgetType~dsb$type~float$default~0.01$min~0.0$max~1.0$decimal~10
+  动量: momentum：基于momentum的梯度下降算法。在梯度更新时，使用指数加权平均法对之前更新的梯度向量进行计算，获取新的平均梯度更新方向，可消除梯度摆动，加速收敛；为0时，将退化为没有momentum的梯度下降，收敛速度大幅度下降；为1时，表示完全没有摩擦，将是无效的训练；0.9是比较合适的值，因为0.9的60次方约等于0.001，相当于仅考虑最近60次迭代产生的梯度值$widgetType~dsb$type~float$default~0.937$min~0.0$max~1.0$decimal~3
+  权重衰减: weight_decay：在损失函数上添加L2正则化项（loss+(wd*||w||^2)/2，其中wd为weight_decay）。当weight_decay接近于0时，前向传播将近似于0；反向传播时，将会对参数进行一个权重衰减（1-ŋ*wd）*
+    w - ŋ*(dloss/dw)， 这可以抑制较大的权重，防止过拟合，且慢慢减小权重，使其保持在一个较小的范围内$widgetType~dsb$type~float$default~0.0005$min~0.0$max~1.0$decimal~10
+  预热周期: warmup_epochs：进行预热训练的周期数，可以为小数，表示预热训练总batch数的百分比；注意$widgetType~dsb$type~float$default~3$min~0.0$max~1000.0$decimal~3
+  预热动量: warmup_momentum：预热初始动量，在预热过程中，动量将从warmuo_momentum逐渐增加至momentum$widgetType~dsb$type~float$default~0.8$min~0.0$max~1.0$decimal~3
+  预热bias学习率: warmup_bias_lr：预热初始bias学习率，将在预热期间逐渐变化至lr0$widgetType~dsb$type~float$default~0.1$min~0.0$max~1.0$decimal~10
+  预测框损失权重: box：通过计算1-iou平均值获得预测框损失，预测框损失再乘以此权值即为最终的预测框损失$widgetType~dsb$type~float$default~0.05$min~0.0$max~1000.0$decimal~3
+  种类损失权值: cls：种类损失通过计算真实目标种类和预测目标种类的BCE损失获取，最终种类损失为种类损失乘以cls$widgetType~dsb$type~float$default~0.3$min~0.0$max~1000.0$decimal~3
+  种类正例权值: cls_pw：计算种类损失时，给到正样本目标的权重$widgetType~dsb$type~float$default~1$min~0.0$max~1000.0$decimal~3
+  置信度损失权值: obj：通过网络预测出的置信度计算该位置有无目标的损失，该损失再乘以此权值为最终置信度损失$widgetType~dsb$type~float$default~0.7$min~0.0$max~1000.0$decimal~3
+  置信度正例权值: obj_pw：计算置信度损失时，给到正样本目标的权重$widgetType~dsb$type~float$default~1$min~0.0$max~1000.0$decimal~3
+  训练IoU: iou_t：训练时使用的iou阈值，计算真实框与先验框的iou，给真实框划分先验框，不使用，使用anchor_t$widgetType~dsb$type~float$default~1$min~0.0$max~1.0$decimal~3
+  先验框阈值: anchor_t：通过计算真实框和先验框的长度比和宽度比，若最大的比小于此阈值，则该先验框属于此真实框$widgetType~dsb$type~float$default~1$min~0.0$max~1000.0$decimal~3
+  fl_gamma: fl_gamma：当fl_gamma大于0时，计算种类和置信度损失的算法由BCELoss换成FocalLoss,FocalLoss通过使用alpha和gamma参数修改BCEWithLogitsLoss算法来克服类不平衡和难分样本问题，gamma值越大，难分样本损失重要性越大，大于0时默认值为1.5$widgetType~dsb$type~float$default~0$min~0.0$max~1000.0$decimal~3
+  随机色相: hsv_h：对输入图像的色相空间进行[-hsv_h, hsv_h]的随机增益$widgetType~dsb$type~float$default~0.015$min~0.0$max~1.0$decimal~3
+  随机饱和度: hsv_s：对输入图像的饱和度空间进行[-hsv_s, hsv_s]的随机增益$widgetType~dsb$type~float$default~0.7$min~0.0$max~1.0$decimal~3
+  随机色调: hsv_v：对输入图像的色调空间进行[-hsv_v, hsv_v]的随机增益$widgetType~dsb$type~float$default~0.4$min~0.0$max~1.0$decimal~3
+  随机旋转角度: degrees：对输入图像进行一个随机角度的旋转，范围[-180,180]$widgetType~dsb$type~float$default~0$min~0.0$max~180.0$decimal~3
+  随机平移比例: translate：对输入图像进行一个输入图像长宽比例大小的随机平移，平移范围[0.5-t, 0.5+t]$widgetType~dsb$type~float$default~0.1$min~0.0$max~0.5$decimal~3
+  随机缩放比例: scale：对输入图像进行一个图像大小比例的随机缩放，范围[1-s. 1+s]$widgetType~dsb$type~float$default~0.5$min~0.0$max~1.0$decimal~3
+  随机斜切角度: shear：对输入图像进行一个随机角度的斜切，范围[-180. 180]$widgetType~dsb$type~float$default~0$min~0.0$max~180.0$decimal~3
+  随机透视变换: perspective：对输入图像进行一个随机透视变换，范围[0. 0.001]$widgetType~dsb$type~float$default~0$min~0.0$max~0.001$decimal~5
+  上下翻转概率: flipud：对输入图像进行上下翻转的概率$widgetType~dsb$type~float$default~0$min~0.0$max~1.0$decimal~3
+  左右翻转概率: fliplr：对输入图像进行左右翻转的概率$widgetType~dsb$type~float$default~0.5$min~0.0$max~1.0$decimal~3
+  图像拼接概率: mosaic：对输入图像进行随机4个图像拼接的概率$widgetType~dsb$type~float$default~1$min~0.0$max~1.0$decimal~3
+  图像叠加概率: mixup：将随机图像1乘以r加上随机图像2乘以1-r进行图像叠加，其中r为随机0-1$widgetType~dsb$type~float$default~0$min~0.0$max~1.0$decimal~3
+  复制黏贴概率: copy_paste：随机获取k个不对称的标签，左右翻转后将标签范围的分割掩膜复制至另一边（左边复制至右边，右边复制至左边），只适用于分割任务$widgetType~dsb$type~float$default~0$min~0.0$max~1.0$decimal~3
