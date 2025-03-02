@@ -3,9 +3,9 @@ import cv2
 import numpy as np
 
 import torch
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 
 import copy
@@ -16,11 +16,11 @@ from multiprocessing.pool import ThreadPool
 from ultralytics.utils import yaml_load,NUM_THREADS, PROGRESS_BAR, LOGGER
 from ultralytics.data.utils import verify_image
 
-from APP import  FILL_RULE
-from APP.Utils import getcat
-from APP.Utils.base import QBboxes, QInstances, QTransformerLabel, QSizeLabel
-from APP.Utils.ops import *
-from APP.Data import format_im_files
+from app import  FILL_RULE
+from app.Utils import getcat
+from app.Utils.base import QBboxes, QInstances, QTransformerLabel, QSizeLabel
+from app.Utils.ops import *
+from app.Data import format_im_files
 
 
 class DetectTransformerLabel(QTransformerLabel):
@@ -1256,8 +1256,7 @@ class ShowLabel(QLabel):
     def loadImages(self, im_shapes):
         """加载所有图像"""
         total = len(im_shapes)
-        PROGRESS_BAR.show("图像生成", "开始生成")
-        PROGRESS_BAR.start(0 ,total, False)
+        PROGRESS_BAR.start("图像生成", "开始生成", [0 ,total], False)
         for i, (im_file, shape) in enumerate(im_shapes.items()):
             new_width = self.height() * (shape[0]/ shape[1])
             if im_file not in self.im_files:

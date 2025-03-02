@@ -139,8 +139,6 @@
   预测框dfl损失增益: dfl：通过计算检测头预选点到目标框4条边的距离的损失为dfl损失，最终dfl损失为计算出的dfl损失乘以dfl增益$widgetType~dsb$type~float$default~1.5$min~0.0$max~1000.0$decimal~3
   关键点位置损失增益: pose：通过计算真实点和预测点的距离和真实点外接矩形的面积的公式获取关键点的位置损失，最终关键点位置损失为位置损失乘以poss增益$widgetType~dsb$type~float$default~12$min~0.0$max~1000.0$decimal~3
   关键点可见性损失增益: kobj：通过计算关键点的可见性BCE损失获取可见性损失，最终可见性损失为可见性损失乘以kobj增益$widgetType~dsb$type~float$default~1.0$min~0.0$max~1000.0$decimal~3
-  标签平滑: label_smoothing：往真实种类分数的one-hot加入噪点，正常真实种类分数为0/1，当加入label_smoothing后，正例为1-0.5*label_smoothing，
-    反例为0.5*smoothing（已取消）$widgetType~dsb$type~float$default~0$min~0.0$max~1.0$decimal~3
   标准批数量: nbs：决定训练多少Batch后更新优化器的标准batch_size；$widgetType~sb$type~int$default~64$min~0$max~10000
   随机色相: hsv_h：对输入图像的色相空间进行[-hsv_h, hsv_h]的随机增益$widgetType~dsb$type~float$default~0.015$min~0.0$max~1.0$decimal~3
   随机饱和度: hsv_s：对输入图像的饱和度空间进行[-hsv_s, hsv_s]的随机增益$widgetType~dsb$type~float$default~0.7$min~0.0$max~1.0$decimal~3
@@ -151,9 +149,11 @@
   随机斜切角度: shear：对输入图像进行一个随机角度的斜切，范围[-180. 180]$widgetType~dsb$type~float$default~0$min~0.0$max~180.0$decimal~3
   随机透视变换: perspective：对输入图像进行一个随机透视变换，范围[0. 0.001]$widgetType~dsb$type~float$default~0$min~0.0$max~0.001$decimal~5
   上下翻转概率: flipud：对输入图像进行上下翻转的概率$widgetType~dsb$type~float$default~0$min~0.0$max~1.0$decimal~3
+  BGR图像概率: bgr：对输入RGB图像转换为BGR图像的概率$widgetType~dsb$type~float$default~0$min~0.0$max~1.0$decimal~3
   左右翻转概率: fliplr：对输入图像进行左右翻转的概率$widgetType~dsb$type~float$default~0.5$min~0.0$max~1.0$decimal~3
   图像拼接概率: mosaic：对输入图像进行随机4个图像拼接的概率$widgetType~dsb$type~float$default~1$min~0.0$max~1.0$decimal~3
   图像叠加概率: mixup：将随机图像1乘以r加上随机图像2乘以1-r进行图像叠加，其中r为随机0-1$widgetType~dsb$type~float$default~0$min~0.0$max~1.0$decimal~3
+  复制黏贴概率: copy_paste_mode：复制黏贴模式，默认flip：只复制黏贴一张图的目标，若为mixup，则随机复制黏贴多张图像的目标$widgetType~cbb$type~str$default~flip$edit~False$items~flip,mixup
   复制黏贴概率: copy_paste：随机获取k个不对称的标签，左右翻转后将标签范围的分割掩膜复制至另一边（左边复制至右边，右边复制至左边），只适用于分割任务$widgetType~dsb$type~float$default~0$min~0.0$max~1.0$decimal~3
   分类自动增强: auto_augment：只适用于分类任务的自动增强策略，自动随机选取多项增强方式对图像进行增强，有randaugment、augmix、autoaugment可选，（选用此项将取消hsv色彩空间增强）$widgetType~cbb$type~str$default~randaugment$edit~False$items~randaugment,augmix,autoaugment,None
   随机擦除概率: erasing：对输入图像进行随机擦除的概率，只适用于分类任务$widgetType~dsb$type~float$default~0.4$min~0.0$max~1.0$decimal~3
@@ -169,3 +169,4 @@ V5参数:
   训练IoU: iou_t：训练时使用的iou阈值，计算真实框与先验框的iou，给真实框划分先验框，不使用，使用anchor_t$widgetType~dsb$type~float$default~0.2$min~0.0$max~1.0$decimal~3
   先验框阈值: anchor_t：通过计算真实框和先验框的长度比和宽度比，若最大的比小于此阈值，则该先验框属于此真实框$widgetType~dsb$type~float$default~4$min~0.0$max~1000.0$decimal~3
   fl_gamma: fl_gamma：当fl_gamma大于0时，计算种类和置信度损失的算法由BCELoss换成FocalLoss,FocalLoss通过使用alpha和gamma参数修改BCEWithLogitsLoss算法来克服类不平衡和难分样本问题，gamma值越大，难分样本损失重要性越大，大于0时默认值为1.5$widgetType~dsb$type~float$default~0$min~0.0$max~1000.0$decimal~3
+  标签平滑: label_smoothing：往真实种类分数的one-hot加入噪点，正常真实种类分数为0/1，当加入label_smoothing后，正例为1-0.5*label_smoothing，反例为0.5*smoothing$widgetType~dsb$type~float$default~0$min~0.0$max~1.0$decimal~3

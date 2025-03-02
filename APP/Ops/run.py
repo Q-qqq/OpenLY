@@ -2,14 +2,14 @@ from pathlib import Path
 import math
 import time
 
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 from ultralytics.utils import LOGGER
 
-from APP.Utils import get_widget
-from APP import PROJ_SETTINGS
+from app.Utils import get_widget
+from app import PROJ_SETTINGS
 
 
 class RunMes(QObject):

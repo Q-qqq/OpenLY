@@ -2,9 +2,9 @@ import shutil
 from typing import Union
 
 import cv2
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 from pathlib import Path
 from ultralytics.utils.instance import Bboxes,Instances,_formats
 from ultralytics.utils.ops import segments2boxes, xyxy2xywh
@@ -12,7 +12,7 @@ from ultralytics.data.utils import img2label_paths, IMG_FORMATS
 import numpy as np
 import copy
 import torch
-from APP.Utils.ops import cvImg2Qpix, generate_distinct_colors,segmentArea
+from app.Utils.ops import cvImg2Qpix, generate_distinct_colors,segmentArea
 
 
 

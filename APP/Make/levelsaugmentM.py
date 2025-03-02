@@ -1,16 +1,16 @@
 import copy
 
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 import cv2
 import numpy as np
 
-from ultralytics.utils import cv2_readimg
+from ultralytics.data.utils import cv2_readimg
 
-from APP.Designer.DesignerPy import levels_augmentUI
-from APP.Utils.plotting import HistFigure
+from app.Designer.DesignerPy import levels_augmentUI
+from app.Utils.plotting import HistFigure
 
 
 

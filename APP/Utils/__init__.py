@@ -1,13 +1,13 @@
 import glob
 from pathlib import Path
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 import numpy as np
 import torch
 
-from APP import PROJ_SETTINGS, EXPERIMENT_SETTINGS
+from app import PROJ_SETTINGS, EXPERIMENT_SETTINGS
 
 def get_widget(parent:QFrame, name):
     for widget in parent.children():

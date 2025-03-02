@@ -1,9 +1,9 @@
 import os
 import time
 
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
-from APP.Designer.DesignerPy import trainUI
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
+from app.Designer.DesignerPy import trainUI
 
 from pathlib import Path
 import shutil
@@ -12,24 +12,24 @@ import numpy as np
 import pandas as pd
 import threading
 
-from ultralytics.utils import yaml_save, DEFAULT_CFG_DICT, DEFAULT_CFG, LOGGER, yaml_load
+from ultralytics.utils import yaml_save, DEFAULT_CFG_DICT, DEFAULT_CFG, LOGGER
 
 
-from APP import  PROJ_SETTINGS, getOpenFileName, EXPERIMENT_SETTINGS, APP_ROOT, loadQssStyleSheet
-from APP.Make.startM import Start
-from APP.Utils.base import QInstances, QTransformerLabel
-from APP.Utils.label import (DetectTransformerLabel,
+from app import  PROJ_SETTINGS, getOpenFileName, EXPERIMENT_SETTINGS, APP_ROOT
+from app.Make.startM import Start
+from app.Utils.base import QInstances, QTransformerLabel
+from app.Utils.label import (DetectTransformerLabel,
                              SegmentTransformerLabel,
                              KeypointsTransformerLabel,
                              ClassifyTransformerLabel,
                              ObbTransformerLabel,
                              ConfusionMatrixLabel,
                              ShowLabel)
-from APP.Ops.cfgs import CfgsTreeWidget
-from APP.Utils.scroll import ImageScroll
-from APP.Utils.plotting import PgPlotLossWidget
-from APP.Ops import SiftDataset, LabelOps, MenuTool, RunMes
-from APP.Utils.ultralytics_enginer import Yolo
+from app.Ops.cfgs import CfgsTreeWidget
+from app.Utils.scroll import ImageScroll
+from app.Utils.plotting import PgPlotLossWidget
+from app.Ops import SiftDataset, LabelOps, MenuTool, RunMes
+from app.Utils.ultralytics_enginer import Yolo
 
 
 

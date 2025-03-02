@@ -1,9 +1,0 @@
-1、设计神经网络
-2、nn.modules添加模块
-3、nn.modules.head添加检测头或修改检测头
-4、nn.tasks修改检测、分割、关键点、分类和旋转框等模型
-5、nn.taasks修改parse_model（解析模型）
-6、utils.loss新增或修改损失函数 （损失函数与检测头相关）
-7、修改engine.trainer输出损失
-8、修改engine.validator修改postprocess后处理（与检测头输出相关）
-9、修改engine.predictor修改最大值抑制

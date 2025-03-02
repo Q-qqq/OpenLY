@@ -1,6 +1,6 @@
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 from pathlib import Path
 import numpy as np
@@ -15,7 +15,7 @@ import pandas as pd
 from scipy.ndimage import gaussian_filter1d
 
 from ultralytics.utils import plt_settings,threaded
-from APP import PROJ_SETTINGS
+from app import PROJ_SETTINGS
 
 
 class QFigure(FigureCanvas):

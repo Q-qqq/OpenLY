@@ -1,16 +1,16 @@
 import copy
 import shutil
 
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 from pathlib import Path
 
 
-from APP import PROJ_SETTINGS, getExistDirectory, getOpenFileName, APP_SETTINGS, loadQssStyleSheet
-from APP.Utils.filters import MenuFilter
-from APP.Make import VocToYolo, CocoToYolo, PngToYolo
+from app import PROJ_SETTINGS, getExistDirectory, getOpenFileName, APP_SETTINGS, loadQssStyleSheet
+from app.Utils.filters import MenuFilter
+from app.Make import VocToYolo, CocoToYolo, PngToYolo
 
 
 class MenuTool(QObject):

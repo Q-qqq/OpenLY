@@ -1,0 +1,82 @@
+amp:
+- 'False'
+- 'True'
+agnostic_nms:
+- 'False'
+- 'True'
+augment:
+- 'False'
+- 'True'
+auto_augment:
+- randaugment
+- augmix
+- autoaugment
+- None
+cache:
+- 'False'
+- 'True'
+- ram
+- disk
+cos_lr:
+- 'False'
+- 'True'
+device:
+- CUDA
+- CPU
+dnn:
+- 'False'
+- 'True'
+dynamic:
+- 'False'
+- 'True'
+embed:
+- 'False'
+- 'True'
+exist_ok:
+- 'False'
+- 'True'
+source:
+- 选中图像
+format:
+- Pytorch
+- TorchScript
+- ONNX
+- OpenVINO
+- TensorRT
+- CoreML
+- TensorFlow SaveModel
+- TensorFlow GraphDef
+- TensorFlow Lite
+- TensorFlow Edge TPU
+- TensorFlow.js
+- PaddlePaddle
+- ncnn
+
+mode:
+- train
+- val
+- predict
+- export
+- track
+- benchmark
+model: []
+optimizer:
+- SGD
+- Adam
+- Adamax
+- AdamW
+- NAdam
+- RAdam
+- RMSProp
+- auto
+split:
+- val
+- test
+- train
+task:
+- detect
+- segment
+- classify
+- pose
+- obb
+

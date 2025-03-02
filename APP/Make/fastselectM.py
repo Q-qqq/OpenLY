@@ -1,13 +1,13 @@
 import math
 
 import cv2
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 import numpy as np
 
-from APP.Designer import fast_selectUI
+from app.Designer import fast_selectUI
 
 
 def clip(n, min, max):

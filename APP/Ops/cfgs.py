@@ -1,13 +1,13 @@
 import copy
 
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 from pathlib import Path
 from ultralytics.utils import yaml_load, yaml_save, LOGGER,ROOT, DEFAULT_CFG_DICT
 from ultralytics.cfg import get_cfg, cfg2dict, CFG_FLOAT_KEYS, CFG_BOOL_KEYS, CFG_FRACTION_KEYS, CFG_INT_KEYS, CFG_OTHER_KEYS
-from APP import APP_SETTINGS, EXPERIMENT_SETTINGS, PROJ_SETTINGS,getExistDirectory, getOpenFileName, APP_ROOT
-from APP.Utils import get_widget
+from app import APP_SETTINGS, EXPERIMENT_SETTINGS, PROJ_SETTINGS,getExistDirectory, getOpenFileName, APP_ROOT
+from app.Utils import get_widget
 import glob
 
 class CfgsTreeWidget(QTreeWidget):

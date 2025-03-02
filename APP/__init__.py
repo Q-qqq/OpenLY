@@ -1,15 +1,13 @@
 import torch
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 
 from pathlib import Path
-from ultralytics.utils import yaml_load, yaml_save, LOGGER,SETTINGS
-from ultralytics.cfg import get_cfg, cfg2dict, CFG_FLOAT_KEYS, CFG_BOOL_KEYS, CFG_FRACTION_KEYS, CFG_INT_KEYS, CFG_OTHER_KEYS
+from ultralytics.utils import yaml_load, yaml_save, LOGGER
 from ultralytics.utils.checks import check_yaml
 
-from ultralytics.utils import ROOT as V8_ROOT
 
 import time
 import copy
@@ -22,13 +20,8 @@ __version__ = "洛业LY:2.0.0:"
 FILE = Path(__file__).resolve()
 APP_ROOT = FILE.parents[1]  # APP根目录
 
-V8_CFG_DEFAULT = V8_ROOT / "cfg" / "default.yaml"
-V8_CFG_STATUS = V8_ROOT / "cfg" / "cfg_status.yaml"
-
 
 FILL_RULE = Qt.WindingFill
-
-
 
 class Setting(dict):
     def __init__(self, *args, **kwargs):

@@ -1,8 +1,8 @@
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
-from APP.Designer import pencil_setUI
+from app.Designer import pencil_setUI
 
 class PencilSet(QWidget, pencil_setUI.Ui_Form):
     def __init__(self, parent, img_label, f=Qt.Tool):

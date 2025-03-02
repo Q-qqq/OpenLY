@@ -12,9 +12,11 @@ import cv2
 import numpy as np
 import torch
 
-from ultralytics.utils import LOGGER,NUM_THREADS, yaml_save, PROGRESS_BAR, cv2_readimg
-from ultralytics.data.utils import IMG_FORMATS, verify_image,xyxy2xywh
+from ultralytics.utils import LOGGER,NUM_THREADS, yaml_save
+from ultralytics.data.utils import IMG_FORMATS, verify_image, cv2_readimg
+from ultralytics.utils.ops import xyxy2xywh
 
+from app import PROGRESS_BAR
 
 def img2label_path(img_path, img="JPEGImages", label="Annotations", suffix=".xml"):
     """将图像路径转为标签路径"""
@@ -191,8 +193,7 @@ class VOC2YOLO:
         yolo_val_path = Path(self.yolo_path) / "images" / "val"
         yolo_test_path = Path(self.yolo_path) / "images" / "test"
         sa, sp = f"{os.sep}images{os.sep}", f"{os.sep}labels{os.sep}"
-        PROGRESS_BAR.show("VOC2YOLO", "开始转换")
-        PROGRESS_BAR.start(0, len(self.im_files), True)
+        PROGRESS_BAR.start("VOC2YOLO", "开始转换", [0, len(self.im_files)], True)
         with ThreadPool(NUM_THREADS) as pool:
             results = pool.imap(self.write,
                                 iterable=zip(self.im_files,
@@ -205,7 +206,7 @@ class VOC2YOLO:
             for i, (im_file) in enumerate(results):
                 PROGRESS_BAR.setValue(i+1, f"转换中...{im_file}")
                 if PROGRESS_BAR.isStop():
-                    raise ProcessLookupError("中断：VOC转YOLO中断成功")
+                    raise ProcessLookupError("Interrupt：VOC转YOLO中断成功")
         data = {"names":list(self.names.keys()), "train": "train.txt", "val":"val.txt", "path":self.yolo_path}
         if self.test_files:
             data.pop("val")
@@ -352,8 +353,8 @@ class COCO2YOLO:
             fs = glob.glob(str(yolo_label_path / "*.txt"))
             if len(fs):
                 shutil.rmtree(yolo_label_path, True)
-        PROGRESS_BAR.show("COCO2YOLO", "开始转换")
-        PROGRESS_BAR.start(0, len(labels), True)
+
+        PROGRESS_BAR.start("COCO2YOLO", "开始转换", [0, len(labels)], True)
         with ThreadPool(NUM_THREADS) as pool:
             results = pool.imap(self.write,
                       iterable=zip(labels.items(),
@@ -363,7 +364,7 @@ class COCO2YOLO:
             for i, im_file in enumerate(results):
                 PROGRESS_BAR.setValue(i+1, "转换中..." + im_file)
                 if PROGRESS_BAR.isStop():
-                    raise ProcessLookupError("中断：COCO转YOLO中断成功")
+                    raise ProcessLookupError("Interrupt：COCO转YOLO中断成功")
 
 
     def buildData(self,names,  yolo_path):
@@ -395,7 +396,6 @@ class PNG2YOLO:
             ori_train_imfiles = check_im_files(ori_train_imfiles)
             seg_train_imfiles, ori_train_imfiles = self.checkSegAndOri(seg_train_imfiles, ori_train_imfiles)
             segments = self.getSegments(seg_train_imfiles)
-            PROGRESS_BAR.show(f"训练集-种类{cls_name}")
             self.toYolo("train", i, ori_train_imfiles, segments, yolo_p)
             names.append(cls_name)
         data.update({"names":names})
@@ -415,7 +415,6 @@ class PNG2YOLO:
                 ori_val_imfiles = check_im_files(ori_val_imfiles)
                 seg_val_imfiles, ori_val_imfiles = self.checkSegAndOri(seg_val_imfiles, ori_val_imfiles)
                 segments = self.getSegments(seg_val_imfiles)
-                PROGRESS_BAR.show(f"验证集-种类{cls_name}")
                 self.toYolo("val", i, ori_val_imfiles, segments, yolo_p)
         PROGRESS_BAR.close()
 
@@ -447,7 +446,7 @@ class PNG2YOLO:
         return segments
 
     def toYolo(self, train_val, cls, ori_imfiles, segments, yolo_p):
-        PROGRESS_BAR.start(0, len(ori_imfiles))
+        PROGRESS_BAR.start(f"Val class{i}", "Start", [0, len(ori_imfiles)])
         yolo_img_p = f"{yolo_p}//images//{train_val}"
         yolo_label_p = f"{yolo_p}//labels//{train_val}"
         paths = f"{yolo_p}//{train_val}.txt"

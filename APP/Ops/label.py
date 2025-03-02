@@ -1,8 +1,8 @@
 import copy
 
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 
 import os
@@ -15,13 +15,13 @@ from ultralytics.data.augment import classify_transforms
 
 
 
-from APP import PROJ_SETTINGS
-from APP.Data import readLabelFile, format_im_files, getNoLabelPath
-from APP.Utils.base import QInstances
-from APP.Utils import get_widget
-from APP.Make.levelsaugmentM import LevelsAugment
-from APP.Make.fastselectM import FastSelect
-from APP.Make.pencilsetM import PencilSet
+from app import PROJ_SETTINGS
+from app.Data import readLabelFile, format_im_files, getNoLabelPath
+from app.Utils.base import QInstances
+from app.Utils import get_widget
+from app.Make.levelsaugmentM import LevelsAugment
+from app.Make.fastselectM import FastSelect
+from app.Make.pencilsetM import PencilSet
 
 
 

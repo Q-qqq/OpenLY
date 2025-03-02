@@ -1,43 +1,85 @@
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+"""
+Check a model's accuracy on a test or val split of a dataset.
+
+Usage:
+    $ yolo mode=val model=yolov8n.pt data=coco8.yaml imgsz=640
+
+Usage - formats:
+    $ yolo mode=val model=yolov8n.pt                 # PyTorch
+                          yolov8n.torchscript        # TorchScript
+                          yolov8n.onnx               # ONNX Runtime or OpenCV DNN with dnn=True
+                          yolov8n_openvino_model     # OpenVINO
+                          yolov8n.engine             # TensorRT
+                          yolov8n.mlpackage          # CoreML (macOS-only)
+                          yolov8n_saved_model        # TensorFlow SavedModel
+                          yolov8n.pb                 # TensorFlow GraphDef
+                          yolov8n.tflite             # TensorFlow Lite
+                          yolov8n_edgetpu.tflite     # TensorFlow Edge TPU
+                          yolov8n_paddle_model       # PaddlePaddle
+                          yolov8n.mnn                # MNN
+                          yolov8n_ncnn_model         # NCNN
+"""
+
 import json
 import time
 from pathlib import Path
+
 import numpy as np
 import torch
+
 from ultralytics.cfg import get_cfg, get_save_dir
 from ultralytics.data.utils import check_cls_dataset, check_det_dataset
 from ultralytics.nn.autobackend import AutoBackend
-from ultralytics.nn.modules.head import V5Segment
-from ultralytics.utils import LOGGER, colorstr, emojis, PROGRESS_BAR
+from ultralytics.utils import LOGGER, TQDM, callbacks, colorstr, emojis, PROGRESS_BAR
 from ultralytics.utils.checks import check_imgsz
 from ultralytics.utils.ops import Profile
-from ultralytics.utils.torch_utils import de_parallel, select_device,smart_inference_mode
+from ultralytics.utils.torch_utils import de_parallel, select_device, smart_inference_mode
+
 
 class BaseValidator:
     """
-    基准验证器
-    Attributes:
-        args(SimpleNamespace)：验证器参数
-        dataloader(Dataloader):验证集
-        model(nn.Module):模型
-        data(dict):数据集参数字典
-        device(torch.device):驱动
-        batch_i(int):当前批次索引
-        training(bool):模型是否处于训练模式
-        names(dict):种类名称
-        seen:在验证期间到目前为止的图像数量
-        stats:在验证期间统计信息的占位符
-        confusion_matrix:混淆矩阵的占位符
-        nc:种类数量
-        iouv(torch.Tensor):iou阈值，0.5以内和0.5~0.95
-        jdict(dict):验证结果（dict）存储为json
-        speed(dict):记录每个batch的‘preprocess’,'inference','loss','postprocess'的运行时间
-        save_dir(Path):保存结果的字典
-        plots(dict):存储plots
+    BaseValidator.
 
+    A base class for creating validators.
+
+    Attributes:
+        args (SimpleNamespace): Configuration for the validator.
+        dataloader (DataLoader): Dataloader to use for validation.
+        pbar (tqdm): Progress bar to update during validation.
+        model (nn.Module): Model to validate.
+        data (dict): Data dictionary.
+        device (torch.device): Device to use for validation.
+        batch_i (int): Current batch index.
+        training (bool): Whether the model is in training mode.
+        names (dict): Class names.
+        seen: Records the number of images seen so far during validation.
+        stats: Placeholder for statistics during validation.
+        confusion_matrix: Placeholder for a confusion matrix.
+        nc: Number of classes.
+        iouv: (torch.Tensor): IoU thresholds from 0.50 to 0.95 in spaces of 0.05.
+        jdict (dict): Dictionary to store JSON validation results.
+        speed (dict): Dictionary with keys 'preprocess', 'inference', 'loss', 'postprocess' and their respective
+                      batch processing times in milliseconds.
+        save_dir (Path): Directory to save results.
+        plots (dict): Dictionary to store plots for visualization.
+        callbacks (dict): Dictionary to store various callback functions.
     """
-    def __init__(self,dataloader=None, save_dir=None, args=None):
+
+    def __init__(self, dataloader=None, save_dir=None, pbar=None, args=None, _callbacks=None):
+        """
+        Initializes a BaseValidator instance.
+
+        Args:
+            dataloader (torch.utils.data.DataLoader): Dataloader to be used for validation.
+            save_dir (Path, optional): Directory to save results.
+            pbar (tqdm.tqdm): Progress bar for displaying progress.
+            args (SimpleNamespace): Configuration for the validator.
+            _callbacks (dict): Dictionary to store various callback functions.
+        """
         self.args = get_cfg(overrides=args)
         self.dataloader = dataloader
+        self.pbar = pbar
         self.stride = None
         self.data = None
         self.device = None
@@ -50,164 +92,192 @@ class BaseValidator:
         self.nc = None
         self.iouv = None
         self.jdict = None
-        self.speed = {"preprocess":0.0, "infrence":0.0, "loss":0.0, "postprocess":0.0}
+        self.speed = {"preprocess": 0.0, "inference": 0.0, "loss": 0.0, "postprocess": 0.0}
 
-        self.save_dir = Path(save_dir) or get_save_dir(self.args)
+        self.save_dir = save_dir or get_save_dir(self.args)
         (self.save_dir / "labels" if self.args.save_txt else self.save_dir).mkdir(parents=True, exist_ok=True)
         if self.args.conf is None:
-            self.args.conf = 0.001
+            self.args.conf = 0.001  # default conf=0.001
         self.args.imgsz = check_imgsz(self.args.imgsz, max_dim=1)
 
         self.plots = {}
+        self.callbacks = _callbacks or callbacks.get_default_callbacks()
 
     @smart_inference_mode()
     def __call__(self, trainer=None, model=None):
+        """Executes validation process, running inference on dataloader and computing performance metrics."""
         self.training = trainer is not None
-        augment = self.args.augment and (not self.training)   #推理过程是否进行数据增强
+        augment = self.args.augment and (not self.training)
         if self.training:
             self.device = trainer.device
             self.data = trainer.data
-            #self.args.half = self.device.type != "cpu"
+            # force FP16 val during training
+            self.args.half = self.device.type != "cpu" and trainer.amp
             model = trainer.ema.ema or trainer.model
             model = model.half() if self.args.half else model.float()
+            # self.model = model
             self.loss = torch.zeros_like(trainer.loss_items, device=trainer.device)
             #self.args.plots &= trainer.stopper.possible_stop or (trainer.epoch == trainer.epochs - 1)
             model.eval()
         else:
+            if str(self.args.model).endswith(".yaml") and model is None:
+                LOGGER.warning("WARNING ⚠️ validating an untrained model YAML will result in 0 mAP.")
+            callbacks.add_integration_callbacks(self)
             model = AutoBackend(
-                model or self.args.model,
+                weights=model or self.args.model,
                 device=select_device(self.args.device, self.args.batch),
                 dnn=self.args.dnn,
                 data=self.args.data,
-                fp16=self.args.half
-            )  #加载模型
-            self.device = model.device
-            self.args.half = model.fp16
+                fp16=self.args.half,
+            )
+            # self.model = model
+            self.device = model.device  # update device
+            self.args.half = model.fp16  # update half
             stride, pt, jit, engine = model.stride, model.pt, model.jit, model.engine
             imgsz = check_imgsz(self.args.imgsz, stride=stride)
             if engine:
                 self.args.batch = model.batch_size
             elif not pt and not jit:
-                self.args.batch = 1
-                LOGGER.info(f"对于不是PyTorch的model，强制使'batch=1'，输入图像大小(1,3,{imgsz},{imgsz})")
+                self.args.batch = model.metadata.get("batch", 1)  # export.py models default to batch-size 1
+                LOGGER.info(f"Setting batch={self.args.batch} input of shape ({self.args.batch}, 3, {imgsz}, {imgsz})")
 
-            if str(self.args.data).split(".")[-1] in ("yaml", "yml"): #YAML文件路径
-                self.data = check_det_dataset(self.args.data)   #检测目标检测数据集
+            if str(self.args.data).split(".")[-1] in {"yaml", "yml"}:
+                self.data = check_det_dataset(self.args.data)
             elif self.args.task == "classify":
-                self.data = check_cls_dataset(self.args.data, split=self.args.split)  #检测分类数据集
+                self.data = check_cls_dataset(self.args.data, split=self.args.split)
             else:
-                raise FileNotFoundError(emojis(f"'task={self.args.task}' 的数据集'{self.args.data}'未发现❌"))
+                raise FileNotFoundError(emojis(f"Dataset '{self.args.data}' for task={self.args.task} not found ❌"))
 
-            if self.device.type in ("cpu", "mps"):
-                self.args.workers = 0
+            if self.device.type in {"cpu", "mps"}:
+                self.args.workers = 0  # faster CPU val as time dominated by inference, not dataloading
             if not pt:
                 self.args.rect = False
-            self.stride = model.stride
-            self.dataloader = self.dataloader or self.get_dataloader(self.data.get(self.args.split), self.args.batch)  #获取数据集
+            self.stride = model.stride  # used in get_dataloader() for padding
+            self.dataloader = self.dataloader or self.get_dataloader(self.data.get(self.args.split), self.args.batch)
 
             model.eval()
-            model.warmup(imgsz=(1 if pt else self.args.batch, 3, imgsz, imgsz))   #模型预热
-        self.model = model
+            model.warmup(imgsz=(1 if pt else self.args.batch, 3, imgsz, imgsz))  # warmup
+
+        self.run_callbacks("on_val_start")
         dt = (
             Profile(device=self.device),
             Profile(device=self.device),
             Profile(device=self.device),
             Profile(device=self.device),
         )
-        self.init_metrics(de_parallel(model))   #初始化混淆矩阵和预测结果等参数
-        self.hdict = []
-        LOGGER.startVal(self.get_desc())
+        bar = TQDM(self.dataloader, desc=self.get_desc(), total=len(self.dataloader))
+        self.init_metrics(de_parallel(model))
+        self.jdict = []  # empty before each val
         if not self.training:
-            PROGRESS_BAR.show("验证中","开始验证")
-            PROGRESS_BAR.start(0, len(self.dataloader), True)
-
-        for batch_i, batch in enumerate(self.dataloader):
+            PROGRESS_BAR.start("Validator", "Start val...", [0, len(self.dataloader)], True)
+        for batch_i, batch in enumerate(bar):
+            self.run_callbacks("on_val_batch_start")
             self.batch_i = batch_i
-            #Preprocess
+            # Preprocess
             with dt[0]:
-                batch = self.preprocess(batch)   #对一批次图像进行处理 转换device，归一化等
+                batch = self.preprocess(batch)
 
-            #Inference
+            # Inference
             with dt[1]:
                 preds = model(batch["img"], augment=augment)
-            #Loss
+
+            # Loss
             with dt[2]:
                 if self.training:
                     self.loss += model.loss(batch, preds)[1]
 
-            #Postprocess
+            # Postprocess
             with dt[3]:
-                preds = self.postprocess(preds)    #NMS
-            
-            self.update_metrics(preds, batch)    #计算正例矩阵， 更新混淆矩阵 如果save_json 则保存结果到jdict 用于coco
+                preds = self.postprocess(preds)
+
+            self.update_metrics(preds, batch)
             if self.args.plots and batch_i < 3:
                 self.plot_val_samples(batch, batch_i)
                 self.plot_predictions(batch, preds, batch_i)
+
+            self.run_callbacks("on_val_batch_end")
             if not self.training:
                 PROGRESS_BAR.setValue(batch_i+1, str(len(batch["img"])))
                 if PROGRESS_BAR.isStop():
-                    raise ProcessLookupError("中断：验证中断成功")
-
-        stats = self.get_stats()  #mr, mp, map50, map, fitness 计算指标
+                    PROGRESS_BAR.close()
+                    raise ProcessLookupError("Interrupt：Val interrupt successful")
+        stats = self.get_stats()
         self.check_stats(stats)
         self.speed = dict(zip(self.speed.keys(), (x.t / len(self.dataloader.dataset) * 1e3 for x in dt)))
-        self.finalize_metrics()   #将混淆矩阵和运行速度更新进self.metrics
+        self.finalize_metrics()
         self.print_results()
-        LOGGER.valFinish("")
-        PROGRESS_BAR.close()
+        self.run_callbacks("on_val_end")
+        if not self.training:
+            PROGRESS_BAR.close()
         if self.training:
             model.float()
             results = {**stats, **trainer.label_loss_items(self.loss.cpu() / len(self.dataloader), prefix="val")}
-            return {k: round(float(v), 5) for k, v in results.items()}  #小数点后5位
+            return {k: round(float(v), 5) for k, v in results.items()}  # return results as 5 decimal place floats
         else:
-            LOGGER.info("Speed:%.1fms preprocess, %.1fms inference, %.1fms loss, %.1fms postprocess per image" % tuple(self.speed.values()))
+            LOGGER.info(
+                "Speed: {:.1f}ms preprocess, {:.1f}ms inference, {:.1f}ms loss, {:.1f}ms postprocess per image".format(
+                    *tuple(self.speed.values())
+                )
+            )
             if self.args.save_json and self.jdict:
                 with open(str(self.save_dir / "predictions.json"), "w") as f:
-                    LOGGER.info(f"Saving{f.name}...")
-                    json.dump(self.jdict, f)
-                stats = self.eval_json(stats)    #重新评估cocomAP
+                    LOGGER.info(f"Saving {f.name}...")
+                    json.dump(self.jdict, f)  # flatten and save
+                stats = self.eval_json(stats)  # update stats
             if self.args.plots or self.args.save_json:
-                LOGGER.info(f"结果已保存至{colorstr('bold', self.save_dir)}")
+                LOGGER.info(f"Results saved to {colorstr('bold', self.save_dir)}")
             return stats
 
     def match_predictions(self, pred_classes, true_classes, iou, use_scipy=False):
         """
-        使用IoU匹配预测的和真实的目标框
+        Matches predictions to ground truth objects (pred_classes, true_classes) using IoU.
+
         Args:
-            pred_classes(torch.Tensor): shape(N,) 预测目标种类索引
-            true_classes(torch.Tensor): shape(M,) 真实目标种类索引
-            iou (torch.Tensor): shape(N,M) 包含用于预测和真实目标的成对IoU值
-            use_scipy(bool):是否使用scipy用于匹配
+            pred_classes (torch.Tensor): Predicted class indices of shape(N,).
+            true_classes (torch.Tensor): Target class indices of shape(M,).
+            iou (torch.Tensor): An NxM tensor containing the pairwise IoU values for predictions and ground of truth
+            use_scipy (bool): Whether to use scipy for matching (more precise).
+
         Returns:
-            (torch.Tensor): shape(N,10)
+            (torch.Tensor): Correct tensor of shape(N,10) for 10 IoU thresholds.
         """
-        correct = np.zeros((pred_classes.shape[0], self.iouv.shape[0])).astype(bool)  #N*10,   10:0.5，0.55，0.6，0.65，0.7，0.75，0.8，0.85，0.9，0.95
-        correct_class = true_classes[:,None] == pred_classes     #M*N   种类预测正确
-        iou = iou * correct_class    #种类预测正确的iou   *M*N
+        # Dx10 matrix, where D - detections, 10 - IoU thresholds
+        correct = np.zeros((pred_classes.shape[0], self.iouv.shape[0])).astype(bool)
+        # LxD matrix where L - labels (rows), D - detections (columns)
+        correct_class = true_classes[:, None] == pred_classes
+        iou = iou * correct_class  # zero out the wrong classes
         iou = iou.cpu().numpy()
         for i, threshold in enumerate(self.iouv.cpu().tolist()):
             if use_scipy:
-                import scipy
+                # WARNING: known issue that reduces mAP in https://github.com/ultralytics/ultralytics/pull/4708
+                import scipy  # scope import to avoid importing for all commands
+
                 cost_matrix = iou * (iou >= threshold)
                 if cost_matrix.any():
-                    labels_idx, detections_idx = scipy.optimize.linear_sum_assignment(cost_matrix, maximize=True)
+                    labels_idx, detections_idx = scipy.optimize.linear_sum_assignment(cost_matrix)
                     valid = cost_matrix[labels_idx, detections_idx] > 0
                     if valid.any():
-                        correct[[detections_idx], i] = True
+                        correct[detections_idx[valid], i] = True
             else:
-                matches = np.nonzero(iou >= threshold)   #iou>threshold  并且跟种类对应shape(n, 2)   2: rowM(true), cloumnN(pred)
-                matches = np.array(matches).T   #n,2
+                matches = np.nonzero(iou >= threshold)  # IoU > threshold and classes match
+                matches = np.array(matches).T
                 if matches.shape[0]:
                     if matches.shape[0] > 1:
-                        matches = matches[iou[matches[:, 0], matches[:, 1]].argsort()[::-1]]   #以iou从大到小进行排序后的matches
-                        matches = matches[np.unique(matches[:, 1], return_index=True)[1]]    #一个预测框对应一个真实框
-                        matches = matches[np.unique(matches[:, 0], return_index=True)[1]]   #一个真实框对应一个预测框
-                    correct[matches[:, 1].astype(int), i] = True   #预测正确的为True， 分10个iou 0.5-0.95
+                        matches = matches[iou[matches[:, 0], matches[:, 1]].argsort()[::-1]]
+                        matches = matches[np.unique(matches[:, 1], return_index=True)[1]]
+                        # matches = matches[matches[:, 2].argsort()[::-1]]
+                        matches = matches[np.unique(matches[:, 0], return_index=True)[1]]
+                    correct[matches[:, 1].astype(int), i] = True
         return torch.tensor(correct, dtype=torch.bool, device=pred_classes.device)
 
+    def add_callback(self, event: str, callback):
+        """Appends the given callback."""
+        self.callbacks[event].append(callback)
 
-
-
+    def run_callbacks(self, event: str):
+        """Runs all callbacks associated with a specified event."""
+        for callback in self.callbacks.get(event, []):
+            callback(self)
 
     def get_dataloader(self, dataset_path, batch_size):
         """Get data loader from dataset path and batch size."""
@@ -217,20 +287,24 @@ class BaseValidator:
         """Build dataset."""
         raise NotImplementedError("build_dataset function not implemented in validator")
 
-    def init_metrics(self, model):
-        """Initialize performance metrics for the YOLO model."""
-        pass
-
     def preprocess(self, batch):
         """Preprocesses an input batch."""
         return batch
 
     def postprocess(self, preds):
-        """Describes and summarizes the purpose of 'postprocess()' but no details mentioned."""
+        """Preprocesses the predictions."""
         return preds
+
+    def init_metrics(self, model):
+        """Initialize performance metrics for the YOLO model."""
+        pass
 
     def update_metrics(self, preds, batch):
         """Updates metrics based on predictions and batch."""
+        pass
+
+    def finalize_metrics(self, *args, **kwargs):
+        """Finalizes and returns all metrics."""
         pass
 
     def get_stats(self):
@@ -241,20 +315,21 @@ class BaseValidator:
         """Checks statistics."""
         pass
 
-    def get_desc(self):
-        """Get results key"""
-        pass
-
-    def finalize_metrics(self, *args, **kwargs):
-        """Finalizes and returns all metrics."""
-        pass
-
     def print_results(self):
         """Prints the results of the model's predictions."""
         pass
 
+    def get_desc(self):
+        """Get description of the YOLO model."""
+        pass
+
+    @property
+    def metric_keys(self):
+        """Returns the metric keys used in YOLO training/validation."""
+        return []
+
     def on_plot(self, name, data=None):
-        """Registers plots (e.g. to be consumed in callbacks)"""
+        """Registers plots (e.g. to be consumed in callbacks)."""
         self.plots[Path(name)] = {"data": data, "timestamp": time.time()}
 
     # TODO: may need to put these following functions into callback

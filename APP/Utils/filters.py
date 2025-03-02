@@ -1,8 +1,8 @@
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
-from APP.Utils import get_widget
+from app.Utils import get_widget
 
 class CentralWidgetFilter(QObject):
     def eventFilter(self, watched:QObject, event:QEvent) -> bool:

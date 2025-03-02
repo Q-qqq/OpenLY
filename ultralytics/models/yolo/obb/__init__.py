@@ -1,5 +1,7 @@
-from ultralytics.models.yolo.obb.predict import OBBPredictor
-from ultralytics.models.yolo.obb.val import OBBValidator
-from ultralytics.models.yolo.obb.train import OBBTrainer
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-__all__ = "OBBTrainer", "OBBValidator", "OBBPredictor"
+from .predict import OBBPredictor
+from .train import OBBTrainer
+from .val import OBBValidator
+
+__all__ = "OBBPredictor", "OBBTrainer", "OBBValidator"

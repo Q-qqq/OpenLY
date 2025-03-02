@@ -2,16 +2,16 @@ from pathlib import Path
 from multiprocessing.pool import ThreadPool
 import threading
 
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 from ultralytics.utils import NUM_THREADS,ThreadingLocked
 
-from APP import PROJ_SETTINGS
-from APP.Utils.label import ShowLabel
-from APP.Data import format_im_files
-from APP.Utils import get_widget
+from app import PROJ_SETTINGS
+from app.Utils.label import ShowLabel
+from app.Data import format_im_files
+from app.Utils import get_widget
 
 
 class ImageScroll(QScrollArea):

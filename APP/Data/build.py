@@ -5,9 +5,9 @@ from ultralytics.data.utils import check_det_dataset
 from ultralytics.utils import IterableSimpleNamespace,  yaml_save, LOGGER, yaml_load
 
 
-from APP.Data import check_cls_val_dataset, check_cls_train_dataset, getDefaultDataset
-from APP.Data.datasets import ClassifyDataset, DetectDataset
-from APP import PROJ_SETTINGS
+from app.Data import check_cls_val_dataset, check_cls_train_dataset, getDefaultDataset
+from app.Data.datasets import ClassifyDataset, DetectDataset
+from app import PROJ_SETTINGS
 
 
 

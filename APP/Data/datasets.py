@@ -1,4 +1,5 @@
 import glob
+from itertools import repeat
 import os
 from pathlib import Path
 from multiprocessing.pool import ThreadPool
@@ -6,15 +7,15 @@ import shutil
 from PIL import Image
 import numpy as np
 
-from ultralytics.data.utils import img2label_paths,resample_segments,IMG_FORMATS
+from ultralytics.data.utils import get_hash, img2label_paths,IMG_FORMATS, verify_image_label
 from ultralytics.data.dataset import YOLODataset, ClassificationDataset
-from ultralytics.utils import DEFAULT_CFG, yaml_save, yaml_load,NUM_THREADS, LOGGER
+from ultralytics.utils import DEFAULT_CFG, PROGRESS_BAR, yaml_save, yaml_load,NUM_THREADS, LOGGER
 from ultralytics.data.augment import classify_transforms
 
 
 
-from APP.Utils.base import QInstances
-from APP.Data import format_im_files,readLabelFile,writeLabelFile
+from app.Utils.base import QInstances
+from app.Data import format_im_files,readLabelFile,writeLabelFile
 
 
 def get_im_files(img_pathes):
@@ -66,6 +67,63 @@ class DetectDataset(YOLODataset):
             im_files = im_files[: round(len(im_files) * self.fraction)]
         im_files = [str(Path(f)) for f in im_files]
         return im_files
+    
+    def cache_labels(self,path, im_files, progress=True):
+        path = Path(path)
+        x = {"labels":[]}
+        nm,nf,ne,nc,npc,msgs = 0,0,0,0,np.array([0]*len(self.data["names"])),[] #miss found empty corrupt messages
+        total = len(im_files)
+        nkpt,ndim = self.data.get("kpt_shape",(0,0))
+        label_files = img2label_paths(im_files)
+        if self.use_keypoints and (nkpt <= 0 or ndim not in (2,3)):
+            raise ValueError(
+                "'kpt_shape' in data.yaml missing or incorrect. Should be a list with [number of "
+                "keypoints, number of dims (2 for x,y or 3 for x,y,visible)], i.e. 'kpt_shape: [17, 3]'"
+            )
+        if progress:
+            PROGRESS_BAR.start("DataLoader", "Start", [0, total], False)
+        with ThreadPool(NUM_THREADS ) as pool:
+            results = pool.imap(
+                verify_image_label,
+                zip(im_files,
+                    label_files,
+                    repeat(self.use_keypoints),
+                    repeat(len(self.data["names"])),
+                    repeat(nkpt),
+                    repeat(ndim))
+            )
+            for i, (im_file, lb, shape, segments, keypoint, nm_f,nf_f, ne_f,nc_f,npc_f,msg) in enumerate(results):
+                nm += nm_f
+                nf += nf_f
+                ne += ne_f
+                nc += nc_f
+                npc += npc_f
+                if im_file:
+                    x["labels"].append(
+                        dict(
+                            im_file = im_file,
+                            shape=shape,
+                            cls=lb[:,0:1],    #[n,1]
+                            bboxes=lb[:,1:],  #[n,4]
+                            segments=segments,
+                            keypoints=keypoint,
+                            normalized=True,
+                            bbox_format="xywh"
+                        )
+                    )
+                if msg:
+                    msgs.append(f"{im_file}:{msg}")
+                if progress:
+                    PROGRESS_BAR.setValue(i+1, f"数据集加载中...{im_file if im_file else msg}")
+            if msgs:
+                LOGGER.info("\n".join(msgs))
+            if progress:
+                PROGRESS_BAR.close()
+            assert nf != 0, f"在路径{path}上未找到标签"
+            x["hash"] = get_hash(self.im_files + self.label_files)
+            x["results"] = nf, nm, ne, nc, npc, len(self.im_files)
+            x["msgs"] = msgs
+            return x
     
 
     def getLabel(self, im_file):

@@ -5,7 +5,7 @@ from ultralytics import YOLO
 from ultralytics.utils import ThreadingLocked, threaded, LOGGER, TryExcept, PROGRESS_BAR
 from ultralytics.data.dataset import YOLODataset
 
-from APP.Utils.base import QInstances
+from app.Utils.base import QInstances
 
 
 class Yolo(YOLO):
@@ -24,8 +24,8 @@ class Yolo(YOLO):
     def lyPredict(self, source=None, stream=False, predictor=None,threaded=True, **kwargs):
         #results = None
         try:
-            PROGRESS_BAR.show("推理", "开始推理...")
-            PROGRESS_BAR.start(0, 0, False)
+            PROGRESS_BAR.show()
+            PROGRESS_BAR.start("Wait infrence", "Wait...", [0, 100], False)
             results = self.predict(source, stream, predictor, **kwargs)
             labels = {}
             for result in results:

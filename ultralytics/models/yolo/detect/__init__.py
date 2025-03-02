@@ -1,5 +1,7 @@
-from ultralytics.models.yolo.detect.predict import DetectionPredictor
-from ultralytics.models.yolo.detect.val import DetectionValidator
-from ultralytics.models.yolo.detect.train import DetectionTrainer
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-__all__ = "DetectionPredictor", "DetectionValidator","DetectionTrainer"
+from .predict import DetectionPredictor
+from .train import DetectionTrainer
+from .val import DetectionValidator
+
+__all__ = "DetectionPredictor", "DetectionTrainer", "DetectionValidator"

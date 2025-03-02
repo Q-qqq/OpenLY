@@ -1,61 +1,69 @@
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
-from ultralytics.utils import PROGRESS_BAR
-
-from APP.Designer.DesignerPy import progressbarUI
+from app import PROGRESS_BAR
+from app.Designer.DesignerPy import progressbarUI
 
 
 class ProgressBar(QWidget, progressbarUI.Ui_Progress):
+    """
+        进度条类
+    Attributes:
+        is_show(bool):  是否正在显示进度条
+        stop(bool):  进度条是否停止
+    """
     def __init__(self, parent=None, f=Qt.Dialog):
         super().__init__(parent, f)
         self.setupUi(self)
-        self.min = 0
-        self.max = 100
-        self.ProgressBar.setRange(self.min, self.max)
         self.eventConnect()
         self.is_show = False
         self.stop = False
 
     def eventConnect(self):
+        """信号槽连接"""
         PROGRESS_BAR.Start_Signal.connect(self.start)
-        PROGRESS_BAR.Set_Value_Signal.connect(self.setValue)
+        PROGRESS_BAR.Set_Value_Signal.connect(self.setValue, Qt.ConnectionType.QueuedConnection)
         PROGRESS_BAR.Reset_Signal.connect(self.reset)
-        PROGRESS_BAR.Show_Signal.connect(self.showProgress)
         PROGRESS_BAR.Close_Signal.connect(self.close)
 
+
     def reset(self):
+        """重置进度条"""
         self.ProgressBar.reset()
 
-    def setValue(self, mes):
-        value = mes[0]
-        text = mes[1]
+    def setValue(self, value, text):
+        """
+        设置进度条的值
+        Args:
+            value(int):  进度条的值
+            text(str):  显示的文本
+        """
         self.ProgressBar.setValue(value)
         if text != "":
             self.Show_mes_te.append(text)
         QApplication.processEvents()
 
-    def showProgress(self, mes) -> None:
-        title, head_txt = mes
+    def start(self, range, title, head_txt):
+        """开始进度条
+        Args:
+            range(list):  进度条的范围
+            title(str):  进度条的标题
+            head_txt(str):  进度条的头部文本
+        """
         self.setWindowTitle(title)
-        if self.is_show:
-            return
-        else:
+        if not self.is_show:
             self.is_show = True
             self.Show_mes_te.clear()
             self.Show_mes_te.append(head_txt)
             self.show()
-
-    def start(self, range):
-        self.min = range[0]
-        self.max = range[1]
-        self.ProgressBar.setRange(self.min, self.max)
-        self.ProgressBar.setValue(self.min)
-        self.ProgressBar.setFormat(f"%v/{self.max}")
+        self.ProgressBar.setRange(range[0], range(1))
+        self.ProgressBar.setValue(range(0))
+        self.ProgressBar.setFormat(f"%v/{range[1]}")
 
     def closeEvent(self, event:QCloseEvent) -> None:
+        """关闭进度条"""
         if self.ProgressBar.value() != self.max:
-            if PROGRESS_BAR.permit_stop and not PROGRESS_BAR.isStop():
+            if PROGRESS_BAR.permit_stop and not PROGRESS_BAR.isStop():  #允许停止且不在停止状态
                 req = QMessageBox.information(self, "提示", "是否中断加载", QMessageBox.Yes | QMessageBox.No)
                 if req == QMessageBox.Yes:
                     PROGRESS_BAR.stop()
