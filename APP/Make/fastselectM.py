@@ -7,7 +7,7 @@ from PySide6.QtWidgets import *
 
 import numpy as np
 
-from app.Designer import fast_selectUI
+from APP.Designer import fast_selectUI
 
 
 def clip(n, min, max):

@@ -14,8 +14,8 @@ from ultralytics.data.augment import classify_transforms
 
 
 
-from app.Utils.base import QInstances
-from app.Data import format_im_files,readLabelFile,writeLabelFile
+from APP.Utils.base import QInstances
+from APP.Data import format_im_files,readLabelFile,writeLabelFile
 
 
 def get_im_files(img_pathes):

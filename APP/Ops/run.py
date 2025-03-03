@@ -8,8 +8,8 @@ from PySide6.QtWidgets import *
 
 from ultralytics.utils import LOGGER
 
-from app.Utils import get_widget
-from app import PROJ_SETTINGS
+from APP.Utils import get_widget
+from APP  import PROJ_SETTINGS
 
 
 class RunMes(QObject):

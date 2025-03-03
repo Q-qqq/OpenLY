@@ -230,28 +230,29 @@ CFG_BOOL_KEYS = {  # boolean-only arguments
 }
 
 CFG_OTHER_KEYS = (
-     "task",  #(str)detect, YOLO task, i.e. detect, segmetn, classify, pose
-     "mode",  #(str)train, YOLO mode, i.e. train, val, predict, export, track,benchmask
-     "model",  #(str)modeln.pt, path to model file i.e. yolov8n.pt, yalov8n.yaml
-     "data",   #(str)data.yaml, path to data file, i.e. coco128.yaml
-     "cache",   #(bool| str)False, Use cache for data loading ,i.e. True(ram, disk)/False
-     "device",   #(int|list[int] | str)0, device to run, i.e. cufa device=0 pr device=0,1,2,3, cpu device=cpu
-     "project",  #(str)proName, project name
-     "name",     #(str)expName, experiname, results saved to "project//name" directory
-     "pretrained",   #(bool | str)True, whether to use a pretrained model(bool) or amodel to load weights from(str)
-     "optimizer",   #(str)auto,  #optimizer to use, choices=[SGD, ADam, Adamx, AdamW,NAdam, RAdam, RMSProp, auto]
-     "freeze",      #(int | list[int])None, freeze first n layers, or freeze list of layer indices during training(int | list)
-     "split",       #(str)val, dataset split to use for validation, i.e. val, test or train
-     "source",    #(str)source directory for images or video for predict
-     "classes",   #(int | list[int])[0,2,3], filter results by class, i.e. classes=0 or classes=[0,2,3]
-     "embed",     #(list[int])return feature vectors/embeddings from given layers
-     "format",    #(str)torchscript,  format to export to, choices at https://docs.ultralytics.com/modes/export/#export-formats
-     "opset",     #(int,optional) ONNX:opset version
-     "auto_augment",     #(str)randaugment, auto augmentation policy for classification (randaugment, autoaugment,augmix)
-     "cfg",       #(str,optional) for overriding defaults.yaml
-     "tracker",   #(str)bootsort.yaml, tracker type, choices=[botsrt.yaml, bytetrack.yaml]
-     "resume",    # (bool|str)False, resume training from last checkpoint
-     "imgsz",     #(int | list)640, image size  width,height
+    "task",  #(str)detect, YOLO task, i.e. detect, segmetn, classify, pose
+    "mode",  #(str)train, YOLO mode, i.e. train, val, predict, export, track,benchmask
+    "model",  #(str)modeln.pt, path to model file i.e. yolov8n.pt, yalov8n.yaml
+    "data",   #(str)data.yaml, path to data file, i.e. coco128.yaml
+    "cache",   #(bool| str)False, Use cache for data loading ,i.e. True(ram, disk)/False
+    "device",   #(int|list[int] | str)0, device to run, i.e. cufa device=0 pr device=0,1,2,3, cpu device=cpu
+    "project",  #(str)proName, project name
+    "name",     #(str)expName, experiname, results saved to "project//name" directory
+    "pretrained",   #(bool | str)True, whether to use a pretrained model(bool) or amodel to load weights from(str)
+    "optimizer",   #(str)auto,  #optimizer to use, choices=[SGD, ADam, Adamx, AdamW,NAdam, RAdam, RMSProp, auto]
+    "freeze",      #(int | list[int])None, freeze first n layers, or freeze list of layer indices during training(int | list)
+    "split",       #(str)val, dataset split to use for validation, i.e. val, test or train
+    "source",    #(str)source directory for images or video for predict
+    "classes",   #(int | list[int])[0,2,3], filter results by class, i.e. classes=0 or classes=[0,2,3]
+    "embed",     #(list[int])return feature vectors/embeddings from given layers
+    "format",    #(str)torchscript,  format to export to, choices at https://docs.ultralytics.com/modes/export/#export-formats
+    "opset",     #(int,optional) ONNX:opset version
+    "copy_paste_mode", #(str) "flip"  the method to do copy_paste augmentation (flip, mixup)
+    "auto_augment",     #(str)randaugment, auto augmentation policy for classification (randaugment, autoaugment,augmix)
+    "cfg",       #(str,optional) for overriding defaults.yaml
+    "tracker",   #(str)bootsort.yaml, tracker type, choices=[botsrt.yaml, bytetrack.yaml]
+    "resume",    # (bool|str)False, resume training from last checkpoint
+    "imgsz",     #(int | list)640, image size  width,height
 )
 
 

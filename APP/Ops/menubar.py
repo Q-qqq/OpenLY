@@ -8,9 +8,9 @@ from PySide6.QtWidgets import *
 from pathlib import Path
 
 
-from app import PROJ_SETTINGS, getExistDirectory, getOpenFileName, APP_SETTINGS, loadQssStyleSheet
-from app.Utils.filters import MenuFilter
-from app.Make import VocToYolo, CocoToYolo, PngToYolo
+from APP  import PROJ_SETTINGS, getExistDirectory, getOpenFileName, APP_SETTINGS, loadQssStyleSheet
+from APP.Utils.filters import MenuFilter
+from APP.Make import VocToYolo, CocoToYolo, PngToYolo
 
 
 class MenuTool(QObject):

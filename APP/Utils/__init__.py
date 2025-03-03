@@ -7,7 +7,7 @@ from PySide6.QtWidgets import *
 import numpy as np
 import torch
 
-from app import PROJ_SETTINGS, EXPERIMENT_SETTINGS
+from APP  import PROJ_SETTINGS, EXPERIMENT_SETTINGS
 
 def get_widget(parent:QFrame, name):
     for widget in parent.children():

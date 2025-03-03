@@ -1,8 +1,8 @@
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
-from app import PROGRESS_BAR
-from app.Designer.DesignerPy import progressbarUI
+from APP  import PROGRESS_BAR
+from APP.Designer.DesignerPy import progressbarUI
 
 
 class ProgressBar(QWidget, progressbarUI.Ui_Progress):

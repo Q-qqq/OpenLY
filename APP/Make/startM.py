@@ -1,14 +1,14 @@
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
-from app.Designer.DesignerPy import startUI
+from APP.Designer.DesignerPy import startUI
 
 from pathlib import Path
 import glob
 
 from ultralytics.utils.files import increment_path
 
-from app import getExistDirectory, checkProject, APP_SETTINGS, PROJ_SETTINGS, EXPERIMENT_SETTINGS
+from APP  import getExistDirectory, checkProject, APP_SETTINGS, PROJ_SETTINGS, EXPERIMENT_SETTINGS
 
 
 class Start(QWidget, startUI.Ui_Form):

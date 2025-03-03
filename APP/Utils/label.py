@@ -16,11 +16,11 @@ from multiprocessing.pool import ThreadPool
 from ultralytics.utils import yaml_load,NUM_THREADS, PROGRESS_BAR, LOGGER
 from ultralytics.data.utils import verify_image
 
-from app import  FILL_RULE
-from app.Utils import getcat
-from app.Utils.base import QBboxes, QInstances, QTransformerLabel, QSizeLabel
-from app.Utils.ops import *
-from app.Data import format_im_files
+from APP  import  FILL_RULE
+from APP.Utils import getcat
+from APP.Utils.base import QBboxes, QInstances, QTransformerLabel, QSizeLabel
+from APP.Utils.ops import *
+from APP.Data import format_im_files
 
 
 class DetectTransformerLabel(QTransformerLabel):

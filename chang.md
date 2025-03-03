@@ -364,5 +364,193 @@ def __call__(self, trainer=None, model=None):
     ...
     ...
 ```
+## 修改七：添加Keys
+### ultralytics.cfg.__init__.py
++ 往全部变量中添加CFG_OTHERS_KEYS, 使KEYS全局变量包含全部参数
+```python
+CFG_OTHER_KEYS = (
+    "task",  #(str)detect, YOLO task, i.e. detect, segmetn, classify, pose
+    "mode",  #(str)train, YOLO mode, i.e. train, val, predict, export, track,benchmask
+    "model",  #(str)modeln.pt, path to model file i.e. yolov8n.pt, yalov8n.yaml
+    "data",   #(str)data.yaml, path to data file, i.e. coco128.yaml
+    "cache",   #(bool| str)False, Use cache for data loading ,i.e. True(ram, disk)/False
+    "device",   #(int|list[int] | str)0, device to run, i.e. cufa device=0 pr device=0,1,2,3, cpu device=cpu
+    "project",  #(str)proName, project name
+    "name",     #(str)expName, experiname, results saved to "project//name" directory
+    "pretrained",   #(bool | str)True, whether to use a pretrained model(bool) or amodel to load weights from(str)
+    "optimizer",   #(str)auto,  #optimizer to use, choices=[SGD, ADam, Adamx, AdamW,NAdam, RAdam, RMSProp, auto]
+    "freeze",      #(int | list[int])None, freeze first n layers, or freeze list of layer indices during training(int | list)
+    "split",       #(str)val, dataset split to use for validation, i.e. val, test or train
+    "source",    #(str)source directory for images or video for predict
+    "classes",   #(int | list[int])[0,2,3], filter results by class, i.e. classes=0 or classes=[0,2,3]
+    "embed",     #(list[int])return feature vectors/embeddings from given layers
+    "format",    #(str)torchscript,  format to export to, choices at https://docs.ultralytics.com/modes/export/#export-formats
+    "opset",     #(int,optional) ONNX:opset version
+    "copy_paste_mode", #(str) "flip"  the method to do copy_paste augmentation (flip, mixup)
+    "auto_augment",     #(str)randaugment, auto augmentation policy for classification (randaugment, autoaugment,augmix)
+    "cfg",       #(str,optional) for overriding defaults.yaml
+    "tracker",   #(str)bootsort.yaml, tracker type, choices=[botsrt.yaml, bytetrack.yaml]
+    "resume",    # (bool|str)False, resume training from last checkpoint
+    "imgsz",     #(int | list)640, image size  width,height
+)
+```
 ## 修改七：LOGGER
+### ultralytics.utils.__init__
++ 添加Logging类，并实例化为LOGGER， 替换原先的LOGGER. 其中定义了多个信号对训练、验证信息进行界面显示
+```python
+# Set logger
+_LOGGER = set_logging(LOGGING_NAME, verbose=VERBOSE)  # define globally (used in train.py, val.py, predict.py, etc.)
+class Logger:
+    """信息显示"""
+    Show_Mes_Signal = Signal(str)
+    Start_Train_Signal = Signal(list)
+    Batch_Finish_Signal = Signal(str)
+    Epoch_Finish_Signal = Signal(list)
+    Train_Finish_Signal = Signal(str)
+    Train_Interrupt_Signal = Signal()
+    Start_Val_Signal = Signal(str)
+    Val_Finish_Signal = Signal(str)
+    Error_Signal = Signal(str)
+    def __init__(self, parent=None):
+        super(Logger, self).__init__(parent)
+        self.errorFormat = '<font color="red" size="5">{}</font>'
+        self.warningFormat = '<font color="orange" size="5">{}</font>'
+        self.stop = False  #停止训练
+
+
+    def error(self,msg):
+        """错误信号"""
+        _LOGGER.error(msg)
+        errorMsg = self.errorFormat.format(msg)
+        self.Error_Signal.emit(msg)
+        self.Show_Mes_Signal.emit(errorMsg)
+
+    def warning(self,msg):
+        """警告信号"""
+        _LOGGER.warning(msg)
+        warningMsg = self.warningFormat.format(msg)
+        self.Show_Mes_Signal.emit(warningMsg)
+
+    def info(self,msg):
+        """正常信号"""
+        _LOGGER.info(msg)
+        self.Show_Mes_Signal.emit(msg)
+
+    def startTrain(self, msg_epochs):
+        """开始训练信号"""
+        _LOGGER.info(msg_epochs[0])
+        self.Start_Train_Signal.emit(msg_epochs)
+
+    def batchFinish(self, msg):
+        """完成一个batch信号"""
+        _LOGGER.info(msg)
+        self.Batch_Finish_Signal.emit(msg)
+
+    def epochFinish(self, msg_epoch):
+        """完成一个epoch信号"""
+        _LOGGER.info(msg_epoch[0])
+        self.Epoch_Finish_Signal.emit(msg_epoch)
+
+
+    def trainFinish(self, msg):
+        """训练结束信号"""
+        _LOGGER.info(msg)
+        self.Train_Finish_Signal.emit(msg)
+
+    def trainInterrupt(self):
+        """训练停止信号"""
+        _LOGGER.info(msg)
+        self.Train_Interrupt_Signal.emit()
+
+    def startVal(self, msg):
+        """开始验证信号"""
+        _LOGGER.info(msg)
+        self.Start_Val_Signal.emit(msg)
+
+    def valFinish(self, msg):
+        """验证结束信号"""
+        _LOGGER.info(msg)
+        self.Val_Finish_Signal.emit(msg)
+LOGGER  = Logger()
+```
+### ultralytics.engine.trainer
++ 在BaseTrainer类的_do_train函数中添加LOGGER对训练进度信息进行显示, 并添加total_instances变量计算每一次训练的总实例数量，在最后一个batch输出
+```python
+def _do_train(self, world_size=1):
+    ...
+    ...
+    LOGGER.info(
+        f"Image sizes {self.args.imgsz} train, {self.args.imgsz} val\n"
+        f"Using {self.train_loader.num_workers * (world_size or 1)} dataloader workers\n"
+        f"Logging results to {colorstr('bold', self.save_dir)}\n"
+        f"Starting training for " + (f"{self.args.time} hours..." if self.args.time else f"{self.epochs} epochs...")
+    )
+    if RANK in (-1, 0):
+        LOGGER.startTrain([self.progress_string(), self.start_epoch, self.epochs]) #start train sinal
+        LOGGER.startVal(self.validator.get_desc())
+    ....
+    ....
+    while True:
+        ...
+        ...
+        if RANK in {-1, 0}:
+            #LOGGER.info(self.progress_string())
+            pbar = TQDM(enumerate(self.train_loader), total=nb)
+        ...
+        total_instance = 0 # all instances
+        for i, batch in pbar:
+            if LOGGER.stop:
+                LOGGER.trainInterrupt()
+                raise ProcessLookupError(f"Interrupt：训练中断成功,已训练{epoch}epoch")
+            self.run_callbacks("on_train_batch_start")
+            ...
+            ...
+            # Log
+            if RANK in {-1, 0}:
+                total_instance += batch["cls"].shape[0]
+                instances = batch["cls"].shape[0] if i < len(self.train_loader)-1 else total_instance
+                loss_length = self.tloss.shape[0] if len(self.tloss.shape) else 1
+                loss_mes = ("%11s" * 2 + "%11.4g" * (2 + loss_length))% (
+                        f"{epoch + 1}/{self.epochs}",
+                        f"{self._get_memory():.3g}G",  # (GB) GPU memory util
+                        *(self.tloss if loss_length > 1 else torch.unsqueeze(self.tloss, 0)),  # losses
+                        instances,  # batch size, i.e. 8
+                        batch["img"].shape[-1],  # imgsz, i.e 640
+                    )
+                pbar.set_description(loss_mes)
+                LOGGER.batchFinish(loss_mes)
+                self.run_callbacks("on_batch_end")
+                if self.args.plots and ni in self.plot_idx:
+                    self.plot_training_samples(batch, ni)
+
+            self.run_callbacks("on_train_batch_end")
+
+        ...
+        if RANK in {-1, 0}:
+            ...
+            ...
+            LOGGER.epochFinish([loss_mes, epoch+1])
+
+        ....
+        ...
+    if RANK in {-1, 0}:
+        ...
+        ...
+        self.run_callbacks("on_train_end")
+        LOGGER.trainFinish("Train Finish!!")
+    self._clear_memory()
+    self.run_callbacks("teardown")
+```
+### ultralytics.engine.validator
++ 在BaseValidator类的__call__函数中添加LOGGER发送验证完成信号
+```python
+@smart_inference_mode()
+    def __call__(self, trainer=None, model=None):
+        ...
+        ...
+        LOGGER.valFinish("")
+        self.run_callbacks("on_val_end")
+        ...
+        ...
+```
 ## 修改八：字体

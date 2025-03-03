@@ -4,7 +4,7 @@ import numpy as np
 from ultralytics.utils import LOGGER
 from ultralytics.data.utils import IMG_FORMATS
 
-from app import PROJ_SETTINGS
+from APP  import PROJ_SETTINGS
 
 
 def getDefaultDataset():

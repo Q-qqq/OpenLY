@@ -12,7 +12,7 @@ from ultralytics.data.utils import img2label_paths, IMG_FORMATS
 import numpy as np
 import copy
 import torch
-from app.Utils.ops import cvImg2Qpix, generate_distinct_colors,segmentArea
+from APP.Utils.ops import cvImg2Qpix, generate_distinct_colors,segmentArea
 
 
 
@@ -867,6 +867,9 @@ class QTransformerLabel(QSizeLabel):
         show_cls_a.setCheckable(True)
         show_cls_a.setChecked(self.show_cls)
 
+        show_area_a = QAction(text="显示面积", parent=main_menu)
+        show_area_a.setCheckable(True)
+        show_area_a.setChecked(self.show_area)
 
 
         cross_a = QAction(text="十字线", parent=main_menu)
@@ -886,9 +889,6 @@ class QTransformerLabel(QSizeLabel):
             if self.task != "classify":
                 main_menu.addAction(show_cls_a)
                 if self.task == "segment":
-                    show_area_a = QAction(text="显示面积", parent=main_menu)
-                    show_area_a.setCheckable(True)
-                    show_area_a.setChecked(self.show_area)
                     main_menu.addAction(show_area_a)
 
         req = main_menu.exec_(self.mapToGlobal(ev.pos()))

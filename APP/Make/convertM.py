@@ -3,10 +3,10 @@ from pathlib import Path
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
-from app.Designer.DesignerPy import coco2yoloUI, voc2yoloUI, png2yoloUI
+from APP.Designer.DesignerPy import coco2yoloUI, voc2yoloUI, png2yoloUI
 
-from app import getExistDirectory, PROJ_SETTINGS
-from app.Data.convert import COCO2YOLO, VOC2YOLO, PNG2YOLO
+from APP  import getExistDirectory, PROJ_SETTINGS
+from APP.Data.convert import COCO2YOLO, VOC2YOLO, PNG2YOLO
 
 
 class CocoToYolo(QWidget,coco2yoloUI.Ui_Form):

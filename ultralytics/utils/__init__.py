@@ -433,7 +433,82 @@ def set_logging(name="LOGGING_NAME", verbose=True):
 
 
 # Set logger
-LOGGER = set_logging(LOGGING_NAME, verbose=VERBOSE)  # define globally (used in train.py, val.py, predict.py, etc.)
+_LOGGER = set_logging(LOGGING_NAME, verbose=VERBOSE)  # define globally (used in train.py, val.py, predict.py, etc.)
+class Logger:
+    """信息显示"""
+    Show_Mes_Signal = Signal(str)
+    Start_Train_Signal = Signal(list)
+    Batch_Finish_Signal = Signal(str)
+    Epoch_Finish_Signal = Signal(list)
+    Train_Finish_Signal = Signal(str)
+    Train_Interrupt_Signal = Signal()
+    Start_Val_Signal = Signal(str)
+    Val_Finish_Signal = Signal(str)
+    Error_Signal = Signal(str)
+    def __init__(self, parent=None):
+        super(Logger, self).__init__(parent)
+        self.errorFormat = '<font color="red" size="5">{}</font>'
+        self.warningFormat = '<font color="orange" size="5">{}</font>'
+        self.stop = False  #停止训练
+
+
+    def error(self,msg):
+        """错误信号"""
+        _LOGGER.error(msg)
+        errorMsg = self.errorFormat.format(msg)
+        self.Error_Signal.emit(msg)
+        self.Show_Mes_Signal.emit(errorMsg)
+
+    def warning(self,msg):
+        """警告信号"""
+        _LOGGER.warning(msg)
+        warningMsg = self.warningFormat.format(msg)
+        self.Show_Mes_Signal.emit(warningMsg)
+
+    def info(self,msg):
+        """正常信号"""
+        _LOGGER.info(msg)
+        self.Show_Mes_Signal.emit(msg)
+
+    def startTrain(self, msg_epochs):
+        """开始训练信号"""
+        _LOGGER.info(msg_epochs[0])
+        self.Start_Train_Signal.emit(msg_epochs)
+
+    def batchFinish(self, msg):
+        """完成一个batch信号"""
+        _LOGGER.info(msg)
+        self.Batch_Finish_Signal.emit(msg)
+
+    def epochFinish(self, msg_epoch):
+        """完成一个epoch信号"""
+        _LOGGER.info(msg_epoch[0])
+        self.Epoch_Finish_Signal.emit(msg_epoch)
+
+
+    def trainFinish(self, msg):
+        """训练结束信号"""
+        _LOGGER.info(msg)
+        self.Train_Finish_Signal.emit(msg)
+
+    def trainInterrupt(self):
+        """训练停止信号"""
+        _LOGGER.info(msg)
+        self.Train_Interrupt_Signal.emit()
+
+    def startVal(self, msg):
+        """开始验证信号"""
+        _LOGGER.info(msg)
+        self.Start_Val_Signal.emit(msg)
+
+    def valFinish(self, msg):
+        """验证结束信号"""
+        _LOGGER.info(msg)
+        self.Val_Finish_Signal.emit(msg)
+
+LOGGER  = Logger()
+
+
 for logger in "sentry_sdk", "urllib3.connectionpool":
     logging.getLogger(logger).setLevel(logging.CRITICAL + 1)
 

@@ -70,13 +70,26 @@ QToolBar {
     spacing: 8px;
 }
  
-/*===== 基础态 =====*/
+
+/*===== 基础量子场 =====*/
 QLabel {
-    color: #00f3e6;                     /* 量子荧光基色 */
-    font: bold 14pt "Orbitron";         /* 曲率引擎控制台字体 */
-    background: transparent;            /* 真空能背景 */
-    padding: 5px 12px;
+    background: #0a0e17;                /* 暗物质基底 */
+    color: #00f3e6;                     /* 量子荧光 */
+    padding: 5px 2px;
+    font: bold 14pt "Orbitron";         /* 星舰控制台字体 */
+    border-radius: 0px;
 }
+QLabel#image_label {
+    border: 3px solid qlineargradient(  /* 曲速通道 */
+        x1:0, y1:0.5, 
+        x2:1, y2:0.5,
+        stop:0 #3d7afe,
+        stop:0.3 #8a2be2,
+        stop:0.7 #00f3e6,
+        stop:1 #ff355e 
+    );
+}
+ 
  
 /*===== 多维增强 =====*/
 QLabel[objectName^="cyber_title_"] {    /* 星舰级标题 */

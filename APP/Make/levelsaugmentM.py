@@ -9,8 +9,8 @@ import numpy as np
 
 from ultralytics.data.utils import cv2_readimg
 
-from app.Designer.DesignerPy import levels_augmentUI
-from app.Utils.plotting import HistFigure
+from APP.Designer.DesignerPy import levels_augmentUI
+from APP.Utils.plotting import HistFigure
 
 
 

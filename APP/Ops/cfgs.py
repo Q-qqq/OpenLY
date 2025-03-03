@@ -1,13 +1,13 @@
 import copy
 
-from PySide6.QtCore import *
-from PySide6.QtGui import *
-from PySide6.QtWidgets import *
+from PySide2.QtCore import *
+from PySide2.QtGui import *
+from PySide2.QtWidgets import *
 from pathlib import Path
 from ultralytics.utils import yaml_load, yaml_save, LOGGER,ROOT, DEFAULT_CFG_DICT
 from ultralytics.cfg import get_cfg, cfg2dict, CFG_FLOAT_KEYS, CFG_BOOL_KEYS, CFG_FRACTION_KEYS, CFG_INT_KEYS, CFG_OTHER_KEYS
-from app import APP_SETTINGS, EXPERIMENT_SETTINGS, PROJ_SETTINGS,getExistDirectory, getOpenFileName, APP_ROOT
-from app.Utils import get_widget
+from APP import APP_SETTINGS, EXPERIMENT_SETTINGS, PROJ_SETTINGS,getExistDirectory, getOpenFileName, APP_ROOT
+from APP.Utils import get_widget
 import glob
 
 class CfgsTreeWidget(QTreeWidget):
@@ -42,6 +42,7 @@ class CfgsTreeWidget(QTreeWidget):
         self.browse_args = tips.pop("可浏览参数")
         self.getWidgetMegs(tips)
         self.initTrees()
+        self.setRootColor()
         self.showArgs(False)
         self.expandAll()
         #self.setStyleSheet(u"QTreeWidget::branch:!has-children{background-color: rgb(221, 255, 238);}")
@@ -61,10 +62,6 @@ class CfgsTreeWidget(QTreeWidget):
         root_font = QFont("幼圆", 12)
         child_font = QFont("幼圆", 10)
 
-        root_color = QColor(200,200,200,150)
-
-        head_color = QColor(10,100,10)
-
         self.clear()
         self.setColumnCount(2)
         head_items = self.headerItem()
@@ -77,8 +74,6 @@ class CfgsTreeWidget(QTreeWidget):
             root = QTreeWidgetItem(self)
             root.setText(0, r)
             root.setFont(0, root_font)
-            #root.setBackgroundColor(0, root_color)
-            #root.setBackgroundColor(1, root_color)
             root.setSizeHint(0, QSize(0, 30))
             root.setSizeHint(1, QSize(0, 30))
             self.addTopLevelItem(root)
@@ -100,6 +95,16 @@ class CfgsTreeWidget(QTreeWidget):
                 self.setItemWidget(child_a,1, w)
             else:
                 child_a.setText(1, str(value))
+
+    def setRootColor(self):
+        if APP_SETTINGS["style"] == "cute":
+            color = QColor(205, 127, 50, 255)
+        elif APP_SETTINGS["style"] == "technology":
+            color = QColor(138, 43, 224, 255)
+        for i in range(self.topLevelItemCount()):
+            root = self.topLevelItem(i)
+            root.setBackgroundColor(0, color)
+            root.setBackgroundColor(1, color)
 
     def updateTrees(self, args, overrides=None):
         """初始化参数"""
@@ -359,6 +364,7 @@ class CfgsTreeWidget(QTreeWidget):
                 w = self.itemWidget(item, 1)
                 if w:
                     if self.widgets[w.objectName()]["widgetType"] != "cb":  #不是checkBox的删除
+                        item.setText(1, str(self.getWidgetValue(w)))
                         self.removeItemWidget(item, 1)
                         w.deleteLater()
             return
@@ -368,6 +374,7 @@ class CfgsTreeWidget(QTreeWidget):
             w = self.itemWidget(self.last_click_item, 1)
             if w:
                 if self.widgets[w.objectName()]["widgetType"] != "cb":
+                    self.last_click_item.setText(1, str(self.getWidgetValue(w)))
                     self.removeItemWidget(self.last_click_item,1)
                     w.deleteLater()
         self.last_click_color = item.backgroundColor(0)
@@ -384,6 +391,7 @@ class CfgsTreeWidget(QTreeWidget):
             else:
                 widget = self.createWidget(item.statusTip(0), item.text(1))
                 self.setItemWidget(item, 1, widget)
+                item.setText(1, "")
 
 
 
@@ -427,7 +435,8 @@ class CfgsTreeWidget(QTreeWidget):
         if APP_SETTINGS["style"] == "cute":
             color = ( QColor(216, 191, 216, 255), QColor(230, 224, 255, 255))
         elif APP_SETTINGS["style"] == "technology":
-            color = (QColor(14, 19, 33, 255), QColor(61, 122, 254, 200))
+            color = (QColor(14, 19, 33, 255), QColor(26,72,95, 255))
+        self.setRootColor()
         ci = 1
         for i in range(self.topLevelItemCount()):
             child = self.topLevelItem(i)

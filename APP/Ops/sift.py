@@ -15,11 +15,11 @@ from ultralytics.utils import yaml_load, NUM_THREADS, LOGGER
 
 
 
-from app import PROJ_SETTINGS
-from app.Data.build import build_dataset
-from app.Data import readLabelFile
-from app.Utils import get_widget
-from app.Utils.filters import CbbFilter
+from APP  import PROJ_SETTINGS
+from APP.Data.build import build_dataset
+from APP.Data import readLabelFile
+from APP.Utils import get_widget
+from APP.Utils.filters import CbbFilter
 
 
 
