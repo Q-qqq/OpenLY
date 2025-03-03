@@ -1,13 +1,14 @@
 import math
 
 import cv2
+
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 import numpy as np
 
-from APP.Designer import fast_selectUI
+from APP.Design import fast_selectQT_ui
 
 
 def clip(n, min, max):
@@ -18,7 +19,7 @@ def clip(n, min, max):
     else:
         return n
 
-class FastSelect(QWidget, fast_selectUI.Ui_Form):
+class FastSelect(QWidget, fast_selectQT_ui.Ui_Form):
     def __init__( self, parent, img_label, f=Qt.Tool):
         super().__init__(parent, f)
         self.setupUi(self)

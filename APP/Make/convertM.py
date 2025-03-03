@@ -1,15 +1,17 @@
 import glob
 from pathlib import Path
+
+from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
-from APP.Designer.DesignerPy import coco2yoloUI, voc2yoloUI, png2yoloUI
+from APP.Design import coco2yoloQT_ui, voc2yoloQT_ui, png2yoloQT_ui
 
 from APP  import getExistDirectory, PROJ_SETTINGS
 from APP.Data.convert import COCO2YOLO, VOC2YOLO, PNG2YOLO
 
 
-class CocoToYolo(QWidget,coco2yoloUI.Ui_Form):
+class CocoToYolo(QWidget,coco2yoloQT_ui.Ui_Form):
     def __init__(self, parent, f=Qt.Dialog):
         super().__init__(parent, f)
         self.setupUi(self)
@@ -62,7 +64,7 @@ class CocoToYolo(QWidget,coco2yoloUI.Ui_Form):
             self.YOLO_path_le.setText(dir)
 
 
-class VocToYolo(QWidget, voc2yoloUI.Ui_Form):
+class VocToYolo(QWidget, voc2yoloQT_ui.Ui_Form):
     def __init__(self, parent, f=Qt.Dialog):
         super().__init__(parent, f)
         self.setupUi(self)
@@ -109,7 +111,7 @@ class VocToYolo(QWidget, voc2yoloUI.Ui_Form):
             self.YOLO_path_le.setText(dir)
 
 
-class PngToYolo(QWidget, png2yoloUI.Ui_Form):
+class PngToYolo(QWidget, png2yoloQT_ui.Ui_Form):
     def __init__(self, parent, f=Qt.Dialog):
         super().__init__(parent, f)
         self.setupUi(self)

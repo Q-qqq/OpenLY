@@ -2,6 +2,7 @@ from pathlib import Path
 from multiprocessing.pool import ThreadPool
 import threading
 
+
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
@@ -31,7 +32,7 @@ class ImageScroll(QScrollArea):
     def setHLayout(self):
         self.setContentsMargins(0, 0, 0, 0)
         self.hor_layout = QHBoxLayout()
-        self.hor_layout.setMargin(0)
+        self.hor_layout.setContentsMargins(0,0,0,0)
         self.hor_layout.setSpacing(5)
         self.widget = QWidget()
         self.widget.setContentsMargins(0,0 ,0 ,0)

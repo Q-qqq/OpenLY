@@ -1,20 +1,20 @@
 import copy
 
+
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
-
 import cv2
 import numpy as np
 
 from ultralytics.data.utils import cv2_readimg
 
-from APP.Designer.DesignerPy import levels_augmentUI
+from APP.Design import levels_augmentQT_ui
 from APP.Utils.plotting import HistFigure
 
 
 
-class LevelsAugment(QWidget, levels_augmentUI.Ui_Form):
+class LevelsAugment(QWidget, levels_augmentQT_ui.Ui_Form):
     def __init__(self, parent,img_label, f = Qt.Tool):
         super().__init__(parent, f)
         self.setupUi(self)
@@ -32,7 +32,7 @@ class LevelsAugment(QWidget, levels_augmentUI.Ui_Form):
         self.hist_figure = HistFigure()
         self.hist_show_gl = QGridLayout(self.Hist_show_F)
         self.hist_show_gl.setObjectName("hist_show_gl")
-        self.hist_show_gl.setMargin(0)
+        self.hist_show_gl.setContentsMargins(0,0,0,0)
         self.hist_show_gl.addWidget(self.hist_figure,0,0)
 
     def eventConnect(self):

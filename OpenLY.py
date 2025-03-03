@@ -1,8 +1,9 @@
 import gc
 
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 from APP import APP_ROOT, loadQssStyleSheet, init_progress_effect
 from APP.Make import Start, Train, ProgressBar
@@ -17,7 +18,7 @@ if __name__ == "__main__":
     import sys
     sys.excepthook = handle_exception
     app = QApplication(sys.argv)
-    
+
     train_ui = Train(app)
     loadQssStyleSheet(app, train_ui)
     train_ui.show()

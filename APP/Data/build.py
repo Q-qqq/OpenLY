@@ -57,7 +57,7 @@ def build_dataset(root, task, args):
 def buildDetectDataset(img_path,task, args, data):
     return DetectDataset(
         img_path=img_path,
-        img_size=100,
+        imgsz=100,
         batch_size=1,
         augment=False,
         hyp=args,

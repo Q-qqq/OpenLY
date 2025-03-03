@@ -1,7 +1,8 @@
+
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
-from APP.Designer.DesignerPy import startUI
+from APP.Design import startQT_ui
 
 from pathlib import Path
 import glob
@@ -11,7 +12,7 @@ from ultralytics.utils.files import increment_path
 from APP  import getExistDirectory, checkProject, APP_SETTINGS, PROJ_SETTINGS, EXPERIMENT_SETTINGS
 
 
-class Start(QWidget, startUI.Ui_Form):
+class Start(QWidget, startQT_ui.Ui_Form):
     Start_Signal = Signal(str)
     def __init__(self, parent=None, f=Qt.Dialog):
         super().__init__(parent,f)

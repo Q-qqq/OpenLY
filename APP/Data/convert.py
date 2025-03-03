@@ -12,11 +12,9 @@ import cv2
 import numpy as np
 import torch
 
-from ultralytics.utils import LOGGER,NUM_THREADS, yaml_save
+from ultralytics.utils import LOGGER,NUM_THREADS, yaml_save, PROGRESS_BAR
 from ultralytics.data.utils import IMG_FORMATS, verify_image, cv2_readimg
 from ultralytics.utils.ops import xyxy2xywh
-
-from APP  import PROGRESS_BAR
 
 def img2label_path(img_path, img="JPEGImages", label="Annotations", suffix=".xml"):
     """将图像路径转为标签路径"""

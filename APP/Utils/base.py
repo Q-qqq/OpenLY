@@ -2,6 +2,7 @@ import shutil
 from typing import Union
 
 import cv2
+
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
@@ -452,7 +453,8 @@ class QSizeLabel(QLabel):
         self.scale_down_h = h / 2
         self.scale_up_h = h / 2
 
-
+        if self.pix is None:
+            return
         painter = QPainter(self)
         painter.drawPixmap(self.image_rect, self.pix)  # 指定矩形范围rect绘制图像
         if self.rect_zoom and not self.zoom_finish and self.zoom_zone:

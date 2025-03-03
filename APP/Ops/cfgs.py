@@ -1,8 +1,9 @@
 import copy
 
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
+
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 from pathlib import Path
 from ultralytics.utils import yaml_load, yaml_save, LOGGER,ROOT, DEFAULT_CFG_DICT
 from ultralytics.cfg import get_cfg, cfg2dict, CFG_FLOAT_KEYS, CFG_BOOL_KEYS, CFG_FRACTION_KEYS, CFG_INT_KEYS, CFG_OTHER_KEYS
@@ -103,8 +104,8 @@ class CfgsTreeWidget(QTreeWidget):
             color = QColor(138, 43, 224, 255)
         for i in range(self.topLevelItemCount()):
             root = self.topLevelItem(i)
-            root.setBackgroundColor(0, color)
-            root.setBackgroundColor(1, color)
+            root.setBackground(0, color)
+            root.setBackground(1, color)
 
     def updateTrees(self, args, overrides=None):
         """初始化参数"""
@@ -248,7 +249,7 @@ class CfgsTreeWidget(QTreeWidget):
         widget.setObjectName(name)
         widget.setStatusTip(widget_args["type"])
         hl = QHBoxLayout(widget)
-        hl.setMargin(0)
+        hl.setContentsMargins(0,0,0,0)
         hl.setSpacing(1)
 
         #浏览文件按钮
@@ -369,8 +370,8 @@ class CfgsTreeWidget(QTreeWidget):
                         w.deleteLater()
             return
         if self.last_click_item:  #去除上次点击的widget选中状态
-            self.last_click_item.setBackgroundColor(0, self.last_click_color)
-            self.last_click_item.setBackgroundColor(1, self.last_click_color)
+            self.last_click_item.setBackground(0, self.last_click_color)
+            self.last_click_item.setBackground(1, self.last_click_color)
             w = self.itemWidget(self.last_click_item, 1)
             if w:
                 if self.widgets[w.objectName()]["widgetType"] != "cb":
@@ -380,8 +381,8 @@ class CfgsTreeWidget(QTreeWidget):
         self.last_click_color = item.backgroundColor(0)
         self.last_click_item = item
         selected_color = QColor(9, 38, 229, 100)
-        item.setBackgroundColor(0, selected_color)
-        item.setBackgroundColor(1, selected_color)
+        item.setBackground(0, selected_color)
+        item.setBackground(1, selected_color)
         top_level = [self.topLevelItem(i) for i in range(self.topLevelItemCount())]
         if column == 1 and item not in top_level:
             w = self.itemWidget(self.last_click_item, 1)

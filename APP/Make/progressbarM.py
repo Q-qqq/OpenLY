@@ -1,11 +1,13 @@
+
+from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
-from APP  import PROGRESS_BAR
-from APP.Designer.DesignerPy import progressbarUI
+from ultralytics.utils import PROGRESS_BAR
+from APP.Design import progressbarQT_ui
 
 
-class ProgressBar(QWidget, progressbarUI.Ui_Progress):
+class ProgressBar(QWidget, progressbarQT_ui.Ui_Progress):
     """
         进度条类
     Attributes:

@@ -1,10 +1,11 @@
+
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
-from APP.Designer import pencil_setUI
+from APP.Design import pencil_setQT_ui
 
-class PencilSet(QWidget, pencil_setUI.Ui_Form):
+class PencilSet(QWidget, pencil_setQT_ui.Ui_Form):
     def __init__(self, parent, img_label, f=Qt.Tool):
         super().__init__(parent, f)
         self.setupUi(self)

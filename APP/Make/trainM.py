@@ -1,9 +1,11 @@
 import os
 import time
 
+
+from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
-from APP.Designer.DesignerPy import trainUI
+from APP.Design import trainQT_ui
 
 from pathlib import Path
 import shutil
@@ -33,12 +35,13 @@ from APP.Utils.ultralytics_enginer import Yolo
 
 
 
-class Train(QMainWindow, trainUI.Ui_MainWindow):
+class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
     def __init__(self, app):
         super(Train, self).__init__()
         self.setupUi(self)
-        self.desktop = QApplication.desktop()
-        self.resize(self.desktop.screenGeometry().width()*0.7, self.desktop.screenGeometry().height()*0.8)
+        self.screen = QApplication.primaryScreen()
+        avail_size = self.screen.availableSize()
+        self.resize(avail_size.width()*0.7, avail_size.height()*0.8)
         self.setStatusBar(QStatusBar())
         self.app = app
 
@@ -71,7 +74,7 @@ class Train(QMainWindow, trainUI.Ui_MainWindow):
     def setCfgsTree(self):
         self.cfgs_gl = QGridLayout(self.Args_dwc)
         self.cfgs_gl.setObjectName(u"cfgs_gl")
-        self.cfgs_gl.setMargin(0)
+        self.cfgs_gl.setContentsMargins(0,0,0,0)
         self.cfgs_widget = CfgsTreeWidget(self)
         self.cfgs_widget.setObjectName(u"cfgs_widget")
         self.cfgs_gl.addWidget(self.cfgs_widget, 0, 0, 1, 1)
@@ -82,7 +85,7 @@ class Train(QMainWindow, trainUI.Ui_MainWindow):
 
         self.image_select_gl = QGridLayout(self.Image_select_f)
         self.image_select_gl.setObjectName(u"image_select_gl")
-        self.image_select_gl.setMargin(0)
+        self.image_select_gl.setContentsMargins(0,0,0,0)
         self.image_scroll = ImageScroll(self.Image_select_f, self.images_label)
         self.image_scroll.setObjectName(u"image_scroll")
         self.image_select_gl.addWidget(self.image_scroll, 0, 0, 1, 1)
@@ -117,7 +120,7 @@ class Train(QMainWindow, trainUI.Ui_MainWindow):
         #self.img_label.setStyleSheet(u"background-color: rgb(254, 255, 246);")
         self.img_label.Show_Status_Signal.connect(self.showStatusMessage)
         self.show_img_gl.addWidget(self.img_label, 0, 0, 1, 1)
-        self.show_img_gl.setMargin(2)
+        self.show_img_gl.setContentsMargins(0,0,0,0)
 
         if self.label_ops:
             self.label_ops.updateImgLabel(self.img_label)

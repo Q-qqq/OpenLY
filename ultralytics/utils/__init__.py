@@ -434,7 +434,7 @@ def set_logging(name="LOGGING_NAME", verbose=True):
 
 # Set logger
 _LOGGER = set_logging(LOGGING_NAME, verbose=VERBOSE)  # define globally (used in train.py, val.py, predict.py, etc.)
-class Logger:
+class Logger(QObject):
     """信息显示"""
     Show_Mes_Signal = Signal(str)
     Start_Train_Signal = Signal(list)
@@ -446,7 +446,7 @@ class Logger:
     Val_Finish_Signal = Signal(str)
     Error_Signal = Signal(str)
     def __init__(self, parent=None):
-        super(Logger, self).__init__(parent)
+        super().__init__(parent)
         self.errorFormat = '<font color="red" size="5">{}</font>'
         self.warningFormat = '<font color="orange" size="5">{}</font>'
         self.stop = False  #停止训练
