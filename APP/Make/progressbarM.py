@@ -23,10 +23,10 @@ class ProgressBar(QWidget, progressbarQT_ui.Ui_Progress):
 
     def eventConnect(self):
         """信号槽连接"""
-        PROGRESS_BAR.Start_Signal.connect(self.start, Qt.ConnectionType.QueuedConnection)
-        PROGRESS_BAR.Set_Value_Signal.connect(self.setValue, Qt.ConnectionType.QueuedConnection)
-        PROGRESS_BAR.Reset_Signal.connect(self.reset)
-        PROGRESS_BAR.Close_Signal.connect(self.close, Qt.ConnectionType.QueuedConnection)
+        PROGRESS_BAR.Start_Signal.connect(self.start, Qt.ConnectionType.DirectConnection)
+        PROGRESS_BAR.Set_Value_Signal.connect(self.setValue, Qt.ConnectionType.DirectConnection)
+        PROGRESS_BAR.Reset_Signal.connect(self.reset,Qt.ConnectionType.DirectConnection)
+        PROGRESS_BAR.Close_Signal.connect(self.close, Qt.ConnectionType.DirectConnection)
 
 
     def reset(self):
