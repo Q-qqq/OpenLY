@@ -17,7 +17,7 @@ from ultralytics.utils import yaml_load, NUM_THREADS, LOGGER
 
 
 from APP  import PROJ_SETTINGS
-from APP.Data.build import build_dataset
+from APP.Data.build import check_cls_dataset, check_detect_dataset
 from APP.Data import readLabelFile
 from APP.Utils import get_widget
 from APP.Utils.filters import CbbFilter
@@ -40,7 +40,11 @@ class SiftDataset(QObject):
         self.sift_tool = SiftTool(self)
 
     def build(self, data, task , args):
-        self.data, self.train_set, self.val_set, self.train_path, self.val_path = build_dataset(data, task, args)
+        if task == "classify":
+            self.data, self.train_set, self.val_set, self.train_path, self.val_path = check_cls_dataset(data, args)
+        else:
+            self.data, self.train_set, self.val_set, self.train_path, self.val_path = check_detect_dataset(data, args)
+        
         self.task = task
         self.args = args
 

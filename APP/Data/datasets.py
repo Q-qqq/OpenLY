@@ -7,9 +7,9 @@ import shutil
 from PIL import Image
 import numpy as np
 
-from ultralytics.data.utils import get_hash, img2label_paths,IMG_FORMATS, verify_image_label
-from ultralytics.data.dataset import YOLODataset, ClassificationDataset
-from ultralytics.utils import DEFAULT_CFG, PROGRESS_BAR, yaml_save, yaml_load,NUM_THREADS, LOGGER
+from ultralytics.data.utils import get_hash, img2label_paths,IMG_FORMATS, load_dataset_cache_file, save_dataset_cache_file, verify_image, verify_image_label
+from ultralytics.data.dataset import DATASET_CACHE_VERSION, YOLODataset, ClassificationDataset
+from ultralytics.utils import DEFAULT_CFG, LOCAL_RANK, PROGRESS_BAR, TQDM, yaml_save, yaml_load,NUM_THREADS, LOGGER
 from ultralytics.data.augment import classify_transforms
 
 
@@ -19,6 +19,7 @@ from APP.Data import format_im_files,readLabelFile,writeLabelFile
 
 
 def get_im_files(img_pathes):
+    """获取所有图像文件路径"""
     f = []
     with open(img_pathes) as t:
         t = t.read().strip().splitlines()
@@ -28,6 +29,7 @@ def get_im_files(img_pathes):
     return im_files
 
 def write_im_files(img_paths, im_files):
+    """将图像文件路径写入txt文件"""
     parent = str(Path(img_paths).parent)
     im_files = ["." + f.replace(parent, "").replace("\\", "/") for f in im_files]
     with open(img_paths, "w") as f:
@@ -119,11 +121,11 @@ class DetectDataset(YOLODataset):
                 LOGGER.info("\n".join(msgs))
             if progress:
                 PROGRESS_BAR.close()
-            assert nf != 0, f"在路径{path}上未找到标签"
-            x["hash"] = get_hash(self.im_files + self.label_files)
-            x["results"] = nf, nm, ne, nc, npc, len(self.im_files)
-            x["msgs"] = msgs
-            return x
+        x["hash"] = get_hash(self.im_files + self.label_files)
+        x["results"] = nf, nm, ne, nc, npc, len(self.im_files)
+        x["msgs"] = msgs
+        save_dataset_cache_file(path,x)
+        return x
     
 
     def getLabel(self, im_file):
@@ -187,7 +189,7 @@ class DetectDataset(YOLODataset):
         labels = self.cache_labels(cache_path, new_im_files, False)
         [labels.pop(k) for k in ("hash", "version", "msgs")]  # 去除没用的项
         self.labels += labels["labels"]
-        self.shapes += labels["shapes"]
+        #self.shapes += labels["shapes"]
         write_im_files(self.img_path, exist_im_files)  #重新写入总图像文件路径
         #重置参数
         self.ni = len(self.labels)
@@ -213,7 +215,7 @@ class DetectDataset(YOLODataset):
                 self.im_files.pop(ind)
                 label_file = self.label_files.pop(ind)
                 self.labels.pop(ind)
-                self.shapes.pop(ind)
+                #self.shapes.pop(ind)
                 if Path(im_file).exists():
                     if no_label_path and no_label_path != "":
                         shutil.move(im_file, no_label_path)  # 图像移动至未标注
@@ -311,6 +313,52 @@ class ClassifyDataset(ClassificationDataset):
         self.labels = {}
         self.im_files = [str(Path(x[0])) for x in self.samples]
         self.names = names
+    
+    def verify_images(self, im_cls, progress=True):
+        """Verify all images in dataset."""
+        desc = f"{self.prefix}Scanning {self.root}..."
+        path = Path(self.root).with_suffix(".cache")  # *.cache file path
+
+        try:
+            cache = load_dataset_cache_file(path)  # attempt to load a *.cache file
+            assert cache["version"] == DATASET_CACHE_VERSION  # matches current version
+            assert cache["hash"] == get_hash([x[0] for x in self.samples])  # identical hash
+            nf, nc, n, samples = cache.pop("results")  # found, missing, empty, corrupt, total
+            if LOCAL_RANK in {-1, 0}:
+                d = f"{desc} {nf} images, {nc} corrupt"
+                TQDM(None, desc=d, total=n, initial=n)
+                if cache["msgs"]:
+                    LOGGER.info("\n".join(cache["msgs"]))  # display warnings
+            return samples
+
+        except (FileNotFoundError, AssertionError, AttributeError):
+            # Run scan if *.cache retrieval failed
+            nf, nc, msgs, samples, x = 0, 0, [], [], {}
+            if progress:
+                PROGRESS_BAR.start("Classify dataset Load", "Start", [0,len(im_cls)], False)
+            with ThreadPool(NUM_THREADS) as pool:
+                results = pool.imap(func=verify_image, iterable=zip(self.samples, repeat(self.prefix)))
+                pbar = TQDM(enumerate(results), desc=desc, total=len(im_cls))
+                for i, sample, nf_f, nc_f, msg in pbar:
+                    if nf_f:
+                        samples.append(sample)
+                    if msg:
+                        msgs.append(msg)
+                    nf += nf_f
+                    nc += nc_f
+                    pbar.desc = f"{desc} {nf} images, {nc} corrupt"
+                    if progress:
+                        PROGRESS_BAR.setValue(i+1, f"数据集加载中...{sample[0]}, {sample[1]}")
+                pbar.close()
+            if msgs:
+                LOGGER.info("\n".join(msgs))
+            if progress:
+                PROGRESS_BAR.close()
+            x["hash"] = get_hash([x[0] for x in self.samples])
+            x["results"] = nf, nc, len(samples), samples
+            x["msgs"] = msgs  # warnings
+            save_dataset_cache_file(self.prefix, path, x, DATASET_CACHE_VERSION)
+            return samples
 
     def addData(self, im_files, classes):
         """

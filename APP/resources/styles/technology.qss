@@ -51,11 +51,11 @@ QTabBar::tab:selected {
 QMenu {
     background-color: rgba(10,25,47,0.98);
     border: 1px solid #00ffff;
-    padding: 5px;
+    padding: 2px;
 }
  
 QMenu::item {
-    padding: 8px 25px 8px 15px;
+    padding: 2px 5px 2px 3px;
     border-left: 3px solid transparent;
 }
  
@@ -90,7 +90,7 @@ QLabel[objectName^="cyber_title_"] {    /* 星舰级标题 */
         stop:1 #8a2be2 
     );
     font-size: 18pt;
-    shadow: 0 0 10px #3d7afe66;    /* 引力透镜光晕 */
+    /*shadow: 0 0 10px #3d7afe66;    /* 引力透镜光晕 */
 }
  
 QLabel[objectName^="status_"] {         /* 时空状态指示 */
@@ -103,7 +103,7 @@ QLabel[objectName^="status_"] {         /* 时空状态指示 */
 /*===== 动态响应 =====*/
 QLabel:hover {
     color: #3d7afe;
-    shadow: 0 0 15px #3d7afe99;
+    /*shadow: 0 0 15px #3d7afe99;
 }
  
 QLabel:disabled {                       /* 熵寂灭态 */
@@ -148,7 +148,7 @@ QGroupBox::title {
     color: #00f3e6;
     font: bold 12pt "Space Mono";
     border-left: 3px solid #3d7afe;    /* 能量导管 */
-    position: translate(15px, -8px);  /* 空间错位 */
+    /*position: translate(15px, -8px);  /* 空间错位 */
 }
  
 /*===== 状态引擎 =====*/
@@ -212,7 +212,7 @@ QFrame[frameShape="4"] {               /* 横向分割线 */
 /*===== 动态维度响应 =====*/
 QWidget:hover {
     background: #0a0e1744;
-    shadow: 0 0 25px #3d7afe44;    /* 量子涨落增强 */
+    /*shadow: 0 0 25px #3d7afe44;    /* 量子涨落增强 */
 }
  
 QFrame[state="critical"] {             /* 临界态容器 */
@@ -225,12 +225,7 @@ QFrame[state="critical"] {             /* 临界态容器 */
     animation: pulse-alert 2s infinite;
 }
  
-/*===== 时空折叠动画 =====*/
-@keyframes pulse-alert {
-    0% { shadow: 0 0 10px #ff355e33; }
-    50% { shadow: 0 0 25px #ff355e88; }
-    100% { shadow: 0 0 10px #ff355e33; }
-}
+
  
 /*===== 动态响应 =====*/
 QPushButton:hover, QToolButton:hover {
@@ -327,7 +322,7 @@ QProgressBar::chunk {
     );
     border-radius: 6px;
     border-right: 3px solid #00f3e688;  /* 时空扭曲拖影 */
-    shadow: inset 0 0 15px #3d7afe; /* 量子涨落辉光 */
+    /*shadow: inset 0 0 15px #3d7afe; /* 量子涨落辉光 */
     margin: 1px;
 }
  
@@ -396,7 +391,7 @@ QSlider::handle:horizontal {
     border: 2px solid #00f3e6;
     border-radius: 12px;
     margin: -8px 0;
-    shadow: 0 0 10px #3d7afe;     /* 引力透镜光晕 */
+    /*shadow: 0 0 10px #3d7afe;     /* 引力透镜光晕 */
 }
  
 /*===== 时空反馈机制 =====*/
@@ -427,6 +422,6 @@ QSlider::handle:horizontal:hover {
 }
  
 QSlider::handle:horizontal:pressed {
-    shadow: 0 0 15px #ff355e;    /* 临界能量爆发 */
+    /*shadow: 0 0 15px #ff355e;    /* 临界能量爆发 */
 }
 

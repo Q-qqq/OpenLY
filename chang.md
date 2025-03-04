@@ -5,6 +5,7 @@
 ```python
 def __init__(self, nc, conf=0.25, iou_thres=0.45, task="detect"):
     ...
+    ...
     self.im_files = [[[] for i in range(nc)] for j in range(nc)] if self.task != "classify" \
                 else [[[] for i in range(nc+1)] for j in range(nc+1)]   # pred,true:im_files
 ```
@@ -217,6 +218,29 @@ def cache_labels(self, path=Path("./labels.cache")):
     ...
     ...
     return x
+```
++ ClassifyDataset类中verify_image进行图像的检测，对其进行进度条显示
+```python
+ def verify_images(self):
+    ...
+    ...
+    except (FileNotFoundError, AssertionError, AttributeError):
+        # Run scan if *.cache retrieval failed
+        nf, nc, msgs, samples, x = 0, 0, [], [], {}
+        PROGRESS_BAR.start("Classify dataset Load", "Start", [0,len(self.samples)], False)
+        with ThreadPool(NUM_THREADS) as pool:
+            results = pool.imap(func=verify_image, iterable=zip(self.samples, repeat(self.prefix)))
+            pbar = TQDM(enumerate(results), desc=desc, total=len(self.samples))
+            for i, sample, nf_f, nc_f, msg in pbar:
+                ...
+                pbar.desc = f"{desc} {nf} images, {nc} corrupt"
+                PROGRESS_BAR.setValue(i+1, f"数据集加载中...{sample[0]}, {sample[1]}")
+            pbar.close()
+        if msgs:
+            LOGGER.info("\n".join(msgs))
+        PROGRESS_BAR.close()
+        ...
+        ...
 ```
 ### ultralytics.data.base
 + BaseDataset类中cache_images进行图像的缓存，对其进行进度条显示

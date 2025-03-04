@@ -11,7 +11,7 @@ from pathlib import Path
 import numpy as np
 
 from ultralytics.data.utils import img2label_paths,IMG_FORMATS
-from ultralytics.utils import yaml_load, ThreadingLocked
+from ultralytics.utils import yaml_load, ThreadingLocked, threaded
 from ultralytics.data.augment import classify_transforms
 
 
@@ -129,6 +129,7 @@ class LabelOps(QObject):
             train_val = "no_label" if Path(self.img_label.im_file).parent.name == "no_label" else "results"
         return train_val
 
+    @threaded
     @ThreadingLocked()
     def save(self):
         """保存标签"""

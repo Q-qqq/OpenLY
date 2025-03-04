@@ -1,3 +1,4 @@
+import copy
 import os
 import time
 
@@ -14,7 +15,7 @@ import numpy as np
 import pandas as pd
 import threading
 
-from ultralytics.utils import yaml_save, DEFAULT_CFG_DICT, DEFAULT_CFG, LOGGER
+from ultralytics.utils import yaml_load, yaml_save, DEFAULT_CFG_DICT, DEFAULT_CFG, LOGGER
 
 
 from APP  import  PROJ_SETTINGS, getOpenFileName, EXPERIMENT_SETTINGS, APP_ROOT
@@ -254,40 +255,45 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
             self.img_label.load_image(file[0], label)
 
     def buildDataset(self, data):
-        try:
-            self.sift_dataset.build(data, self.cfgs_widget.args["task"], self.cfgs_widget.args)
-            self.cfgs_widget.setValue("data", self.sift_dataset.data)
-            self.cfgs_widget.save()
-            self.label_ops.updateDataset(self.sift_dataset.train_set,
-                                         self.sift_dataset.val_set,
-                                         self.sift_dataset.train_path,
-                                         self.sift_dataset.val_path)
-            self.sift_dataset.initLoadDataset()
-            self.sift_dataset.sift_tool.initSifter()  #初始化筛选器
-            self.image_scroll.horBarValueChangedSlot()
-        except Exception as ex:
-            QMessageBox.warning(self, "加载数据集出错", str(ex))
+        self.sift_dataset.build(data, self.cfgs_widget.args["task"], self.cfgs_widget.args)
+        self.cfgs_widget.setValue("data", self.sift_dataset.data)
+        self.cfgs_widget.save()
+        self.label_ops.updateDataset(self.sift_dataset.train_set,
+                                        self.sift_dataset.val_set,
+                                        self.sift_dataset.train_path,
+                                        self.sift_dataset.val_path)
+        self.sift_dataset.initLoadDataset()
+        self.sift_dataset.sift_tool.initSifter()  #初始化筛选器
+        self.image_scroll.horBarValueChangedSlot()
 
     def openExperiment(self, experiment_path):
         experiment_path = Path(experiment_path)
+        cfg_path = experiment_path / "cfgs" / "cfg.yaml"
         #检查实验是否存在,不存在则创建新实验
         if not experiment_path.exists():
             experiment_path.mkdir(parents=True,exist_ok=True)
         if not (experiment_path / "cfgs"/ "cfg.yaml").exists():
             (experiment_path / "cfgs").mkdir(parents=True, exist_ok=True)
-            if self.cfg_path != "":
+            if self.cfg_path != "": #复制前一个实验参数
                 shutil.copy(self.cfg_path, experiment_path / "cfgs")
-            else:
-                yaml_save(experiment_path / "cfgs" / "cfg.yaml", DEFAULT_CFG_DICT)
+            else:  #新建默认参数
+                cfg = copy.deeepcopy(DEFAULT_CFG_DICT)
+                cfg["task"] = PROJ_SETTINGS["task"]
+                yaml_save(cfg_path, DEFAULT_CFG_DICT)
+        else:
+            cfg =yaml_load(cfg_path)
+            if cfg["task"] != PROJ_SETTINGS["task"]:
+                QMessageBox.information(self, "提示", f"实验任务{cfg['task']}与项目任务{PROJ_SETTINGS['task']}不一致，已自动更改实验任务为{cfg['task']}")
+                cfg["task"] = PROJ_SETTINGS["task"]
+                yaml_save(cfg_path, cfg)
 
         self.experiment = str(experiment_path)
         if (experiment_path / "SETTINGS.yaml").exists():
             EXPERIMENT_SETTINGS.load(experiment_path)
 
         PROJ_SETTINGS.updateExperiment(self.experiment)
-        args = self.experiment + "//cfgs//cfg.yaml"
-        self.cfg_path = args
-        self.cfgs_widget.updateTrees(args)
+        self.cfg_path = cfg_path
+        self.cfgs_widget.updateTrees(self.cfg_path)
         self.changeTaskSlot(self.cfgs_widget.args["task"])
         self.setWindowTitle(str(self.experiment))
         self.buildDataset(self.cfgs_widget.args["data"])

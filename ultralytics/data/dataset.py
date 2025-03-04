@@ -504,10 +504,11 @@ class ClassificationDataset:
         except (FileNotFoundError, AssertionError, AttributeError):
             # Run scan if *.cache retrieval failed
             nf, nc, msgs, samples, x = 0, 0, [], [], {}
+            PROGRESS_BAR.start("Classify dataset Load", "Start", [0,len(self.samples)], False)
             with ThreadPool(NUM_THREADS) as pool:
                 results = pool.imap(func=verify_image, iterable=zip(self.samples, repeat(self.prefix)))
-                pbar = TQDM(results, desc=desc, total=len(self.samples))
-                for sample, nf_f, nc_f, msg in pbar:
+                pbar = TQDM(enumerate(results), desc=desc, total=len(self.samples))
+                for i, sample, nf_f, nc_f, msg in pbar:
                     if nf_f:
                         samples.append(sample)
                     if msg:
@@ -515,9 +516,11 @@ class ClassificationDataset:
                     nf += nf_f
                     nc += nc_f
                     pbar.desc = f"{desc} {nf} images, {nc} corrupt"
+                    PROGRESS_BAR.setValue(i+1, f"数据集加载中...{sample[0]}, {sample[1]}")
                 pbar.close()
             if msgs:
                 LOGGER.info("\n".join(msgs))
+            PROGRESS_BAR.close()
             x["hash"] = get_hash([x[0] for x in self.samples])
             x["results"] = nf, nc, len(samples), samples
             x["msgs"] = msgs  # warnings

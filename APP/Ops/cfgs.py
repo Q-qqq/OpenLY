@@ -9,6 +9,7 @@ from ultralytics.utils import yaml_load, yaml_save, LOGGER,ROOT, DEFAULT_CFG_DIC
 from ultralytics.cfg import get_cfg, cfg2dict, CFG_FLOAT_KEYS, CFG_BOOL_KEYS, CFG_FRACTION_KEYS, CFG_INT_KEYS, CFG_OTHER_KEYS
 from APP import APP_SETTINGS, EXPERIMENT_SETTINGS, PROJ_SETTINGS,getExistDirectory, getOpenFileName, APP_ROOT
 from APP.Utils import get_widget
+from APP.Data import guess_dataset_task
 import glob
 
 class CfgsTreeWidget(QTreeWidget):
@@ -320,6 +321,7 @@ class CfgsTreeWidget(QTreeWidget):
             le.setFont(font)
             le.setObjectName(name + "_value")
             le.setText(str(value))
+            le.setEnabled(eval(widget_args.get("enable", True))
             le.textChanged.connect(lambda: self.changeEvents(le))
             hl.addWidget(le)
             if browse_bp:
@@ -337,7 +339,19 @@ class CfgsTreeWidget(QTreeWidget):
         elif isinstance(widget, (QDoubleSpinBox, QSpinBox)):
             self.args[name] = self.checkValue(name, widget.value())
         elif isinstance(widget, QLineEdit):
-            self.args[name] = self.checkValue(name, widget.text())
+            if name == "dataset":  #数据集参数
+                if widget.text() != "" and Path(widget.text()).exists():  #数据集存在
+                    task = guess_dataset_task(self.args[name])  #检查数据集任务类型
+                    if self.args["task"] not in task and task[0] != "null": #任务类型不匹配
+                        QMessageBox.warning(self.parent(), "警告", f"数据集类型{task}与当前任务类型{self.args['task']}不匹配")
+                        return
+                    else:   #任务类型匹配
+                        self.args[name] = self.checkValue(name, widget.text())
+                else:   #数据集不存在
+                    QMessageBox.warning(self.parent(), "警告", f"数据集{widget.text()}不存在")
+                    self.args[name] = ""
+            else:
+                self.args[name] = self.checkValue(name, widget.text())
         elif isinstance(widget, QCheckBox):
             self.args[name] = self.checkValue(name, str(widget.isChecked()))
         self.setTreeItemText(name, self.args[name])

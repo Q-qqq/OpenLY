@@ -111,6 +111,7 @@ class ProjectSetting(Setting):
             "save_time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
             "experiments":[],
             "current_experiment":"",
+            "task": "detect",
         }
         super().__init__(copy.deepcopy(self.defaults))
 
@@ -144,7 +145,6 @@ class ExperimentSetting(Setting):
             "version": __version__,
             "time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
             "save_time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-            "mode": "v8",
         }
         super().__init__(copy.deepcopy(self.defaults))
 

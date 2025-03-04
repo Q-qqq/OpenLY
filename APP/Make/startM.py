@@ -62,6 +62,9 @@ class Start(QWidget, startQT_ui.Ui_Form):
 
 
     def addNewProject(self, project):
+        if Path(project).exists():
+            QMessageBox.warning(self, "警告", f"{project}已存在，请重新命名")
+            return
         self.createProject(project)
         self.addItem(project)
         self.openProject(project)
@@ -76,10 +79,15 @@ class Start(QWidget, startQT_ui.Ui_Form):
 
     def createProject(self, project):
         project_path = Path(project)
-        if not project_path.exists():
-            project_path.mkdir()
+        task, ok = QInputDialog.getItem(self, "选择任务", "选择项目任务", ["detect", "obb","segment", "classify", "keypoint"], 0, False)
+        if not ok:
+            return
+        
+        project_path.mkdir(parents=True, exist_ok=True)
         APP_SETTINGS.updateProject(str(project_path))  # 添加新项目至系统列表
         PROJ_SETTINGS.load(str(project_path))
+        PROJ_SETTINGS["task"] = task
+        PROJ_SETTINGS.save()
 
     def openProject(self, project):
         project = str(Path(project))
@@ -106,10 +114,12 @@ class Start(QWidget, startQT_ui.Ui_Form):
 
     def showEvent(self, event:QShowEvent) -> None:
         self.start = False
+        super().showEvent(event)
 
     def closeEvent(self, event:QCloseEvent) -> None:
         if not self.start:
             self.parent().close()
+        
 
 
 
