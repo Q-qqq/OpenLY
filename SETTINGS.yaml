@@ -2,7 +2,7 @@ version: '洛业LY:2.0.0:'
 projects:
 - D:\Code\Project\python\p8
 current_project: D:\Code\Project\python\p8
-default_dir: D:/Code/Project/python/p8
+default_dir: D:/Code/Project/python/p8/experiments/p1
 default_file: G:\project\p8\experiments\v5_acnhors\weights
 style: technology
 name: .

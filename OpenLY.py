@@ -16,7 +16,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 
 if __name__ == "__main__":
     import sys
-    sys.excepthook = handle_exception
+    #sys.excepthook = handle_exception
     app = QApplication(sys.argv)
 
     train_ui = Train(app)

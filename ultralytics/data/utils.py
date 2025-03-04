@@ -30,6 +30,7 @@ from ultralytics.utils import (
     is_dir_writeable,
     yaml_load,
     yaml_save,
+    ThreadingLocked,
 )
 from ultralytics.utils.checks import check_file, check_font, is_ascii
 from ultralytics.utils.downloads import download, safe_download, unzip_file
@@ -92,7 +93,7 @@ def verify_image(args):
     except Exception as e:
         nc = 1
         msg = f"{prefix}WARNING ⚠️ {im_file}: ignoring corrupt image/label: {e}"
-    return (im_file, cls), nf, nc, msg
+    return (im_file, cls), nf, nc, msg, shape
 
 _LOCK = threading.Lock()
 def verify_image_label(args):

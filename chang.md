@@ -219,7 +219,7 @@ def cache_labels(self, path=Path("./labels.cache")):
     ...
     return x
 ```
-+ ClassifyDataset类中verify_image进行图像的检测，对其进行进度条显示
++ ClassifyDataset类中verify_images进行图像的检测，对其进行进度条显示
 ```python
  def verify_images(self):
     ...
@@ -231,7 +231,7 @@ def cache_labels(self, path=Path("./labels.cache")):
         with ThreadPool(NUM_THREADS) as pool:
             results = pool.imap(func=verify_image, iterable=zip(self.samples, repeat(self.prefix)))
             pbar = TQDM(enumerate(results), desc=desc, total=len(self.samples))
-            for i, sample, nf_f, nc_f, msg in pbar:
+            for i, sample, nf_f, nc_f, msg,_ in pbar:
                 ...
                 pbar.desc = f"{desc} {nf} images, {nc} corrupt"
                 PROGRESS_BAR.setValue(i+1, f"数据集加载中...{sample[0]}, {sample[1]}")
@@ -577,4 +577,12 @@ def _do_train(self, world_size=1):
         ...
         ...
 ```
-## 修改八：字体
+## 修改八：验证图像增加输出shape
+### ultralytics.data.utils
++ 在verify_image函数中添加图像shape的输出
+```python
+def verify_image(args):
+    ...
+    ...
+    return (im_file, cls), nf, nc, msg, shape
+```

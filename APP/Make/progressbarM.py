@@ -23,10 +23,10 @@ class ProgressBar(QWidget, progressbarQT_ui.Ui_Progress):
 
     def eventConnect(self):
         """信号槽连接"""
-        PROGRESS_BAR.Start_Signal.connect(self.start)
+        PROGRESS_BAR.Start_Signal.connect(self.start, Qt.ConnectionType.QueuedConnection)
         PROGRESS_BAR.Set_Value_Signal.connect(self.setValue, Qt.ConnectionType.QueuedConnection)
         PROGRESS_BAR.Reset_Signal.connect(self.reset)
-        PROGRESS_BAR.Close_Signal.connect(self.close)
+        PROGRESS_BAR.Close_Signal.connect(self.close, Qt.ConnectionType.QueuedConnection)
 
 
     def reset(self):
@@ -45,7 +45,7 @@ class ProgressBar(QWidget, progressbarQT_ui.Ui_Progress):
             self.Show_mes_te.append(text)
         QApplication.processEvents()
 
-    def start(self, range, title, head_txt):
+    def start(self, title, head_txt, range):
         """开始进度条
         Args:
             range(list):  进度条的范围
@@ -58,13 +58,13 @@ class ProgressBar(QWidget, progressbarQT_ui.Ui_Progress):
             self.Show_mes_te.clear()
             self.Show_mes_te.append(head_txt)
             self.show()
-        self.ProgressBar.setRange(range[0], range(1))
-        self.ProgressBar.setValue(range(0))
+        self.ProgressBar.setRange(range[0], range[1])
+        self.ProgressBar.setValue(range[0])
         self.ProgressBar.setFormat(f"%v/{range[1]}")
 
     def closeEvent(self, event:QCloseEvent) -> None:
         """关闭进度条"""
-        if self.ProgressBar.value() != self.max:
+        if self.ProgressBar.value() != self.ProgressBar.maximum():
             if PROGRESS_BAR.permit_stop and not PROGRESS_BAR.isStop():  #允许停止且不在停止状态
                 req = QMessageBox.information(self, "提示", "是否中断加载", QMessageBox.Yes | QMessageBox.No)
                 if req == QMessageBox.Yes:

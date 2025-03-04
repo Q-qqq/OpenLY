@@ -137,8 +137,8 @@ class PgPlotLossWidget(pg.PlotWidget):
             self.val_line = self.plot(x, val_loss_y.tolist(), pen=pg.mkPen((0,255,0), width=2), symbol="s", symbolSize=2, name="val")
         else:
             self.val_line.setData(x, val_loss_y.tolist())
-        self.setXRange(1, x[-1]+2)
-        self.setYRange(0, max(train_loss_y.max(), val_loss_y.max()))
+        #self.setXRange(1, x[-1]+2)
+        #self.setYRange(0, max(train_loss_y.max(), val_loss_y.max()))
 
 
 

@@ -321,7 +321,7 @@ class CfgsTreeWidget(QTreeWidget):
             le.setFont(font)
             le.setObjectName(name + "_value")
             le.setText(str(value))
-            le.setEnabled(eval(widget_args.get("enable", True))
+            le.setEnabled(eval(widget_args.get("enable", True)))
             le.textChanged.connect(lambda: self.changeEvents(le))
             hl.addWidget(le)
             if browse_bp:

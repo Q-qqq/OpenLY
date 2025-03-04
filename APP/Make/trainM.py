@@ -116,7 +116,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
     def setImgLabel(self, transformerLabel):
         if self.img_label:
             self.img_label.deleteLater()
-        self.img_label = transformerLabel(self.Source_show_f)
+        self.img_label = transformerLabel(self)
         self.img_label.setObjectName(u"image_label")
         #self.img_label.setStyleSheet(u"background-color: rgb(254, 255, 246);")
         self.img_label.Show_Status_Signal.connect(self.showStatusMessage)
@@ -277,7 +277,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
             if self.cfg_path != "": #复制前一个实验参数
                 shutil.copy(self.cfg_path, experiment_path / "cfgs")
             else:  #新建默认参数
-                cfg = copy.deeepcopy(DEFAULT_CFG_DICT)
+                cfg = copy.deepcopy(DEFAULT_CFG_DICT)
                 cfg["task"] = PROJ_SETTINGS["task"]
                 yaml_save(cfg_path, DEFAULT_CFG_DICT)
         else:

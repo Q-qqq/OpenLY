@@ -4,8 +4,12 @@ import os
 from pathlib import Path
 from multiprocessing.pool import ThreadPool
 import shutil
+import time
 from PIL import Image
 import numpy as np
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 from ultralytics.data.utils import get_hash, img2label_paths,IMG_FORMATS, load_dataset_cache_file, save_dataset_cache_file, verify_image, verify_image_label
 from ultralytics.data.dataset import DATASET_CACHE_VERSION, YOLODataset, ClassificationDataset
@@ -70,61 +74,73 @@ class DetectDataset(YOLODataset):
         im_files = [str(Path(f)) for f in im_files]
         return im_files
     
-    def cache_labels(self,path, im_files, progress=True):
-        path = Path(path)
-        x = {"labels":[]}
-        nm,nf,ne,nc,npc,msgs = 0,0,0,0,np.array([0]*len(self.data["names"])),[] #miss found empty corrupt messages
-        total = len(im_files)
-        nkpt,ndim = self.data.get("kpt_shape",(0,0))
+    def cache_labels(self,path, im_files=[], progress=True):
+        if not len(im_files):
+            im_files = self.im_files
         label_files = img2label_paths(im_files)
-        if self.use_keypoints and (nkpt <= 0 or ndim not in (2,3)):
+        path =Path(path)
+        x = {"labels": []}
+        nm, nf, ne, nc, msgs = 0, 0, 0, 0, []  # number missing, found, empty, corrupt, messages
+        desc = f"{self.prefix}Scanning {path.parent / path.stem}..."
+        total = len(im_files)
+        nkpt, ndim = self.data.get("kpt_shape", (0, 0))
+        if self.use_keypoints and (nkpt <= 0 or ndim not in {2, 3}):
             raise ValueError(
                 "'kpt_shape' in data.yaml missing or incorrect. Should be a list with [number of "
                 "keypoints, number of dims (2 for x,y or 3 for x,y,visible)], i.e. 'kpt_shape: [17, 3]'"
             )
         if progress:
-            PROGRESS_BAR.start("DataLoader", "Start", [0, total], False)
-        with ThreadPool(NUM_THREADS ) as pool:
+            PROGRESS_BAR.start("DataLoader", "Start...", [0, total], False)
+
+        with ThreadPool(NUM_THREADS) as pool:
             results = pool.imap(
-                verify_image_label,
-                zip(im_files,
-                    label_files,
+                func=verify_image_label,
+                iterable=zip(
+                    self.im_files,
+                    self.label_files,
+                    repeat(self.prefix),
                     repeat(self.use_keypoints),
                     repeat(len(self.data["names"])),
                     repeat(nkpt),
-                    repeat(ndim))
+                    repeat(ndim),
+                ),
             )
-            for i, (im_file, lb, shape, segments, keypoint, nm_f,nf_f, ne_f,nc_f,npc_f,msg) in enumerate(results):
+            for i, (im_file, lb, shape, segments, keypoint, nm_f, nf_f, ne_f, nc_f, msg) in enumerate(results):
                 nm += nm_f
                 nf += nf_f
                 ne += ne_f
                 nc += nc_f
-                npc += npc_f
                 if im_file:
                     x["labels"].append(
-                        dict(
-                            im_file = im_file,
-                            shape=shape,
-                            cls=lb[:,0:1],    #[n,1]
-                            bboxes=lb[:,1:],  #[n,4]
-                            segments=segments,
-                            keypoints=keypoint,
-                            normalized=True,
-                            bbox_format="xywh"
-                        )
+                        {
+                            "im_file": im_file,
+                            "shape": shape,
+                            "cls": lb[:, 0:1],  # n, 1
+                            "bboxes": lb[:, 1:],  # n, 4
+                            "segments": segments,
+                            "keypoints": keypoint,
+                            "normalized": True,
+                            "bbox_format": "xywh",
+                        }
                     )
                 if msg:
-                    msgs.append(f"{im_file}:{msg}")
-                if progress:
-                    PROGRESS_BAR.setValue(i+1, f"数据集加载中...{im_file if im_file else msg}")
-            if msgs:
-                LOGGER.info("\n".join(msgs))
+                    msgs.append(msg)
+                    if progress:
+                        PROGRESS_BAR.setValue(i+1, f"Dataset loading...{im_file if im_file else msg}")
+                        
             if progress:
                 PROGRESS_BAR.close()
-        x["hash"] = get_hash(self.im_files + self.label_files)
-        x["results"] = nf, nm, ne, nc, npc, len(self.im_files)
-        x["msgs"] = msgs
-        save_dataset_cache_file(path,x)
+        if msgs:
+            LOGGER.info("\n".join(msgs))
+        if nf == 0:
+            LOGGER.warning(f"{self.prefix}WARNING ⚠️ No labels found in {path}. {HELP_URL}")
+        x["hash"] = get_hash(label_files + im_files)
+        x["results"] = nf, nm, ne, nc, len(im_files)
+        x["msgs"] = msgs  # warnings
+        if len(im_file) != len(self.im_files):
+            x["version"] = DATASET_CACHE_VERSION  # add cache version
+        else:
+            save_dataset_cache_file(self.prefix, path, x, DATASET_CACHE_VERSION)
         return x
     
 

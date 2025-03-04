@@ -84,7 +84,7 @@ class YOLODataset(BaseDataset):
                 "'kpt_shape' in data.yaml missing or incorrect. Should be a list with [number of "
                 "keypoints, number of dims (2 for x,y or 3 for x,y,visible)], i.e. 'kpt_shape: [17, 3]'"
             )
-        PROGRESS_BAR.start([0, total], "DataLoader", "Start...", False)
+        PROGRESS_BAR.start("DataLoader", "Start...", [0, total], False)
         with ThreadPool(NUM_THREADS) as pool:
             results = pool.imap(
                 func=verify_image_label,
@@ -508,7 +508,7 @@ class ClassificationDataset:
             with ThreadPool(NUM_THREADS) as pool:
                 results = pool.imap(func=verify_image, iterable=zip(self.samples, repeat(self.prefix)))
                 pbar = TQDM(enumerate(results), desc=desc, total=len(self.samples))
-                for i, sample, nf_f, nc_f, msg in pbar:
+                for i, sample, nf_f, nc_f, msg,_ in pbar:
                     if nf_f:
                         samples.append(sample)
                     if msg:

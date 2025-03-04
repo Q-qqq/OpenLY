@@ -124,7 +124,7 @@ os.environ["KINETO_LOG_LEVEL"] = "5"  # suppress verbose PyTorch profiler output
 from PySide6.QtCore import *
 class Progress(QObject):
     """进度条"""
-    Start_Signal = Signal(list, str, str)
+    Start_Signal = Signal(str, str, list)
     Set_Value_Signal = Signal(int, str)
     Reset_Signal = Signal()
     Close_Signal = Signal()
@@ -132,6 +132,7 @@ class Progress(QObject):
         super().__init__(parent)
         self._stop = False    #停止进度条对应的加载
         self.permit_stop = False
+
 
     def stop(self):
         """停止进度条"""
@@ -141,15 +142,17 @@ class Progress(QObject):
         """判断是否停止"""
         return self._stop
 
-    def start(self, range, title="Load", head_txt="start load...", permit_stop=False):
+    def start(self, title="Load", head_txt="start load...", range=[0,100], permit_stop=False):
         """开始进度条"""
         self._stop = False
         self.permit_stop = permit_stop
-        self.Start_Signal.emit(range, title, head_txt)
+        
+        self.Start_Signal.emit( title, head_txt, range)
 
     def setValue(self, value, text):
         """设置进度条的值"""
         self.Set_Value_Signal.emit(value, text)
+    
 
     def reset(self):
         """重置进度条"""
