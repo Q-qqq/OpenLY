@@ -265,7 +265,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
         self.image_scroll.horBarValueChangedSlot()
 
     def openExperiment(self, experiment):
-        experiment_path = Path(PROJ_SETTINGS["name"]) / "experiments" / experiment
+        experiment_path = Path(getExperimentPath(experiment))
         cfg_path = experiment_path / "cfgs" / "cfg.yaml"
         #检查实验是否存在,不存在则创建新实验
         if not experiment_path.exists():
@@ -285,14 +285,12 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
                 cfg["task"] = PROJ_SETTINGS["task"]
                 yaml_save(cfg_path, cfg)
 
-        if (experiment_path / "SETTINGS.yaml").exists():
-            EXPERIMENT_SETTINGS.load(experiment)
-
-        PROJ_SETTINGS.updateExperiment(experiment)
+        
+        EXPERIMENT_SETTINGS.load(experiment)
         self.cfg_path = cfg_path
         self.cfgs_widget.updateTrees(self.cfg_path)
         self.changeTaskSlot(self.cfgs_widget.args["task"])
-        self.setWindowTitle(experiment_path)
+        self.setWindowTitle(str(experiment_path))
         self.buildDataset(self.cfgs_widget.args["data"])
         self.run.updateConfusion()
         self.run.updateLoss()
@@ -306,7 +304,6 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
                 if ok and name != "":
                     shutil.copytree(getExperimentPath(), str(Path(f"{PROJ_SETTINGS['name']}//experiments//{name}")))
                     shutil.rmtree(getExperimentPath())
-                    PROJ_SETTINGS.updateExperiment(str(Path(f"{PROJ_SETTINGS['name']}//experiments//{name}")))
                 elif ok and name == "":
                     QMessageBox.information(self, "提示", "实验名称不能为空")
                     event.ignore()
@@ -317,8 +314,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
             else:
                 shutil.rmtree(getExperimentPath())
                 event.accept()
-        else:
-            PROJ_SETTINGS.updateExperiment(getExperimentPath())
+        
 
 
 

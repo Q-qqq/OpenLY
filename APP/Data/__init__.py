@@ -1,5 +1,6 @@
 from pathlib import  Path
 import numpy as np
+import torch
 
 from ultralytics.utils import LOGGER, yaml_load
 from ultralytics.data.utils import IMG_FORMATS, check_det_dataset
@@ -43,9 +44,12 @@ def writeLabelFile(label_file, lb):
     """将list(np.array(1,m))格式的数据保存为标签文件txt"""
     texts = []
     for line in lb:
-        texts.append(("%g " * len(line)).rstrip() % line)
-    Path(label_file).parent.mkdir(parents=True, exist_ok=True)
-    with open(label_file, "a") as f:
+        line = (line.view(-1) if isinstance(line, torch.Tensor) else line.reshape(-1)).tolist()
+        line[0] = int[line[0]]
+        texts.append(("%g " * len(line)).rstrip() % tuple(line))
+    if not Path(label_file).parent.exists():
+        Path(label_file).parent.mkdir(parents=True, exist_ok=True)
+    with open(label_file, "W") as f:
         f.writelines(text + "\n" for text in texts)
 
 

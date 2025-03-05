@@ -98,9 +98,12 @@ class Start(QWidget, startQT_ui.Ui_Form):
         experiments = [Path(f).name for f in glob.glob(f"{project}\\experiments\\**", recursive=False)]
         cache_experiments= [Path(f).name for f in glob.glob(f"{project}\\experiments\\expcache\\**")]
         if experiment not in experiments and experiment not in cache_experiments:  # current实验不存在， 新建默认实验
-            experiment_path = increment_path(f"{exp_cache_p}\\untitled", mkdir=True)
-            experiment = ".\\expcache\\" +  Path(experiment_path).name
-            EXPERIMENT_SETTINGS.load(experiment_path)
+            if not experiments:  #不存在其他实验
+                experiment_path = increment_path(f"{exp_cache_p}\\untitled", mkdir=True)
+                experiment = ".\\expcache\\" +  Path(experiment_path).name
+                EXPERIMENT_SETTINGS.load(experiment_path)
+            else:  #存在其他实验
+                experiment = experiments[0]
         no_label_path = Path(project) / "data" / "no_label"
         if not no_label_path.exists():
             no_label_path.mkdir(parents=True, exist_ok=True)

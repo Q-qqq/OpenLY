@@ -248,6 +248,8 @@ class LabelOps(QObject):
         Args:
             cls_name(str):新种类名称"""
         self.train_set.addClass(cls_name) #训练集和验证集同一个data
+        self.img_label.label["names"] = self.train_set.names if self.task == "classify" else self.train_set.data["names"]
+        self.img_label.generateColors()
 
     def deleteClass(self, cls_name):
         """删除种类cls_name
@@ -259,6 +261,7 @@ class LabelOps(QObject):
         self.train_set.deleteClass(cls, no_label_path)
         self.val_set.deleteClass(cls, no_label_path)
         self.img_label.label["names"] = self.train_set.names if self.task == "classify" else self.train_set.data["names"]
+        self.img_label.generateColors()
         if self.img_label.cls >= len(self.img_label.label["names"]):
             self.img_label.cls = len(self.img_label.label["names"])-1
 

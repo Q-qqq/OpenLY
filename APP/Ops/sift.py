@@ -17,7 +17,7 @@ from ultralytics.utils import ThreadingLocked, threaded, yaml_load, NUM_THREADS,
 
 
 
-from APP  import PROJ_SETTINGS
+from APP  import PROJ_SETTINGS, getExperimentPath,EXPERIMENT_SETTINGS
 from APP.Data.build import check_cls_dataset, check_detect_dataset
 from APP.Data import getNoLabelPath, readLabelFile
 from APP.Utils import get_widget
@@ -107,7 +107,7 @@ class SiftDataset(QObject):
 
     def tryGetConfusionResults(self):
         """尝试获取混淆矩阵结果"""
-        path = Path(PROJ_SETTINGS["current_experiment"]) / "Confusion_Matrix_Imfiles.yaml"
+        path = Path(getExperimentPath()) / "Confusion_Matrix_Imfiles.yaml"
         if path.exists():
             return yaml_load(path)
         else:
@@ -115,7 +115,7 @@ class SiftDataset(QObject):
 
     def tryGetResults(self):
         """尝试获取验证结果图像"""
-        results_path = Path(PROJ_SETTINGS["current_experiment"])
+        results_path = Path(getExperimentPath())
         im_files = [str(path) for path in results_path.rglob("*.*") if path.suffix[1:].lower() in IMG_FORMATS]
         return self.getImShapes(im_files)
 
@@ -172,7 +172,7 @@ class SiftDataset(QObject):
         Args:'all':所有种类, ‘ok’：已标注但没有标签的OK样本"""
         if not len(im_shapes):
             return {}
-        if Path(list(im_shapes.keys())[0]).parent.name == Path(PROJ_SETTINGS["current_experiment"]).name:
+        if Path(list(im_shapes.keys())[0]).parent.name == EXPERIMENT_SETTINGS["name"]:
             return im_shapes
         if cls_name == "all":
             return im_shapes
@@ -188,7 +188,7 @@ class SiftDataset(QObject):
             cls = names.index(cls_name)
             label_files = img2label_paths(list(im_shapes.keys()))
             for label_file,(im_file, shape) in zip(label_files,im_shapes.items()):
-                if Path(im_file).parent.name in ("no_label", Path(PROJ_SETTINGS["current_experiment"]).name):
+                if Path(im_file).parent.name in ("no_label", EXPERIMENT_SETTINGS["name"]):
                     continue
                 lb = readLabelFile(label_file)
                 if len(lb):

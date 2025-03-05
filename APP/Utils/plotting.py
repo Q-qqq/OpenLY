@@ -16,7 +16,7 @@ import pandas as pd
 from scipy.ndimage import gaussian_filter1d
 
 from ultralytics.utils import plt_settings,threaded
-from APP  import PROJ_SETTINGS
+from APP  import PROJ_SETTINGS, getExperimentPath
 
 
 class QFigure(FigureCanvas):
@@ -30,7 +30,7 @@ class LossFigure(QFigure):
     @threaded
     @plt_settings( backend="QtAgg")
     def plot(self, metrics_csv=f"results.csv"):
-        metrics_csv = Path(PROJ_SETTINGS["current_experiment"]) / metrics_csv
+        metrics_csv = Path(getExperimentPath()) / metrics_csv
         if not metrics_csv.exists():
             return
         data = pd.read_csv(metrics_csv)
@@ -106,7 +106,7 @@ class PgPlotLossWidget(pg.PlotWidget):
 
 
     def lossPlot(self, metrics_csv=f"results.csv"):
-        metrics_csv = Path(PROJ_SETTINGS["current_experiment"]) / metrics_csv
+        metrics_csv = Path(getExperimentPath()) / metrics_csv
         if not metrics_csv.exists():
             return
         data = pd.read_csv(metrics_csv)

@@ -10,7 +10,7 @@ from PySide6.QtWidgets import *
 from ultralytics.utils import LOGGER
 
 from APP.Utils import get_widget
-from APP  import PROJ_SETTINGS
+from APP  import PROJ_SETTINGS,getExperimentPath
 
 
 class RunMes(QObject):
@@ -99,8 +99,8 @@ class RunMes(QObject):
     def updateConfusion(self):
         title_norm = "Confusion Matrix" + " Normalized"
         title_denorm = "Confusion Matrix"
-        p_norm = Path(PROJ_SETTINGS["current_experiment"]) / f"{title_norm.lower().replace(' ', '_')}.png"
-        p_denorm = Path(PROJ_SETTINGS["current_experiment"]) / f"{title_denorm.lower().replace(' ', '_')}.png"
+        p_norm = Path(getExperimentPath()) / f"{title_norm.lower().replace(' ', '_')}.png"
+        p_denorm = Path(getExperimentPath()) / f"{title_denorm.lower().replace(' ', '_')}.png"
         self.confusion_norm_label.load_image(p_norm)
         self.confusion_denorm_label.load_image(p_denorm)
 

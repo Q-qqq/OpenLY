@@ -125,8 +125,8 @@ class CfgsTreeWidget(QTreeWidget):
     def updateArgs(self, args, overrides=None):
         """更新所有参数"""
         args = cfg2dict(get_cfg(args, overrides))
-        proj = PROJ_SETTINGS["name"]
-        name = str(Path(EXPERIMENT_SETTINGS["name"]) / "experiments")
+        proj = Path(PROJ_SETTINGS["name"]) / "experiments"
+        name = EXPERIMENT_SETTINGS["name"]
         for k,  v  in zip(["project", "name"],[proj, name]):
             if k in args.keys():
                 args[k] = v

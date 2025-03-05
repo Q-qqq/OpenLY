@@ -1,4 +1,5 @@
 import copy
+import glob
 import shutil
 
 
@@ -9,7 +10,7 @@ from PySide6.QtWidgets import *
 from pathlib import Path
 
 
-from APP  import PROJ_SETTINGS, getExistDirectory, getOpenFileName, APP_SETTINGS, loadQssStyleSheet, getExperimentPath
+from APP  import PROJ_SETTINGS, getExistDirectory, getOpenFileName, APP_SETTINGS, loadQssStyleSheet, getExperimentPath, EXPERIMENT_SETTINGS
 from APP.Utils.filters import MenuFilter
 from APP.Make import VocToYolo, CocoToYolo, PngToYolo
 
@@ -81,7 +82,7 @@ class MenuTool(QObject):
 
     def file_openExperiment(self):
         """打开实验"""
-        experiments = PROJ_SETTINGS["experiments"]
+        experiments = glob.glob(str(Path(PROJ_SETTINGS["name"]) / "experiments" / "*"))
         experiment, ok = QInputDialog.getItem(self.parent(),"选择实验", "实验：",experiments,0,False)
         if ok:
             self.parent().openExperiment(experiment)
@@ -90,9 +91,9 @@ class MenuTool(QObject):
         """保存实验"""
         self.parent().cfgs_widget.save()
         if Path(getExperimentPath()).parent.name == "expcache":   #实验未命名，存储于缓存区
-            name, ok = QInputDialog.getText(self.parent(), "保存实验", "实验名称：", text=PROJ_SETTINGS['current_experiment'])
+            name, ok = QInputDialog.getText(self.parent(), "保存实验", "实验名称：", text=EXPERIMENT_SETTINGS["name"]+"_1")
             if ok and name != "":
-                exp_p = Path(f"{PROJ_SETTINGS['name']}//experiments//{name}")
+                exp_p = Path(getExperimentPath(name))
                 if exp_p.exists():
                     QMessageBox.information(self.parent(), "提示", "实验已存在，请重新命名")
                     self.file_save()
@@ -100,7 +101,6 @@ class MenuTool(QObject):
                 shutil.copytree(getExperimentPath(), str(exp_p))
                 shutil.rmtree(getExperimentPath())
                 self.parent().openExperiment(name)
-                PROJ_SETTINGS.updateExperiment(str(Path(f"{PROJ_SETTINGS['name']}//experiments//{name}")))
             elif ok and name == "":
                 QMessageBox.information(self.parent(), "提示", "保存失败，实验名称不能为空")
 
@@ -109,11 +109,14 @@ class MenuTool(QObject):
         """实验另存为"""
         name, ok = QInputDialog.getText(self.parent(), "实验另存为", "实验名称：", text="")
         if ok and name != "":
-            new_experiment = Path(PROJ_SETTINGS["name"]) / "experiments" / name
-            shutil.copytree(PROJ_SETTINGS["current_experiment"], new_experiment)
-            self.parent().openExperoment(new_experiment)
+            new_experiment_path = getExperimentPath(name)
+            if Path(new_experiment_path).exists():
+                QMessageBox.warning(self.parent(), "提示", "实验已存在，请重新命名")
+                return
+            shutil.copytree(getExperimentPath(), new_experiment_path)
+            self.parent().openExperoment(name)
         elif ok and name == "":
-            QMessageBox.warning(self.parent(), "提示", "实验名称不能为空, 创建失败")
+            QMessageBox.warning(self.parent(), "提示", "实验名称不能为空, 另存为失败")
 
     def file_exit(self):
         """退出"""
@@ -181,7 +184,7 @@ class MenuTool(QObject):
         a1.setObjectName(cls)
         a2 = QAction("删除", cm)
         a1.triggered.connect(lambda: self.edit_renameClassAction(a1))
-        a2.triggered.connect(lambda: self.edit_deleteClassAction(a1))
+        a2.triggered.connect(lambda: self.edit_deleteClassAction(a2))
         cm.addActions([a1, a2])
         return cm
 

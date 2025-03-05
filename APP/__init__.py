@@ -109,8 +109,7 @@ class ProjectSetting(Setting):
             "version": __version__,
             "time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
             "save_time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-            "experiments":[],
-            "current_experiment":"",
+            "current_experiment": "",
             "task": "detect",
         }
         super().__init__(copy.deepcopy(self.defaults))
@@ -126,17 +125,6 @@ class ProjectSetting(Setting):
         super().load(Path(project_path) / "SETTINGS.yaml")
         self["name"] = str(Path(project_path))
 
-    def updateExperiment(self, experiment):
-        experiment = experiment
-        """更新项目列表"""
-        if experiment in self["experiments"]:
-            self["experiments"].remove(experiment)
-        self["experiments"].append(experiment)
-        self["current_experiment"] = experiment
-        self.save()
-
-    def updateMode(self, mode):
-        self["mode"] = mode
 
 
 class ExperimentSetting(Setting):
@@ -157,21 +145,22 @@ class ExperimentSetting(Setting):
 
     def load(self, experiment):
         """加载新的实验或者切换实验"""
-        super().load(Path(ProjectSetting["name"]) / "experiments" /  experiment / "SETTINGS.yaml")
-        self["name"] = str(Path(experiment))
-
-    def updateMode(self):
+        super().load(Path(PROJ_SETTINGS["name"]) / "experiments" /  experiment / "SETTINGS.yaml")
+        self["name"] = experiment
         self.save()
+        PROJ_SETTINGS["current_experiment"] = experiment
+        PROJ_SETTINGS.save()
+
 
 APP_SETTINGS = APPSetting()
 PROJ_SETTINGS = ProjectSetting()
 EXPERIMENT_SETTINGS = ExperimentSetting()
 
 
-def getExperimentPath():
+def getExperimentPath(name=EXPERIMENT_SETTINGS["name"]):
     """获取实验路径""" 
     project = PROJ_SETTINGS["name"]
-    experiment = EXPERIMENT_SETTINGS["name"]
+    experiment = name
     return str(Path(project) / "experiments" / experiment)
 
 def getExistDirectory(*args, **kwargs):
