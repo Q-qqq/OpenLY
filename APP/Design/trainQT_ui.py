@@ -33,9 +33,6 @@ class Ui_MainWindow(object):
         MainWindow.setTabShape(QTabWidget.TabShape.Rounded)
         self.Train_a = QAction(MainWindow)
         self.Train_a.setObjectName(u"Train_a")
-        icon = QIcon()
-        icon.addFile(u":/aa/F:/Download_icon/MdiBulma.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.Train_a.setIcon(icon)
         self.Val_a = QAction(MainWindow)
         self.Val_a.setObjectName(u"Val_a")
         self.Predict_a = QAction(MainWindow)
@@ -79,8 +76,8 @@ class Ui_MainWindow(object):
         self.Create_dataset_a.setObjectName(u"Create_dataset_a")
         self.Load_zip_a = QAction(MainWindow)
         self.Load_zip_a.setObjectName(u"Load_zip_a")
-        self.Add_no_label_a = QAction(MainWindow)
-        self.Add_no_label_a.setObjectName(u"Add_no_label_a")
+        self.Add_no_labels_a = QAction(MainWindow)
+        self.Add_no_labels_a.setObjectName(u"Add_no_labels_a")
         self.Load_model_a = QAction(MainWindow)
         self.Load_model_a.setObjectName(u"Load_model_a")
         self.Voc_to_yolo_a = QAction(MainWindow)
@@ -360,7 +357,7 @@ class Ui_MainWindow(object):
         self.Train_progressbar.setObjectName(u"Train_progressbar")
         self.Train_progressbar.setStyleSheet(u"")
         self.Train_progressbar.setMaximum(100)
-        self.Train_progressbar.setValue(100)
+        self.Train_progressbar.setValue(0)
 
         self.gridLayout_4.addWidget(self.Train_progressbar, 1, 0, 1, 1)
 
@@ -437,42 +434,7 @@ class Ui_MainWindow(object):
         self.Image_select_f = QFrame(self.Select_image_spliter)
         self.Image_select_f.setObjectName(u"Image_select_f")
         self.Image_select_f.setMinimumSize(QSize(0, 0))
-        self.Image_select_f.setStyleSheet(u"/* \u57fa\u7840\u6846\u67b6\u6837\u5f0f */\n"
-"\n"
-"/* \u88c5\u9970\u6027\u5bb9\u5668 */\n"
-"QFrame[frameShape=\"Panel\"] {\n"
-"    background-color: #FFFFFF;\n"
-"    border: 2px solid #CD7F32;\n"
-"    border-radius: 10px;\n"
-"    padding: 8px;\n"
-"    box-shadow: 1px 1px 4px rgba(205,127,50, 0.15);\n"
-"}\n"
-"\n"
-"/* \u6c34\u5e73\u5206\u9694\u7ebf */\n"
-"QFrame[frameShape=\"HLine\"] {\n"
-"    background-color: transparent;\n"
-"    border-top: 2px solid #C8A2C8;\n"
-"    margin: 8px 0;\n"
-"}\n"
-"\n"
-"/* \u5782\u76f4\u5206\u9694\u7ebf */\n"
-"QFrame[frameShape=\"VLine\"] {\n"
-"    background-color: transparent;\n"
-"    border-left: 2px solid #C8A2C8;\n"
-"    margin: 0 8px;\n"
-"}\n"
-"\n"
-"/* \u7279\u6b8a\u6837\u5f0f-\u5e26\u6e10\u53d8\u6807\u9898 */\n"
-"QFrame[frameShape=\"StyledPanel\"]::title {\n"
-"    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,\n"
-"                              stop:0 #D8BFD8, stop:1 #B19CD9);\n"
-"    color: #4A4453;\n"
-"    padding: 4px 12px;\n"
-"    border: 1px solid #CD7F32;\n"
-"    b"
-                        "order-radius: 5px;\n"
-"    margin-bottom: 6px;\n"
-"}")
+        self.Image_select_f.setStyleSheet(u"")
         self.Image_select_f.setFrameShape(QFrame.Shape.Box)
         self.Image_select_f.setFrameShadow(QFrame.Shadow.Raised)
         self.Select_image_spliter.addWidget(self.Image_select_f)
@@ -659,7 +621,7 @@ class Ui_MainWindow(object):
         self.Edit_menu.addAction(self.menuargs.menuAction())
         self.Dataset_menu.addAction(self.Load_dataset_a)
         self.Dataset_menu.addAction(self.Load_zip_a)
-        self.Dataset_menu.addAction(self.Add_no_label_a)
+        self.Dataset_menu.addAction(self.Add_no_labels_a)
         self.menu_2.addAction(self.Load_model_a)
         self.menuargs.addAction(self.Show_allargs_a)
         self.menuargs.addAction(self.Cfgs_init_a)
@@ -799,9 +761,9 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(tooltip)
         self.Load_zip_a.setToolTip(QCoreApplication.translate("MainWindow", u"\u5bfc\u5165\u538b\u7f29\u5305", None))
 #endif // QT_CONFIG(tooltip)
-        self.Add_no_label_a.setText(QCoreApplication.translate("MainWindow", u"\u6dfb\u52a0", None))
+        self.Add_no_labels_a.setText(QCoreApplication.translate("MainWindow", u"\u6dfb\u52a0", None))
 #if QT_CONFIG(tooltip)
-        self.Add_no_label_a.setToolTip(QCoreApplication.translate("MainWindow", u"\u6dfb\u52a0\u672a\u6807\u6ce8\u6570\u636e", None))
+        self.Add_no_labels_a.setToolTip(QCoreApplication.translate("MainWindow", u"\u6dfb\u52a0\u672a\u6807\u6ce8\u6570\u636e", None))
 #endif // QT_CONFIG(tooltip)
         self.Load_model_a.setText(QCoreApplication.translate("MainWindow", u"\u8bad\u7ec3\u6a21\u578b", None))
 #if QT_CONFIG(tooltip)

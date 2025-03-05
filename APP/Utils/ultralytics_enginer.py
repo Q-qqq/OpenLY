@@ -5,7 +5,7 @@ from ultralytics import YOLO
 from ultralytics.utils import ThreadingLocked, threaded, LOGGER, TryExcept, PROGRESS_BAR
 from ultralytics.data.dataset import YOLODataset
 
-from APP.Utils.base import QInstances
+from APP.Label.base import QInstances
 
 
 class Yolo(YOLO):

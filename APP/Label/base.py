@@ -13,7 +13,7 @@ from ultralytics.data.utils import img2label_paths, IMG_FORMATS
 import numpy as np
 import copy
 import torch
-from APP.Utils.ops import cvImg2Qpix, generate_distinct_colors,segmentArea
+from APP.Label.utils import cvImg2Qpix, generate_distinct_colors,segmentArea
 
 
 
@@ -463,7 +463,7 @@ class QSizeLabel(QLabel):
             zone_r = max(self.zoom_zone[0], self.zoom_zone[2])
             zone_d = max(self.zoom_zone[1], self.zoom_zone[3])
             zoom_rect = QRect(QPoint(int(zone_l), int(zone_u)), QPoint(int(zone_r), int(zone_d)))
-            painter.setPen(QPen(Qt.blue,3, Qt.DashDotLine))
+            painter.setPen(QPen(Qt.GlobalColor.blue,3, Qt.PenStyle.DashDotLine))
             painter.drawRect(QRect(zoom_rect))
         self.draw(painter)
         painter.end()
@@ -475,18 +475,18 @@ class QSizeLabel(QLabel):
 
 
     def mousePressEvent(self, event: QMouseEvent):
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self.start = event.pos()
             if self.rect_zoom:
                 self.zoom_zone = [event.x(), event.y(), event.x(), event.y()]
                 self.zoom_finish = False
 
     def mouseMoveEvent(self, event: QMouseEvent):
-        if self.rect_zoom and event.buttons() == Qt.LeftButton and event.modifiers() != Qt.ControlModifier:
+        if self.rect_zoom and event.buttons() == Qt.MouseButton.LeftButton and event.modifiers() != Qt.KeyboardModifier.ControlModifier:
             self.zoom_zone[2] = event.x()
             self.zoom_zone[3] = event.y()
             self.update()
-        elif event.buttons() == Qt.LeftButton and event.modifiers() == Qt.ControlModifier:
+        elif event.buttons() == Qt.MouseButton.LeftButton and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
             self.translate_x = event.x() - self.start.x()
             self.translate_y = event.y() - self.start.y()
             self.start = QPoint(event.x(), event.y())
@@ -497,7 +497,7 @@ class QSizeLabel(QLabel):
         self.mouse_point = QPoint(event.x(), event.y())
 
     def mouseReleaseEvent(self, ev:QMouseEvent) -> None:
-        if self.rect_zoom and ev.button() == Qt.LeftButton:
+        if self.rect_zoom and ev.button() == Qt.MouseButton.LeftButton:
             center_x = (self.zoom_zone[0] + self.zoom_zone[2]) / 2
             center_y = (self.zoom_zone[1] + self.zoom_zone[3]) / 2
             w = abs(self.zoom_zone[2] - self.zoom_zone[0])
@@ -523,8 +523,8 @@ class QSizeLabel(QLabel):
 
             half_w = self.pix_half_width + int(event.angleDelta().y() / 5 * self.pix_scale_x)  #放大后的一半宽
             half_h = self.pix_half_height + int(event.angleDelta().y() / 5 * self.pix_scale_y)  #放大后的一半高
-            x = event.x() if event.angleDelta().y() > 0  else self.width()/2  #放大以鼠标位置为缩放中心，缩小以label中心为缩放中心
-            y = event.y() if event.angleDelta().y() > 0  else self.height()/2
+            x = event.position.x() if event.angleDelta().y() > 0  else self.width()/2  #放大以鼠标位置为缩放中心，缩小以label中心为缩放中心
+            y = event.position.y() if event.angleDelta().y() > 0  else self.height()/2
             self.scalePix(half_w, half_h, x, y)
 
 
@@ -558,14 +558,13 @@ class QSizeLabel(QLabel):
 
     def contextMenuEvent(self, ev: QContextMenuEvent) -> None:
         main_menu = QMenu(self)
-        main_menu.setStyleSheet(
-            u"color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); selection-color: rgb(0, 0, 0); selection-background-color: rgb(144, 188, 255);")
+        main_menu.setObjectName("right_menu")
         auto_fit_a = QAction(text="自适应", parent=main_menu)
         rect_zoom_a = QAction(text= "放大", parent=main_menu)
         rect_zoom_a.setCheckable(True)
         rect_zoom_a.setChecked(self.rect_zoom)
         main_menu.addActions([auto_fit_a,rect_zoom_a])
-        req = main_menu.exec_(self.mapToGlobal(ev.pos()))
+        req = main_menu.exec(self.mapToGlobal(ev.pos()))
         if req == auto_fit_a:
             self.fit()
         elif req == rect_zoom_a:
@@ -603,7 +602,7 @@ class QTransformerLabel(QSizeLabel):
         levels_img(np.ndarray): 色阶增强后的图像
         """
         super().__init__(parent)
-        self.setCursor(Qt.CrossCursor)
+        self.setCursor(Qt.CursorShape.CrossCursor)
         self.label = None
         self.pred_label = None
         self.image_rect = None
@@ -663,7 +662,6 @@ class QTransformerLabel(QSizeLabel):
         """加载预测标签"""
         pred_label["cls"] = [int(c) for c in pred_label["cls"]]
         self.pred_label = pred_label
-
 
     def getLabelSizeInstance(self, instance: Instances):
         if len(instance):
@@ -774,25 +772,25 @@ class QTransformerLabel(QSizeLabel):
                 ld = QPoint(box[0], box[3])
                 rd = QPoint(box[2], box[3])
                 rect = QRect(lu, rd)
-                painter.setBrush(QBrush(Qt.NoBrush))
+                painter.setBrush(QBrush(Qt.BrushStyle.NoBrush))
                 color = QColor(self.colors[c][0], self.colors[c][1], self.colors[c][2])
-                painter.setPen(QPen(color if not pred else self.red, 3, Qt.SolidLine))
+                painter.setPen(QPen(color if not pred else self.red, 3, Qt.PenStyle.SolidLine))
                 painter.drawRect(rect)
-                painter.setPen(QPen(Qt.green if not pred else self.red, 5, Qt.SolidLine))
+                painter.setPen(QPen(Qt.GlobalColor.green if not pred else self.red, 5, Qt.PenStyle.SolidLine))
                 painter.drawPoints([lu, ru, ld, rd])
                 if self.show_cls and self.task == "detect":
                     if not pred:
-                        self.drawText(painter, QPoint(box[0],box[1]-2), self.label["names"][int(c)], 12, color=Qt.green)
+                        self.drawText(painter, QPoint(box[0],box[1]-2), self.label["names"][int(c)], 12, color=Qt.GlobalColor.green)
                     else:
-                        self.drawText(painter, QPoint(box[2], box[3] + 12), self.pred_label["names"][int(c)] + f" {self.pred_label['conf'][i]:3.2f}", 12, color=Qt.white)
+                        self.drawText(painter, QPoint(box[2], box[3] + 12), self.pred_label["names"][int(c)] + f" {self.pred_label['conf'][i]:3.2f}", 12, color=Qt.GlobalColor.white)
 
-    def drawText(self, painter,point, text, font_size=8, color=Qt.green):
+    def drawText(self, painter,point, text, font_size=8, color=Qt.GlobalColor.green):
         text_w = len(text) * font_size*3/4
         text_h = font_size
-        brush = QBrush(Qt.SolidPattern)
+        brush = QBrush(Qt.BrushStyle.SolidPattern)
         brush.setColor(QColor(255, 0, 0, 150))
         painter.setBrush(brush)
-        painter.setPen(Qt.NoPen)
+        painter.setPen(Qt.PenStyle.NoPen)
         painter.drawRect(QRect(point.x()-2, point.y() - font_size-1, text_w+4, text_h+5))
         painter.setPen(QPen(color))
         painter.setFont(QFont("幼圆", font_size))
@@ -818,18 +816,18 @@ class QTransformerLabel(QSizeLabel):
                 tip = ""
             self.Show_Status_Signal.emit(tip)
         # 当前选中标签
-        if self.paint and not self.painting and event.buttons() != Qt.LeftButton:
+        if self.paint and not self.painting and event.buttons() != Qt.MouseButton.LeftButton:
             if self.label.get("instances") and len(self.label["instances"]):
                 for i, inst in enumerate(self.label["instances"]):
                     instance = copy.deepcopy(inst)
                     self.getLabelSizeInstance(instance)
                     self.setInstanceCursor(instance, self.mouse_point)
-                    if self.cursor() != Qt.CrossCursor:
+                    if self.cursor() != Qt.CursorShape.CrossCursor:
                         if self.index != i:
                             self.index = i
                         break
             else:
-                self.setCursor(Qt.CrossCursor)
+                self.setCursor(Qt.CursorShape.CrossCursor)
         self.update()
 
     def setInstanceCursor(self, instance, pos):
@@ -841,9 +839,9 @@ class QTransformerLabel(QSizeLabel):
         pass
 
     def keyPressEvent(self, ev:QKeyEvent) -> None:
-        if ev.key() == Qt.Key_Down:
+        if ev.key() == Qt.Key.Key_Down:
             self.Next_Image_Signal.emit()
-        elif ev.key() == Qt.Key_Up:
+        elif ev.key() == Qt.Key.Key_Up:
             self.Last_Image_Signal.emit()
 
 
@@ -851,8 +849,7 @@ class QTransformerLabel(QSizeLabel):
         if not self.pix:
             return
         main_menu = QMenu(self)
-        main_menu.setStyleSheet(
-            u"color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); selection-color: rgb(0, 0, 0); selection-background-color: rgb(144, 188, 255);")
+        main_menu.setObjectName("right_menu")
         clear_all_a = QAction(text="清空", parent=main_menu)
         auto_fit_a = QAction(text="自适应", parent=main_menu)
         rect_zoom_a = QAction(text="放大", parent=main_menu)

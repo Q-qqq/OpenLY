@@ -509,7 +509,7 @@
      </property>
      <addaction name="Load_dataset_a"/>
      <addaction name="Load_zip_a"/>
-     <addaction name="Add_no_label_a"/>
+     <addaction name="Add_no_labels_a"/>
     </widget>
     <widget class="QMenu" name="menu_2">
      <property name="title">
@@ -682,7 +682,7 @@
         <number>100</number>
        </property>
        <property name="value">
-        <number>100</number>
+        <number>0</number>
        </property>
       </widget>
      </item>
@@ -858,41 +858,7 @@
             </size>
            </property>
            <property name="styleSheet">
-            <string notr="true">/* 基础框架样式 */
-
-/* 装饰性容器 */
-QFrame[frameShape=&quot;Panel&quot;] {
-    background-color: #FFFFFF;
-    border: 2px solid #CD7F32;
-    border-radius: 10px;
-    padding: 8px;
-    box-shadow: 1px 1px 4px rgba(205,127,50, 0.15);
-}
-
-/* 水平分隔线 */
-QFrame[frameShape=&quot;HLine&quot;] {
-    background-color: transparent;
-    border-top: 2px solid #C8A2C8;
-    margin: 8px 0;
-}
-
-/* 垂直分隔线 */
-QFrame[frameShape=&quot;VLine&quot;] {
-    background-color: transparent;
-    border-left: 2px solid #C8A2C8;
-    margin: 0 8px;
-}
-
-/* 特殊样式-带渐变标题 */
-QFrame[frameShape=&quot;StyledPanel&quot;]::title {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                              stop:0 #D8BFD8, stop:1 #B19CD9);
-    color: #4A4453;
-    padding: 4px 12px;
-    border: 1px solid #CD7F32;
-    border-radius: 5px;
-    margin-bottom: 6px;
-}</string>
+            <string notr="true"/>
            </property>
            <property name="frameShape">
             <enum>QFrame::Shape::Box</enum>
@@ -1258,10 +1224,6 @@ QFrame[frameShape=&quot;StyledPanel&quot;]::title {
    </widget>
   </widget>
   <action name="Train_a">
-   <property name="icon">
-    <iconset>
-     <normaloff>:/aa/F:/Download_icon/MdiBulma.svg</normaloff>:/aa/F:/Download_icon/MdiBulma.svg</iconset>
-   </property>
    <property name="text">
     <string>训练</string>
    </property>
@@ -1461,7 +1423,7 @@ QFrame[frameShape=&quot;StyledPanel&quot;]::title {
     <string>导入压缩包</string>
    </property>
   </action>
-  <action name="Add_no_label_a">
+  <action name="Add_no_labels_a">
    <property name="text">
     <string>添加</string>
    </property>

@@ -9,7 +9,7 @@ from PySide6.QtWidgets import *
 from pathlib import Path
 
 
-from APP  import PROJ_SETTINGS, getExistDirectory, getOpenFileName, APP_SETTINGS, loadQssStyleSheet
+from APP  import PROJ_SETTINGS, getExistDirectory, getOpenFileName, APP_SETTINGS, loadQssStyleSheet, getExperimentPath
 from APP.Utils.filters import MenuFilter
 from APP.Make import VocToYolo, CocoToYolo, PngToYolo
 
@@ -45,6 +45,7 @@ class MenuTool(QObject):
         self.parent().Style_cute_a.triggered.connect(self.file_loadCuteStyle)
         self.parent().Style_technology_a.triggered.connect(self.file_loadTechnologyStyle)
         self.parent().Style_light_a.triggered.connect(self.file_loadLightStyle)
+        self.parent().Add_no_labels_a.triggered.connect(self.edit_addNolabels)
 
     def file_showStart(self):
         """显示开始界面"""
@@ -74,30 +75,31 @@ class MenuTool(QObject):
                 QMessageBox.warning(self.parent(), "提示", "实验已存在，请重新命名")
                 self.file_newExperiment()
                 return
-            self.parent().openExperiment(new_experiment)
+            self.parent().openExperiment(name)
         elif ok and name == "":
             QMessageBox.warning(self.parent(), "提示", "实验名称不能为空, 创建失败")
 
     def file_openExperiment(self):
         """打开实验"""
-        dir = getExistDirectory(self.parent(), "打开实验", dir=str(Path(PROJ_SETTINGS["name"])))
-        if dir != "":
-            self.parent().openExperiment(dir)
+        experiments = PROJ_SETTINGS["experiments"]
+        experiment, ok = QInputDialog.getItem(self.parent(),"选择实验", "实验：",experiments,0,False)
+        if ok:
+            self.parent().openExperiment(experiment)
 
     def file_save(self):
         """保存实验"""
         self.parent().cfgs_widget.save()
-        if Path(self.parent().experiment).parent.name == "expcache":   #实验未命名，存储于缓存区
-            name, ok = QInputDialog.getText(self.parent(), "保存实验", "实验名称：", text=Path(PROJ_SETTINGS['current_experiment']).name)
+        if Path(getExperimentPath()).parent.name == "expcache":   #实验未命名，存储于缓存区
+            name, ok = QInputDialog.getText(self.parent(), "保存实验", "实验名称：", text=PROJ_SETTINGS['current_experiment'])
             if ok and name != "":
                 exp_p = Path(f"{PROJ_SETTINGS['name']}//experiments//{name}")
                 if exp_p.exists():
                     QMessageBox.information(self.parent(), "提示", "实验已存在，请重新命名")
                     self.file_save()
                     return
-                shutil.copytree(PROJ_SETTINGS['current_experiment'], str(exp_p))
-                shutil.rmtree(PROJ_SETTINGS['current_experiment'])
-                self.parent().openExperiment(exp_p)
+                shutil.copytree(getExperimentPath(), str(exp_p))
+                shutil.rmtree(getExperimentPath())
+                self.parent().openExperiment(name)
                 PROJ_SETTINGS.updateExperiment(str(Path(f"{PROJ_SETTINGS['name']}//experiments//{name}")))
             elif ok and name == "":
                 QMessageBox.information(self.parent(), "提示", "保存失败，实验名称不能为空")
@@ -151,6 +153,16 @@ class MenuTool(QObject):
         data = self.parent().cfgs_widget.args["data"]
         if data != "":
             self.parent().buildDataset(data)
+    
+    def edit_addNolabels(self):
+        """添加图像数据到未标注"""
+        files,_ = getOpenFileNames(self.parent(), "选择需要添加的文件", filter=f"Image files (*.{' *.'.join(IMG_FORMATS)})")
+        if files:
+            exist_names = self.parent().sift_dataset.addNolabels(files)
+            _names = '\n'.join(exist_names)
+            QMessageBox.information(self.parent(), "提示",
+                                     f"添加成功，添加数量：{len(files) - len(exist_names)}\n" + 
+                                     f"识别到同名文件数量{len(exist_names)}，如下，已剔除\n{_names}" * (exist_names != []))
 
     def edit_showClasses(self):
         if not self.parent().sift_dataset:

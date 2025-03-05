@@ -18,10 +18,10 @@ import threading
 from ultralytics.utils import yaml_load, yaml_save, DEFAULT_CFG_DICT, DEFAULT_CFG, LOGGER
 
 
-from APP  import  PROJ_SETTINGS, getOpenFileName, EXPERIMENT_SETTINGS, APP_ROOT
+from APP  import  PROJ_SETTINGS, getOpenFileName, EXPERIMENT_SETTINGS, APP_ROOT, getExperimentPath
 from APP.Make.startM import Start
-from APP.Utils.base import QInstances, QTransformerLabel
-from APP.Utils.label import (DetectTransformerLabel,
+from APP.Label.base import QInstances, QTransformerLabel
+from APP.Label.labels import (DetectTransformerLabel,
                              SegmentTransformerLabel,
                              KeypointsTransformerLabel,
                              ClassifyTransformerLabel,
@@ -46,8 +46,6 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
         self.setStatusBar(QStatusBar())
         self.app = app
 
-        self.project = ""
-        self.experiment = ""
         self.cfg_path = ""
         self.pred_labels = {}
         self.img_label = None
@@ -159,7 +157,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
             LOGGER.stop = False
             self.cfgs_widget.save()
             model = Yolo(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
-            results = Path(self.experiment) / "results.csv"
+            results = Path(getExperimentPath()) / "results.csv"
             if results.exists():
                 data = pd.read_csv(results)
                 x = data.values[:, 0]
@@ -170,7 +168,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
                     else:
                         return
 
-            DEFAULT_CFG.save_dir = self.experiment
+            DEFAULT_CFG.save_dir = getExperimentPath()
             if isinstance(self.cfgs_widget.args["pretrained"], str):
                 model.load(self.cfgs_widget.args["pretrained"])
             model.lyTrain(cfg=self.cfg_path, data=self.cfgs_widget.args["data"])
@@ -186,7 +184,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
         self.Progress_dw.raise_()
         self.cfgs_widget.save()
         yolo = Yolo(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
-        yolo.lyVal(save_dir=self.experiment, **self.cfgs_widget.args)
+        yolo.lyVal(save_dir=getExperimentPath(), **self.cfgs_widget.args)
 
     def startPredict(self):
         self.cfgs_widget.save()
@@ -196,7 +194,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
             source = self.cfgs_widget.args["source"]
         yolo = Yolo(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
         yolo.overrides = self.cfgs_widget.args
-        self.pred_labels = yolo.lyPredict(source=source, save_dir=self.experiment,conf=self.cfgs_widget.args["conf"])
+        self.pred_labels = yolo.lyPredict(source=source, save_dir=getExperimentPath,conf=self.cfgs_widget.args["conf"])
         if self.pred_labels is None:
             self.pred_labels = {}
         if self.img_label.im_file in self.pred_labels.keys():
@@ -266,8 +264,8 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
         self.sift_dataset.sift_tool.initSifter()  #初始化筛选器
         self.image_scroll.horBarValueChangedSlot()
 
-    def openExperiment(self, experiment_path):
-        experiment_path = Path(experiment_path)
+    def openExperiment(self, experiment):
+        experiment_path = Path(PROJ_SETTINGS["name"]) / "experiments" / experiment
         cfg_path = experiment_path / "cfgs" / "cfg.yaml"
         #检查实验是否存在,不存在则创建新实验
         if not experiment_path.exists():
@@ -281,34 +279,33 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
                 cfg["task"] = PROJ_SETTINGS["task"]
                 yaml_save(cfg_path, DEFAULT_CFG_DICT)
         else:
-            cfg =yaml_load(cfg_path)
+            cfg = yaml_load(cfg_path)
             if cfg["task"] != PROJ_SETTINGS["task"]:
                 QMessageBox.information(self, "提示", f"实验任务{cfg['task']}与项目任务{PROJ_SETTINGS['task']}不一致，已自动更改实验任务为{cfg['task']}")
                 cfg["task"] = PROJ_SETTINGS["task"]
                 yaml_save(cfg_path, cfg)
 
-        self.experiment = str(experiment_path)
         if (experiment_path / "SETTINGS.yaml").exists():
-            EXPERIMENT_SETTINGS.load(experiment_path)
+            EXPERIMENT_SETTINGS.load(experiment)
 
-        PROJ_SETTINGS.updateExperiment(self.experiment)
+        PROJ_SETTINGS.updateExperiment(experiment)
         self.cfg_path = cfg_path
         self.cfgs_widget.updateTrees(self.cfg_path)
         self.changeTaskSlot(self.cfgs_widget.args["task"])
-        self.setWindowTitle(str(self.experiment))
+        self.setWindowTitle(experiment_path)
         self.buildDataset(self.cfgs_widget.args["data"])
         self.run.updateConfusion()
         self.run.updateLoss()
 
 
     def closeEvent(self, event: QCloseEvent):
-        if Path(self.experiment).parent.name == "expcache":
+        if Path(getExperimentPath()).parent.name == "expcache":
             ans = QMessageBox.information(self, "关闭提示", "实验未保存，请问是否保存实验", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
             if ans == QMessageBox.Yes:
-                name, ok = QInputDialog.getText(self, "保存实验", "实验名称：",text=Path(self.experiment).name)
+                name, ok = QInputDialog.getText(self, "保存实验", "实验名称：",text=Path(getExperimentPath()).name)
                 if ok and name != "":
-                    shutil.copytree(self.experiment, str(Path(f"{PROJ_SETTINGS['name']}//experiments//{name}")))
-                    shutil.rmtree(self.experiment)
+                    shutil.copytree(getExperimentPath(), str(Path(f"{PROJ_SETTINGS['name']}//experiments//{name}")))
+                    shutil.rmtree(getExperimentPath())
                     PROJ_SETTINGS.updateExperiment(str(Path(f"{PROJ_SETTINGS['name']}//experiments//{name}")))
                 elif ok and name == "":
                     QMessageBox.information(self, "提示", "实验名称不能为空")
@@ -318,10 +315,10 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
             elif ans == QMessageBox.Cancel:
                 event.ignore()
             else:
-                shutil.rmtree(self.experiment)
+                shutil.rmtree(getExperimentPath())
                 event.accept()
         else:
-            PROJ_SETTINGS.updateExperiment(self.experiment)
+            PROJ_SETTINGS.updateExperiment(getExperimentPath())
 
 
 

@@ -20,8 +20,8 @@ from ultralytics.data.utils import verify_image
 
 from APP  import  FILL_RULE
 from APP.Utils import getcat
-from APP.Utils.base import QBboxes, QInstances, QTransformerLabel, QSizeLabel
-from APP.Utils.ops import *
+from APP.Label.base import QBboxes, QInstances, QTransformerLabel, QSizeLabel
+from APP.Label.utils import *
 from APP.Data import format_im_files
 
 
@@ -36,13 +36,13 @@ class DetectTransformerLabel(QTransformerLabel):
 
     def drawLabel(self, painter, instance, pred=False):
         if self.painting and self.label["instances"]._bboxes is not None and len(self.label["instances"]._bboxes) == self.index:
-            painter.setPen(QPen(Qt.green, 10, Qt.SolidLine))
+            painter.setPen(QPen(Qt.GlobalColor.green, 10, Qt.PenStyle.SolidLine))
             painter.drawPoint(self.mouse_point)
 
 
     def mousePressEvent(self, event: QMouseEvent):
         super().mousePressEvent(event)
-        if self.painting and event.button() == Qt.LeftButton:
+        if self.painting and event.button() == Qt.MouseButton.LeftButton:
             if len(self.label["instances"]._bboxes) == self.index:  #未添加框
                 p = self.getPixSizePoint(event.x(), event.y())
                 self.addBox([p[0], p[1], p[0], p[1]], self.cls)   #添加框
@@ -50,7 +50,7 @@ class DetectTransformerLabel(QTransformerLabel):
                 self.ori_y = p[1]
             elif len(self.label["instances"]._bboxes) - 1 == self.index:
                 self.painting = False
-        if not self.painting and self.paint and event.button() == Qt.LeftButton and self.cursor() != Qt.CrossCursor:
+        if not self.painting and self.paint and event.button() == Qt.MouseButton.LeftButton and self.cursor() != Qt.CursorShape.CrossCursor:
             self.getOri()
 
     def getOri(self):
@@ -102,21 +102,21 @@ class DetectTransformerLabel(QTransformerLabel):
             self.Change_Label_Signal.emit()
         elif self.paint and not self.painting:
             #操作标签
-            if event.buttons() == Qt.LeftButton and event.modifiers() != Qt.ControlModifier:
+            if event.buttons() == Qt.LeftButton and event.modifiers() != Qt.KeyboardModifier.ControlModifier:
                 tx = event.x() - self.start.x()
                 ty = event.y() - self.start.y()
                 self.start = QPoint(event.x(), event.y())
-                if self.cursor() != Qt.CrossCursor:
+                if self.cursor() != Qt.CursorShape.CrossCursor:
                     instance = self.label["instances"][self.index]
                     if instance.bboxes is not None:  # 移动矩形框
                         self.getLabelSizeInstance(instance)
-                        if self.cursor() == Qt.SizeVerCursor:
+                        if self.cursor() == Qt.CursorShape.SizeVerCursor:
                             instance._bboxes.translateVer(0, self.ori_y, event.y())  # 上下移动
-                        elif self.cursor() == Qt.SizeHorCursor:
+                        elif self.cursor() == Qt.CursorShape.SizeHorCursor:
                             instance._bboxes.translateHor(0, self.ori_x, event.x())  # 左右移动
-                        elif self.cursor() == Qt.SizeFDiagCursor or self.cursor() == Qt.SizeBDiagCursor:
+                        elif self.cursor() == Qt.CursorShape.SizeFDiagCursor or self.cursor() == Qt.CursorShape.SizeBDiagCursor:
                             instance._bboxes.translatePoint(0, self.ori_x, self.ori_y, event.x(), event.y())
-                        elif self.cursor() == Qt.SizeAllCursor:
+                        elif self.cursor() == Qt.CursorShape.SizeAllCursor:
                             instance._bboxes.moveBox(0, event.x(), event.y())
                         self.getPixSizeInstance(instance)
                         self.label["instances"].setItem(self.index, instance)
@@ -169,41 +169,41 @@ class DetectTransformerLabel(QTransformerLabel):
         if judgePointUpLine(point_lu, point_ru, pos, r):
             self.point_ind1 = 0
             self.point_ind2 = 1
-            self.setCursor(Qt.SizeVerCursor)
+            self.setCursor(Qt.CursorShape.SizeVerCursor)
         elif judgePointUpLine(point_ld, point_rd, pos, r):
             self.point_ind1 = 2
             self.point_ind2 = 3
-            self.setCursor(Qt.SizeVerCursor)
+            self.setCursor(Qt.CursorShape.SizeVerCursor)
         elif judgePointUpLine(point_lu, point_ld, pos, r):
             self.point_ind1 = 0
             self.point_ind2 = 2
-            self.setCursor(Qt.SizeHorCursor)
+            self.setCursor(Qt.CursorShape.SizeHorCursor)
         elif judgePointUpLine(point_ru, point_rd, pos, r):
             self.point_ind1 = 1
             self.point_ind2 = 3
-            self.setCursor(Qt.SizeHorCursor)
+            self.setCursor(Qt.CursorShape.SizeHorCursor)
         elif judgePointInCircle(point_lu, pos, r):
             self.point_ind1 = 0
             self.point_ind2 = 0
-            self.setCursor(Qt.SizeFDiagCursor)
+            self.setCursor(Qt.CursorShape.SizeFDiagCursor)
         elif judgePointInCircle(point_rd, pos, r):
             self.point_ind1 = 3
             self.point_ind2 = 3
-            self.setCursor(Qt.SizeFDiagCursor)
+            self.setCursor(Qt.CursorShape.SizeFDiagCursor)
         elif judgePointInCircle(point_ru, pos, r):
             self.point_ind1 = 1
             self.point_ind2 = 1
-            self.setCursor(Qt.SizeBDiagCursor)
+            self.setCursor(Qt.CursorShape.SizeBDiagCursor)
         elif judgePointInCircle(point_ld, pos, r):
             self.point_ind1 = 2
             self.point_ind2 = 2
-            self.setCursor(Qt.SizeBDiagCursor)
+            self.setCursor(Qt.CursorShape.SizeBDiagCursor)
         elif judgePointInCircle(point_c, pos, r):
             self.point_ind1 = 4
             self.point_ind2 = 4
-            self.setCursor(Qt.SizeAllCursor)
+            self.setCursor(Qt.CursorShape.SizeAllCursor)
         else:
-            self.setCursor(Qt.CrossCursor)
+            self.setCursor(Qt.CursorShape.CrossCursor)
         self.update()
 
     def keyPressEvent(self, ev:QKeyEvent) -> None:
@@ -214,7 +214,7 @@ class DetectTransformerLabel(QTransformerLabel):
 
     def mouseReleaseEvent(self, ev):
         super().mouseReleaseEvent(ev)
-        if self.painting and len(self.label["instances"]._bboxes) - 1 == self.index and self.label["instances"]._bboxes.areas()[-1] > 10 and ev.button() == Qt.LeftButton:
+        if self.painting and len(self.label["instances"]._bboxes) - 1 == self.index and self.label["instances"]._bboxes.areas()[-1] > 10 and ev.button() == Qt.MouseButton.LeftButton:
             self.painting = False
 
     def contextMenuEvent(self, ev:QContextMenuEvent) -> None:
@@ -222,12 +222,11 @@ class DetectTransformerLabel(QTransformerLabel):
             self.painting = False
             self.Change_Label_Signal.emit()
             return
-        if self.cursor() == Qt.CrossCursor:
+        if self.cursor() == Qt.CursorShape.CrossCursor:
             super().contextMenuEvent(ev)
         else:
             main_menu = QMenu(self)
-            main_menu.setStyleSheet(
-                u"color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); selection-color: rgb(0, 0, 0); selection-background-color: rgb(144, 188, 255);")
+            main_menu.setObjectName("right_menu")
             delete_a = main_menu.addAction("删除")
             req = main_menu.exec_(self.mapToGlobal(ev.pos()))
             if req == delete_a:
@@ -277,12 +276,12 @@ class SegmentTransformerLabel(QTransformerLabel):
             pred(bool): 是否为预测标签
         """
         if self.fast_cre_sel and self.fast_rect:
-            painter.setPen(QPen(Qt.yellow, 2, Qt.DashLine))
+            painter.setPen(QPen(Qt.GlobalColor.yellow, 2, Qt.PenStyle.DashLine))
             p1 = self.getLabelSizePoint(self.fast_rect[0], self.fast_rect[1])
             p2 = self.getLabelSizePoint(self.fast_rect[2], self.fast_rect[3])
             painter.drawRect(QRect(p1[0], p1[1], p2[0]-p1[0], p2[1]-p1[1]))
         if self.fast_seed_searching:
-            painter.setPen(QPen(Qt.green, 8, Qt.SolidLine))
+            painter.setPen(QPen(Qt.GlobalColor.green, 8, Qt.PenStyle.SolidLine))
             painter.drawPoint(self.mouse_point)
 
         if self.use_pencil:
@@ -293,10 +292,10 @@ class SegmentTransformerLabel(QTransformerLabel):
                 _, self.mask_pixmap = self.setOpencvMask(mask)
             painter.drawPixmap(self.image_rect,self.mask_pixmap)
             if not self.fast_rect:
-                painter.setPen(QPen(Qt.yellow, 2, Qt.SolidLine))
+                painter.setPen(QPen(Qt.GlobalColor.yellow, 2, Qt.PenStyle.SolidLine))
                 color = QColor(self.colors[self.cls][0], self.colors[self.cls][1], self.colors[self.cls][2])
                 color.setAlpha(100)
-                painter.setBrush(QBrush(color,Qt.SolidPattern))
+                painter.setBrush(QBrush(color,Qt.PenStyle.SolidPattern))
                 painter.drawEllipse(self.mouse_point, self.line_width, self.line_width)
 
         if pred or self.use_pen:
@@ -317,7 +316,7 @@ class SegmentTransformerLabel(QTransformerLabel):
                 return
 
 
-            brush = QBrush(Qt.SolidPattern)
+            brush = QBrush(Qt.BrushStyle.SolidPattern)
             for segment, area, c in zip(segments, areas, cls):
                 color = QColor(self.colors[c][0], self.colors[c][1], self.colors[c][2])
                 color.setAlpha(100)
@@ -327,18 +326,18 @@ class SegmentTransformerLabel(QTransformerLabel):
                 for p in segment:
                     points.append(QPoint(p[0], p[1]))
                 if len(segment) < 3:  # 小于3个点 只绘制点
-                    painter.setPen(QPen(Qt.green if not pred else self.red, 1, Qt.SolidLine))
+                    painter.setPen(QPen(Qt.GlobalColor.green if not pred else self.red, 1, Qt.PenStyle.SolidLine))
                     painter.drawPoints(points)
                     continue
-                painter.setPen(QPen(Qt.green if not pred else self.red, 1, Qt.SolidLine))
+                painter.setPen(QPen(Qt.GlobalColor.green if not pred else self.red, 1, Qt.PenStyle.SolidLine))
                 painter.drawPolygon(points, FILL_RULE)
                 if self.show_area or self.show_cls:
                     lu, rd = get_segment_diagnol_point(segment)
                     mes = f"{self.label['names'][int(c)]}  " * self.show_cls + f"{area:3.2f}px" * self.show_area
                     if pred:
-                        self.drawText(painter, QPoint(rd[0], rd[1]), mes, 12, Qt.white)
+                        self.drawText(painter, QPoint(rd[0], rd[1]), mes, 12, Qt.GlobalColor.white)
                     else:
-                        self.drawText(painter, QPoint(lu[0], lu[1]), mes, 12, Qt.green)
+                        self.drawText(painter, QPoint(lu[0], lu[1]), mes, 12, Qt.GlobalColor.green)
 
     def getLabelSizeSegment(self, segment):
         new_segment = np.zeros_like(segment, dtype=np.float32)
@@ -547,7 +546,7 @@ class SegmentTransformerLabel(QTransformerLabel):
             elif self.painting:  #下一个点
                 self.setPoint(self.index, -1, point)
                 self.addPoint(self.index, point)
-            elif self.cursor() == Qt.PointingHandCursor:  #插入点
+            elif self.cursor() == Qt.CursorShape.PointingHandCursor:  #插入点
                 self.insertPoint(self.index, self.point_ind2, point)
                 self.Change_Label_Signal.emit()
             self.update()
@@ -570,45 +569,45 @@ class SegmentTransformerLabel(QTransformerLabel):
             if judgePointUpLine(p, next_p, pos, r):
                 self.point_ind1 = i
                 self.point_ind2 = next_i
-                self.setCursor(Qt.PointingHandCursor)
+                self.setCursor(Qt.CursorShape.PointingHandCursor)
                 break
             elif judgePointInCircle(p, pos, r):
                 self.point_ind1 = i
                 self.point_ind2 = i
-                self.setCursor(Qt.SizeAllCursor)
+                self.setCursor(Qt.CursorShape.SizeAllCursor)
                 break
             else:
-                self.setCursor(Qt.CrossCursor)
+                self.setCursor(Qt.CursorShape.CrossCursor)
 
     def mouseMoveEvent(self, event: QMouseEvent):
         super().mouseMoveEvent(event)
         if self.pix == None:
             return
         if self.paint and not self.fast_seed_searching:
-            if self.fast_cre_sel and event.buttons() == Qt.LeftButton:  # 快速选择创建选区
+            if self.fast_cre_sel and event.buttons() == Qt.MouseButton.LeftButton:  # 快速选择创建选区
                 p1 = self.getPixSizePoint(self.start.x(), self.start.y())
                 p2 = self.getPixSizePoint(event.x(), event.y())
                 self.fast_rect = twoPoints2box(p1, p2, "xyxy")[0].tolist()
-            elif self.use_pencil and event.buttons() == Qt.LeftButton:  # 铅笔绘制
+            elif self.use_pencil and event.buttons() == Qt.MouseButton.LeftButton:  # 铅笔绘制
                 self.pencilPaint(event.pos())
 
             elif self.painting:  # 钢笔绘制中
                 point = self.getPixSizePoint(event.x(), event.y())
-                if event.buttons() == Qt.LeftButton:
+                if event.buttons() == Qt.MouseButton.LeftButton:
                     self.addPoint(self.index, point)
                 else:
                     self.setPoint(self.index, -1, point)
                 self.update()
             else:
-                if event.buttons() == Qt.LeftButton and event.modifiers() != Qt.ControlModifier:
+                if event.buttons() == Qt.MouseButton.LeftButton and event.modifiers() != Qt.KeyboardModifier.ControlModifier:
                     tx = event.x() - self.start.x()  # 鼠标位置移动X距离
                     ty = event.y() - self.start.y()  # 鼠标位置移动Y距离
                     self.start = QPoint(event.x(), event.y())
-                    if self.cursor() != Qt.CrossCursor:
+                    if self.cursor() != Qt.CursorShape.CrossCursor:
                         instance = self.label["instances"][self.index]
                         if instance.segments is not None:
                             self.getLabelSizeInstance(instance)
-                            if self.cursor() == Qt.SizeAllCursor:  # 移动选中的点
+                            if self.cursor() == Qt.CursorShape.SizeAllCursor:  # 移动选中的点
                                 instance.segments[0][self.point_ind1, 0] += tx
                                 instance.segments[0][self.point_ind1, 1] += ty
                             self.getPixSizeInstance(instance)
@@ -619,7 +618,7 @@ class SegmentTransformerLabel(QTransformerLabel):
 
     def mouseReleaseEvent(self, ev:QMouseEvent):
         super().mouseReleaseEvent(ev)
-        if ev.button() == Qt.LeftButton and self.fast_cre_sel and self.fast_rect is not None and self.fast_method != "floodfill":
+        if ev.button() == Qt.MouseButton.LeftButton and self.fast_cre_sel and self.fast_rect is not None and self.fast_method != "floodfill":
             self.Fast_Sel_Cop_Signal.emit([])
 
     def keyPressEvent(self, ev:QKeyEvent):
@@ -645,10 +644,9 @@ class SegmentTransformerLabel(QTransformerLabel):
             self.Change_Label_Signal.emit()
             self.update()
             return
-        if self.cursor() == Qt.SizeAllCursor:
+        if self.cursor() == Qt.CursorShape.SizeAllCursor:
             main_menu = QMenu(self)
-            main_menu.setStyleSheet(
-                u"color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); selection-color: rgb(0, 0, 0); selection-background-color: rgb(144, 188, 255);")
+            main_menu.setObjectName("right_menu")
             delete_point_a = QAction(text="删除点", parent=main_menu)
             delete_seg_a = QAction(text="删除标签", parent=main_menu)
             main_menu.addActions([delete_point_a, delete_seg_a])
@@ -693,7 +691,7 @@ class KeypointsTransformerLabel(QTransformerLabel):
             color = QColor(self.colors[int(c)][0], self.colors[int(c)][1], self.colors[int(c)][2])
             color.setHsv(color.hue(), min(color.saturation() * s[c]/4 + 40,250), color.value(), 255)
             s[c] += 1
-            painter.setPen(QPen(color if not pred else self.red, 10, Qt.SolidLine))
+            painter.setPen(QPen(color if not pred else self.red, 10, Qt.PenStyle.SolidLine))
             painter.drawPoints(points)
 
 
@@ -743,17 +741,17 @@ class KeypointsTransformerLabel(QTransformerLabel):
             if judgePointInCircle(QPoint(p[0].item(), p[1].item()), pos, r):
                 self.point_ind1 = i
                 self.point_ind2 = i
-                self.setCursor(Qt.SizeAllCursor)
+                self.setCursor(Qt.CursorShape.SizeAllCursor)
                 break
             else:
-                self.setCursor(Qt.CrossCursor)
+                self.setCursor(Qt.CursorShape.CrossCursor)
 
     def mousePressEvent(self, event: QMouseEvent):
         super().mousePressEvent(event)
         if self.painting:
-            if event.button() == Qt.LeftButton:
+            if event.button() == Qt.MouseButton.LeftButton:
                 self.point_ind1 += 1
-            elif event.modifiers() == Qt.Key_Alt and event.buttons() == Qt.LeftButton and self.label["ndim"] == 3:
+            elif event.modifiers() == Qt.Key.Key_Alt and event.buttons() == Qt.MouseButton.LeftButton and self.label["ndim"] == 3:
                 self.label["instances"].keypoints[self.index, self.point_ind1,2] = 1
                 self.point_ind1 += 1
             if self.point_ind1 == self.label["nkpt"]:
@@ -770,10 +768,10 @@ class KeypointsTransformerLabel(QTransformerLabel):
             self.setKeypoint(self.index, self.point_ind1, self.mouse_point)
 
         if self.paint and not self.painting:
-            if event.buttons() == Qt.LeftButton and event.modifiers() != Qt.ControlModifier:
-                if self.cursor() != Qt.CrossCursor:
+            if event.buttons() == Qt.MouseButton.LeftButton and event.modifiers() != Qt.KeyboardModifier.ControlModifier:
+                if self.cursor() != Qt.CursorShape.CrossCursor:
                     if self.label["instances"].keypoints is not None:
-                        if self.cursor() == Qt.SizeAllCursor:
+                        if self.cursor() == Qt.CursorShape.SizeAllCursor:
                             self.setKeypoint(self.index, self.point_ind1, event.pos())
                             self.Change_Label_Signal.emit()
         self.update()
@@ -795,10 +793,9 @@ class KeypointsTransformerLabel(QTransformerLabel):
             self.Change_Label_Signal.emit()
             self.update()
             return
-        if self.cursor() == Qt.SizeAllCursor:
+        if self.cursor() == Qt.CursorShape.SizeAllCursor:
             main_menu = QMenu(self)
-            main_menu.setStyleSheet(
-                u"color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); selection-color: rgb(0, 0, 0); selection-background-color: rgb(144, 188, 255);")
+            main_menu.setObjectName("right_menu")
             visible_a = QAction(text="可见", parent=main_menu)
             visible_a.setCheckable(True)
             visible_a.setChecked(bool(self.label["instances"].keypoints[self.index, self.point_ind1, 2]) if len(self.label["instances"].keypoints) else False)
@@ -839,15 +836,15 @@ class ObbTransformerLabel(QTransformerLabel):
             for i in range(len(obb)):
                 points.append(QPoint(obb[i, 0].item(), obb[i, 1].item()))
             if len(points) == 4:
-                painter.setPen(QPen(Qt.green if not pred else self.red, 2, Qt.SolidLine))
+                painter.setPen(QPen(Qt.GlobalColor.green if not pred else self.red, 2, Qt.PenStyle.SolidLine))
                 color = QColor(self.colors[int(c)][0], self.colors[int(c)][1], self.colors[int(c)][2])
-                painter.setBrush(QBrush(color if not pred else self.red, Qt.SolidPattern))
+                painter.setBrush(QBrush(color if not pred else self.red, Qt.BrushStyle.SolidPattern))
                 painter.drawPolygon(points, FILL_RULE)
                 c_point = self.getObbCenter(obb, True)
                 r_point = self.getObbRotate(obb, True)
                 points.append(c_point)
                 points.append(r_point)
-            painter.setPen(QPen(Qt.green if not pred else self.red, 10, Qt.SolidLine))
+            painter.setPen(QPen(Qt.GlobalColor.green if not pred else self.red, 10, Qt.PenStyle.SolidLine))
             painter.drawPoints(points)
 
     def getObbCenter(self, obb, qpoint=False):
@@ -878,21 +875,21 @@ class ObbTransformerLabel(QTransformerLabel):
         if judgePointInCircle(r_point, pos, r):   #旋转点
             self.point_ind1 = 5
             self.point_ind2 = 5
-            self.setCursor(Qt.WaitCursor)
+            self.setCursor(Qt.CursorShape.WaitCursor)
         elif judgePointInCircle(c_point, pos, r):  #中心点
             self.point_ind1 = 4
             self.point_ind2 = 4
-            self.setCursor(Qt.SizeAllCursor)
+            self.setCursor(Qt.CursorShape.SizeAllCursor)
         else:
             for i in range(4):
                 p = QPoint(obb[i,0].item(), obb[i,1].item())
                 if judgePointInCircle(p, pos, r):
                     self.point_ind1 = i
                     self.point_ind2 = i
-                    self.setCursor(Qt.SizeAllCursor)
+                    self.setCursor(Qt.CursorShape.SizeAllCursor)
                     break
                 else:
-                    self.setCursor(Qt.CrossCursor)
+                    self.setCursor(Qt.CursorShape.CrossCursor)
 
     def addObb(self, obb, cls):
         self.label["instances"].segments.append(obb)
@@ -1015,15 +1012,15 @@ class ObbTransformerLabel(QTransformerLabel):
                 self.setPoint(self.index, self.point_ind1, p)
             elif self.point_ind1 == self.point_ind2 == 2:
                 self.setPoint23(self.index,event.pos())
-        elif self.paint and event.buttons() == Qt.LeftButton and event.modifiers() is not Qt.ControlModifier:
-            if self.cursor() == Qt.SizeAllCursor:
+        elif self.paint and event.buttons() == Qt.MouseButton.LeftButton and event.modifiers() is not Qt.MouseButton.ControlModifier:
+            if self.cursor() == Qt.CursorShape.SizeAllCursor:
                 if self.point_ind1 == self.point_ind2  in [0, 1, 2, 3]:
                     self.movePoint(self.index, self.point_ind1, event.pos())   #移动定向框某一点
                 elif self.point_ind1 == self.point_ind2 == 4:
                     self.moveObb(self.index,self.start, event.pos()) #移动定向框
                     self.start = event.pos()
                 self.Change_Label_Signal.emit()
-            elif self.cursor() == Qt.WaitCursor:
+            elif self.cursor() == Qt.CursorShape.WaitCursor:
                 self.rotateObb(self.index, event.pos())   #旋转定向框
                 self.Change_Label_Signal.emit()
         self.update()
@@ -1049,10 +1046,10 @@ class ObbTransformerLabel(QTransformerLabel):
             self.Change_Label_Signal.emit()
             self.update()
             return
-        if self.cursor() == Qt.SizeAllCursor or self.cursor() == Qt.WaitCursor:
+        if self.cursor() == Qt.CursorShape.SizeAllCursor or self.cursor() == Qt.CursorShape.WaitCursor:
             main_menu = QMenu(self)
-            main_menu.setStyleSheet(
-                u"color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); selection-color: rgb(0, 0, 0); selection-background-color: rgb(144, 188, 255);")
+            main_menu.setObjectName("right_menu")
+
             delete_seg_a = QAction(text="删除标签", parent=main_menu)
 
             main_menu.addActions([ delete_seg_a])
@@ -1081,7 +1078,7 @@ class ClassifyTransformerLabel(QTransformerLabel):
         cls = self.label["cls"]
         if cls == -1: return
         name = self.label["names"][cls]
-        painter.setPen(QPen(Qt.green if not pred else self.red, 5, Qt.SolidLine))
+        painter.setPen(QPen(Qt.GlobalColor.green if not pred else self.red, 5, Qt.PenStyle.SolidLine))
         painter.setFont(QFont("宋体", min(self.width(),self.height())/20))
         ty = self.image_rect.y()+min(self.width(),self.height())/20
         painter.drawText(QPoint(self.image_rect.x(), ty if not pred else ty+min(self.width(),self.height())/20), f"{cls}:{name}")
@@ -1091,7 +1088,7 @@ class ClassifyTransformerLabel(QTransformerLabel):
         if self.paint:
             if ev.text() == "\r":
                 self.label["cls"] = self.cls
-            elif ev.key() == Qt.Key_Escape:
+            elif ev.key() == Qt.Key.Key_Escape:
                 self.label["cls"] = -1
             self.update()
 
@@ -1134,7 +1131,7 @@ class ConfusionMatrixLabel(QSizeLabel):
         self.update()
 
 
-    def mouseMoveEvent(self, ev):
+    def mouseMoveEvent(self, ev:QMouseEvent):
         super().mouseMoveEvent(ev)
         self.setRectFocus(ev.pos())
         self.update()
@@ -1175,13 +1172,13 @@ class ConfusionMatrixLabel(QSizeLabel):
     def draw(self, painter):
         self.getClsRects()
         if self.select_rect is not None:
-            painter.setPen(QPen(Qt.green, 5, Qt.SolidLine))
-            color = QColor(Qt.darkBlue)
+            painter.setPen(QPen(Qt.GlobalColor.green, 5, Qt.PenStyle.SolidLine))
+            color = QColor(Qt.GlobalColor.darkBlue)
             color.setAlpha(100)
-            painter.setBrush(QBrush(color,Qt.SolidPattern))
+            painter.setBrush(QBrush(color,Qt.BrushStyle.SolidPattern))
             painter.drawRect(self.select_rect)
             painter.setFont(QFont("幼圆", 14))
-            painter.setPen(QPen(Qt.darkBlue))
+            painter.setPen(QPen(Qt.GlobalColor.darkBlue))
             pred = self.keys[self.pred_i][self.gt_i].split("$")[0].split(",")[0]
             gt = self.keys[self.pred_i][self.gt_i].split("$")[0].split(",")[1]
             point = copy.deepcopy(self.mouse_point)
@@ -1244,12 +1241,12 @@ class ShowLabel(QLabel):
     def drawImage(self, painter, rect, img, selected, im_file):
         painter.drawPixmap(rect, img)
         if selected:
-            color = QColor(Qt.darkBlue)
+            color = QColor(Qt.GlobalColor.darkBlue)
             color.setAlpha(50)
-            painter.setPen(QPen(Qt.blue, 3, Qt.SolidLine))
-            painter.setBrush(QBrush(color, Qt.SolidPattern))
+            painter.setPen(QPen(Qt.GlobalColor.blue, 3, Qt.PenStyle.SolidLine))
+            painter.setBrush(QBrush(color, Qt.BrushStyle.SolidPattern))
             painter.drawRect(rect)
-        painter.setPen(QPen(Qt.green))
+        painter.setPen(QPen(Qt.GlobalColor.green))
         painter.setFont(QFont("宋体", 20))
         painter.drawText(QPoint(rect.x(), rect.y()+20), f"{self.label_ops.judgeDataset(im_file)}:")
         painter.setFont(QFont("宋体", 20))
@@ -1334,7 +1331,7 @@ class ShowLabel(QLabel):
     def getTinyImg(self, im_file):
         """获取缩略图"""
         image = QImage(im_file)
-        thumbnail = image.scaled(200, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        thumbnail = image.scaled(200, 200, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         return QPixmap.fromImage(thumbnail)
 
 
@@ -1502,10 +1499,10 @@ class ShowLabel(QLabel):
 
 
     def mousePressEvent(self, ev:QMouseEvent) -> None:
-        if ev.buttons() == Qt.LeftButton or ev.buttons() == Qt.RightButton:
+        if ev.buttons() == Qt.MouseButton.LeftButton or ev.buttons() == Qt.MouseButton.RightButton:
             all_ind = self.getSelectedInd(ev.pos())
             if all_ind != -1:
-                if ev.modifiers() != Qt.ControlModifier:
+                if ev.modifiers() != Qt.KeyboardModifier.ControlModifier:
                     self.clickImage(all_ind)
                 else:
                     if self.selecteds[all_ind]:
@@ -1530,8 +1527,7 @@ class ShowLabel(QLabel):
     def contextMenuEvent(self, ev:QContextMenuEvent) -> None:
         all_ind = self.getSelectedInd(ev.pos())
         main_menu = QMenu(self)
-        main_menu.setStyleSheet(
-            u"color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); selection-color: rgb(0, 0, 0); selection-background-color: rgb(144, 188, 255);")
+        main_menu.setObjectName("right_menu")
         delete_a = QAction(text="删除", parent=main_menu)
         train2val_a = QAction(text="转验证集", parent=main_menu)
         val2train_a = QAction(text="转训练集", parent=main_menu)

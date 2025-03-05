@@ -55,11 +55,21 @@ QMenu {
 }
  
 QMenu::item {
-    padding: 2px 5px 2px 3px;
+    padding: 6px 20px 6px 15px;
     border-left: 3px solid transparent;
 }
  
 QMenu::item:selected {
+    background-color: #245b78;
+    border-left: 3px solid #00ff9d;
+}
+
+QMenu#right_menu::item {
+    padding: 6px 20px 6px 15px;
+    border-left: 3px solid transparent;
+}
+ 
+QMen#right_menuu::item:selected {
     background-color: #245b78;
     border-left: 3px solid #00ff9d;
 }
@@ -391,7 +401,6 @@ QSlider::handle:horizontal {
     border: 2px solid #00f3e6;
     border-radius: 12px;
     margin: -8px 0;
-    /*shadow: 0 0 10px #3d7afe;     /* 引力透镜光晕 */
 }
  
 /*===== 时空反馈机制 =====*/
@@ -421,7 +430,23 @@ QSlider::handle:horizontal:hover {
     border: 2px solid #ff355e;
 }
  
-QSlider::handle:horizontal:pressed {
-    /*shadow: 0 0 15px #ff355e;    /* 临界能量爆发 */
+/*===== 基础量子泡 =====*/
+QToolTip {
+    background-color: qradialgradient(        /* 量子纠缠基底 */
+        cx:0.3, cy:0.3,
+        radius: 0.7,
+        stop:0 #0a0e17ee, 
+        stop:1 #0a0e17aa 
+    );
+    color: #ff355e;                /* 信息素荧光 */
+    border: 2px solid qlineargradient(  /* 翘曲空间边界 */
+        x1:0, y1:0.5,
+        x2:1, y2:0.5,
+        stop:0 #3d7afe,
+        stop:1 #8a2be2 
+    );
+    border-radius: 4px;
+    font: 10pt "Quantum Console";       /* 超弦振动字体 */
+    padding: 1px 3px;
 }
 

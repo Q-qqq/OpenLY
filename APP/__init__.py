@@ -127,7 +127,7 @@ class ProjectSetting(Setting):
         self["name"] = str(Path(project_path))
 
     def updateExperiment(self, experiment):
-        experiment = str(Path(experiment))
+        experiment = experiment
         """更新项目列表"""
         if experiment in self["experiments"]:
             self["experiments"].remove(experiment)
@@ -137,6 +137,7 @@ class ProjectSetting(Setting):
 
     def updateMode(self, mode):
         self["mode"] = mode
+
 
 class ExperimentSetting(Setting):
     def __init__(self):
@@ -154,21 +155,31 @@ class ExperimentSetting(Setting):
             self["save_time"] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
             yaml_save(self.file, dict(self))
 
-    def load(self, experiment_path):
-        """加载新的项目或者切换项目"""
-        super().load(Path(experiment_path) / "SETTINGS.yaml")
-        self["name"] = str(Path(experiment_path))
+    def load(self, experiment):
+        """加载新的实验或者切换实验"""
+        super().load(Path(ProjectSetting["name"]) / "experiments" /  experiment / "SETTINGS.yaml")
+        self["name"] = str(Path(experiment))
 
-    def updateMode(self, mode):
-        self["mode"] = mode
+    def updateMode(self):
         self.save()
 
 APP_SETTINGS = APPSetting()
 PROJ_SETTINGS = ProjectSetting()
 EXPERIMENT_SETTINGS = ExperimentSetting()
 
+
+def getExperimentPath():
+    """获取实验路径""" 
+    project = PROJ_SETTINGS["name"]
+    experiment = EXPERIMENT_SETTINGS["name"]
+    return str(Path(project) / "experiments" / experiment)
+
 def getExistDirectory(*args, **kwargs):
-    """获取系统存在的一个文件夹并保存历史路径"""
+    """获取系统存在的一个文件夹并保存历史路径
+    Args:
+        parent(QWidget|None): 父窗口
+        caption(str): 标题
+        dir(str): 初始打开文件路径，默认为APP_SETTINGS["default_dir"]"""
     if len(args) < 3 and not kwargs.get("dir"):
         kwargs["dir"] = APP_SETTINGS["default_dir"]
     dir = QFileDialog.getExistingDirectory(*args, **kwargs)
@@ -176,11 +187,32 @@ def getExistDirectory(*args, **kwargs):
     return dir
 
 def getOpenFileName(*args, **kwargs):
+    """
+    获取单个文件
+    Args：
+        parent(QWidget|None): 父窗口
+        caption(str): 标题
+        dir(str): 初始打开文件路径，默认为APP_SETTINGS["default_file"]
+        filter(str): 文件过滤 'file (*.jpg *.png *.gif)'"""
     if len(args) < 3 and  not kwargs.get("dir"):
         kwargs["dir"] = APP_SETTINGS["default_file"]
-    file = QFileDialog.getOpenFileName(*args, **kwargs)
-    APP_SETTINGS.update({"default_file": str(Path(file[0]).parent)}) if file[0] != "" else None
-    return file
+    file, file_type = QFileDialog.getOpenFileName(*args, **kwargs)
+    APP_SETTINGS.update({"default_file": str(Path(file).parent)}) if file != "" else None
+    return file, file_type
+
+def getOpenFileNames(*args, **kwargs):
+    """
+    获取多个文件
+    Args：
+        parent(QWidget|None): 父窗口
+        caption(str): 标题
+        dir(str): 初始打开文件路径,默认APP_SETTINGS["default_file"]
+        filter(str): 文件过滤 'file (*.jpg *.png *.gif)'"""
+    if len(args) < 3 and  not kwargs.get("dir"):
+        kwargs["dir"] = APP_SETTINGS["default_file"]
+    files, files_type = QFileDialog.getOpenFileNames(*args, **kwargs)
+    APP_SETTINGS.update({"default_file": str(Path(files[0]).parent)}) if len(files) else None
+    return files, files_type
 
 
 def checkProject(project_path):
