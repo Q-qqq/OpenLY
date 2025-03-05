@@ -1,4 +1,5 @@
 
+import shutil
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
@@ -11,14 +12,14 @@ from multiprocessing.pool import ThreadPool
 from itertools import repeat
 
 from ultralytics.data.utils import img2label_paths,IMG_FORMATS, verify_image
-from ultralytics.utils import yaml_load, NUM_THREADS, LOGGER
+from ultralytics.utils import ThreadingLocked, threaded, yaml_load, NUM_THREADS, LOGGER
 
 
 
 
 from APP  import PROJ_SETTINGS
 from APP.Data.build import check_cls_dataset, check_detect_dataset
-from APP.Data import readLabelFile
+from APP.Data import getNoLabelPath, readLabelFile
 from APP.Utils import get_widget
 from APP.Utils.filters import CbbFilter
 
@@ -56,6 +57,26 @@ class SiftDataset(QObject):
             self.sift_tool.images_label.build = True
         self.sift_tool.siftImageSignal()
         self.sift_tool.image_scroll.resizeEvent(None)
+    
+    def addNolabels(self, im_files):
+        """添加未标注图像"""
+        no_label_path = getNoLabelPath()
+        all_files_name = [Path(im_file).name for im_file in self.sift_tool.images_label.im_files]  #所有图像文件名
+        exist_names = []
+        new_im_files = []
+        for im_file in im_files:
+            if Path(im_file).exists():
+                if Path(im_file).name not in all_files_name:
+                    shutil.copy(im_file, no_label_path)
+                    new_im_files.append(str(Path(no_label_path) / Path(im_file).name))
+                else:
+                    exist_names.append(Path(im_file).name)
+        if new_im_files:
+            im_shapes = self.getImShapes(new_im_files)
+            self.sift_tool.loadImages(im_shapes)
+            if self.sift_tool.select_dataset_cbb.currentText() in ("总样本集", "未标注集"):
+                self.sift_tool.showImages(new_im_files+ self.sift_tool.images_label.show_files)
+        return exist_names
 
     def getImShapes(self, im_files):
         """获取图像对应的大小，输出字典{im_file:shape}
@@ -151,7 +172,7 @@ class SiftDataset(QObject):
         Args:'all':所有种类, ‘ok’：已标注但没有标签的OK样本"""
         if not len(im_shapes):
             return {}
-        if Path(list(im_shapes.keys())[0]).parent.name in ("no_label", Path(PROJ_SETTINGS["current_experiment"]).name):
+        if Path(list(im_shapes.keys())[0]).parent.name == Path(PROJ_SETTINGS["current_experiment"]).name:
             return im_shapes
         if cls_name == "all":
             return im_shapes
@@ -162,9 +183,13 @@ class SiftDataset(QObject):
                     im_ss.update({file: shape})
         else:
             names = list(self.train_set.data["names"].values())
-            cls = names.index(cls_name) if cls_name in names else cls_name
+            if cls_name not in names:
+                return im_shapes
+            cls = names.index(cls_name)
             label_files = img2label_paths(list(im_shapes.keys()))
             for label_file,(im_file, shape) in zip(label_files,im_shapes.items()):
+                if Path(im_file).parent.name in ("no_label", Path(PROJ_SETTINGS["current_experiment"]).name):
+                    continue
                 lb = readLabelFile(label_file)
                 if len(lb):
                     for line in lb:
@@ -216,9 +241,12 @@ class SiftTool(QObject):
         self.select_class_cbb.installEventFilter(CbbFilter(self.parent()))
         self.select_ops_cbb.installEventFilter(CbbFilter(self.parent()))
 
-
-    def siftImageSignal(self):
+    @ThreadingLocked()
+    @threaded
+    def siftImageSignal(self, changeText=""):
         """筛选图像"""
+        if self.select_class_cbb.currentText() == "":
+            return
         sift_dataset = self.parent()
         item_text = self.select_dataset_cbb.currentText()
         im_shapes = sift_dataset.getValue(item_text)

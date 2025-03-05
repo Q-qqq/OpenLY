@@ -18,7 +18,7 @@ from ultralytics.data.augment import classify_transforms
 
 
 
-from APP.Utils.base import QInstances
+from APP.Label.base import QInstances
 from APP.Data import format_im_files,readLabelFile,writeLabelFile
 
 

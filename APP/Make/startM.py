@@ -9,7 +9,7 @@ import glob
 
 from ultralytics.utils.files import increment_path
 
-from APP  import getExistDirectory, checkProject, APP_SETTINGS, PROJ_SETTINGS, EXPERIMENT_SETTINGS
+from APP  import getExistDirectory, checkProject, APP_SETTINGS, PROJ_SETTINGS, EXPERIMENT_SETTINGS, getExperimentPath
 
 
 class Start(QWidget, startQT_ui.Ui_Form):
@@ -93,17 +93,19 @@ class Start(QWidget, startQT_ui.Ui_Form):
         project = str(Path(project))
         APP_SETTINGS.updateProject(project)
         PROJ_SETTINGS.load(project)
-        experiment = PROJ_SETTINGS["current_experiment"]
+        experiment = PROJ_SETTINGS["current_experiment"]   #实验名称
         exp_cache_p = f"{project}\\experiments\\expcache"
-        experiments = [str(Path(f)) for f in glob.glob(f"{project}\\experiments\\**", recursive=False)]
-        cache_experiments = [str(Path(f)) for f in glob.glob(f"{project}\\experiments\\expcache\\**")]
-        if str(Path(experiment)) not in experiments and str(experiment) not in cache_experiments:  # current实验不存在， 新建默认实验
-            experiment = increment_path(f"{exp_cache_p}\\untitled", mkdir=True)
+        experiments = [Path(f).name for f in glob.glob(f"{project}\\experiments\\**", recursive=False)]
+        cache_experiments= [Path(f).name for f in glob.glob(f"{project}\\experiments\\expcache\\**")]
+        if experiment not in experiments and experiment not in cache_experiments:  # current实验不存在， 新建默认实验
+            experiment_path = increment_path(f"{exp_cache_p}\\untitled", mkdir=True)
+            experiment = ".\\expcache\\" +  Path(experiment_path).name
+            EXPERIMENT_SETTINGS.load(experiment_path)
         no_label_path = Path(project) / "data" / "no_label"
         if not no_label_path.exists():
             no_label_path.mkdir(parents=True, exist_ok=True)
         self.start = True
-        self.Start_Signal.emit(str(experiment))  # 打开项目
+        self.Start_Signal.emit(experiment)  # 打开项目
         self.close()
 
     def delectProject(self, item):

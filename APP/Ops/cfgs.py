@@ -125,9 +125,8 @@ class CfgsTreeWidget(QTreeWidget):
     def updateArgs(self, args, overrides=None):
         """更新所有参数"""
         args = cfg2dict(get_cfg(args, overrides))
-        exp = Path(PROJ_SETTINGS["current_experiment"])
-        proj = str(exp.parent)
-        name = str(exp.name)
+        proj = PROJ_SETTINGS["name"]
+        name = str(Path(EXPERIMENT_SETTINGS["name"]) / "experiments")
         for k,  v  in zip(["project", "name"],[proj, name]):
             if k in args.keys():
                 args[k] = v
@@ -321,7 +320,7 @@ class CfgsTreeWidget(QTreeWidget):
             le.setFont(font)
             le.setObjectName(name + "_value")
             le.setText(str(value))
-            le.setEnabled(eval(widget_args.get("enable", True)))
+            le.setEnabled(eval(widget_args.get("enable", "True")))
             le.textChanged.connect(lambda: self.changeEvents(le))
             hl.addWidget(le)
             if browse_bp:
