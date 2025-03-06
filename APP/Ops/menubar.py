@@ -83,6 +83,7 @@ class MenuTool(QObject):
     def file_openExperiment(self):
         """打开实验"""
         experiments = glob.glob(str(Path(PROJ_SETTINGS["name"]) / "experiments" / "*"))
+        experiments = [Path(e).name for e in experiments].remove("expcache")
         experiment, ok = QInputDialog.getItem(self.parent(),"选择实验", "实验：",experiments,0,False)
         if ok:
             self.parent().openExperiment(experiment)

@@ -91,6 +91,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
 
         self.show_img_gl = QGridLayout(self.Source_show_f)
         self.show_img_gl.setObjectName(u"show_img_gl")
+        self.show_img_gl.setContentsMargins(2,2,2,2)
         self.setImgLabel(QTransformerLabel)
 
         self.show_confusion_norm_gl = QGridLayout(self.Confusion_norm_w)
@@ -184,7 +185,9 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
         self.Progress_dw.raise_()
         self.cfgs_widget.save()
         yolo = Yolo(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
-        yolo.lyVal(save_dir=getExperimentPath(), **self.cfgs_widget.args)
+        args = copy.deepcopy(self.cfgs_widget.args)
+        args["save_dir"] = getExperimentPath()
+        yolo.lyVal(**args)
 
     def startPredict(self):
         self.cfgs_widget.save()
@@ -295,6 +298,8 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
         self.run.updateConfusion()
         self.run.updateLoss()
 
+    def keyPressEvent(self, event):
+        self.img_label.keyPressEvent(event)
 
     def closeEvent(self, event: QCloseEvent):
         if Path(getExperimentPath()).parent.name == "expcache":
@@ -302,7 +307,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
             if ans == QMessageBox.Yes:
                 name, ok = QInputDialog.getText(self, "保存实验", "实验名称：",text=Path(getExperimentPath()).name)
                 if ok and name != "":
-                    shutil.copytree(getExperimentPath(), str(Path(f"{PROJ_SETTINGS['name']}//experiments//{name}")))
+                    shutil.copytree(getExperimentPath(), getExperimentPath(name))
                     shutil.rmtree(getExperimentPath())
                 elif ok and name == "":
                     QMessageBox.information(self, "提示", "实验名称不能为空")

@@ -72,7 +72,8 @@ class ImageScroll(QScrollArea):
             v = self.horizontalScrollBar().value()
             self.horizontalScrollBar().setValue(max(0,v - self.images_label.widths[all_ind] - self.images_label.spacing))
 
-
+    def keyPressEvent(self, ev):
+        self.images_label.keyPressEvent(ev)
 
     def resizeEvent(self, arg__1:QResizeEvent) -> None:
         self.images_label.setMinimumHeight(self.height() - 30)

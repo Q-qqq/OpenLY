@@ -17,7 +17,7 @@ from ultralytics.utils import ThreadingLocked, threaded, yaml_load, NUM_THREADS,
 
 
 
-from APP  import PROJ_SETTINGS, getExperimentPath,EXPERIMENT_SETTINGS
+from APP  import PROJ_SETTINGS, getExperimentPath,EXPERIMENT_SETTINGS, debounce
 from APP.Data.build import check_cls_dataset, check_detect_dataset
 from APP.Data import getNoLabelPath, readLabelFile
 from APP.Utils import get_widget
@@ -122,7 +122,7 @@ class SiftDataset(QObject):
     def getNames(self):
         """获取种类
         return(dict): {num:class}"""
-        if self.train_set:
+        if self.train_set is not None:
             if self.task == "classify":
                 names = self.train_set.names
             else:
@@ -183,9 +183,8 @@ class SiftDataset(QObject):
                     im_ss.update({file: shape})
         else:
             names = list(self.train_set.data["names"].values())
-            if cls_name not in names:
+            if cls_name not in names+["ok"]:
                 return im_shapes
-            cls = names.index(cls_name)
             label_files = img2label_paths(list(im_shapes.keys()))
             for label_file,(im_file, shape) in zip(label_files,im_shapes.items()):
                 if Path(im_file).parent.name in ("no_label", EXPERIMENT_SETTINGS["name"]):
@@ -193,7 +192,7 @@ class SiftDataset(QObject):
                 lb = readLabelFile(label_file)
                 if len(lb):
                     for line in lb:
-                        if line[0] == cls:
+                        if line[0] == names.index(cls_name):
                             im_ss.update({im_file: shape})
                             break
                 else:
@@ -241,12 +240,15 @@ class SiftTool(QObject):
         self.select_class_cbb.installEventFilter(CbbFilter(self.parent()))
         self.select_ops_cbb.installEventFilter(CbbFilter(self.parent()))
 
-    @ThreadingLocked()
+    @debounce(500)
     @threaded
-    def siftImageSignal(self, changeText=""):
+    def siftImageSignal(self, change_text=""):
         """筛选图像"""
         if self.select_class_cbb.currentText() == "":
             return
+        items = self.parent().getItems()
+        if change_text in items:
+            self.updateOps()
         sift_dataset = self.parent()
         item_text = self.select_dataset_cbb.currentText()
         im_shapes = sift_dataset.getValue(item_text)
@@ -280,25 +282,65 @@ class SiftTool(QObject):
         if item == "删除":
             self.images_label.deleteImages(im_files)
         elif item == "转验证集":
-            self.images_label.train2Val(im_files)
+            if self.select_dataset_cbb.currentText() == "训练集":
+                self.images_label.train2Val(im_files)
+            else:
+                self.images_label.nolabel2Val(im_files)
         elif item == "转训练集":
-            self.images_label.val2Train(im_files)
+            if self.select_dataset_cbb.currentText() == "验证集":
+                self.images_label.val2Train(im_files)
+            else:
+                self.images_label.nolabel2Train(im_files)
         elif item == "转未标注集":
             self.images_label.toNolabel(im_files)
+
+    def updateOps(self):
+        """更新操作"""
+        dataset = self.select_dataset_cbb.currentText()
+        if dataset == "训练集":
+            items = ["删除", "转验证集", "转未标注集"]
+        elif dataset == "验证集":
+            items = ["删除", "转训练集", "转未标注集"]
+        elif dataset in ("未标注集"):
+            items = ["删除", "转验证集", "转训练集"]
+        else:
+            items = []
+        self.select_ops_cbb.clear()
+        self.select_ops_cbb.addItems(items)
+    
+    def updateDataset(self):
+        """更新数据集"""
+        dataset_items = self.parent().getItems()
+        items = [self.select_dataset_cbb.itemText(i) for i in range(self.select_dataset_cbb.count())]
+        for item in dataset_items:
+            if item not in items:
+                self.select_dataset_cbb.addItem(item)
+        for item in items:
+            if item not in dataset_items:
+                self.select_dataset_cbb.removeItem(items.index(item))
+
+    def updateClass(self):
+        """更新种类"""
+        names = self.parent().getNames()
+        class_items = ["all"] + list(names.values()) + ["ok"]
+        items = [self.select_class_cbb.itemText(i) for i in range(self.select_class_cbb.count())]
+        for item in class_items:
+            if item not in items:
+                self.select_class_cbb.addItem(item)
+        for item in items:
+            if item not in class_items:
+                self.select_class_cbb.removeItem(items.index(item))
 
     def initSifter(self):
         """初始化筛选器"""
         #dataset
-        sift_dataset = self.parent()
-        dataset_items = sift_dataset.getItems()
-        self.select_dataset_cbb.clear()
-        self.select_dataset_cbb.addItems(dataset_items)
+        self.updateDataset()
 
         #class
-        names = sift_dataset.getNames()
-        cls_items = ["all"] + list(names.values())
-        self.select_class_cbb.clear()
-        self.select_class_cbb.addItems(cls_items)
+        self.updateClass()
+
+        #ops 
+        self.updateOps()
 
         #search
         self.select_search_le.setText("")

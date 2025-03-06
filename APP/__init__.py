@@ -1,3 +1,4 @@
+from functools import wraps
 import torch
 from PySide6.QtCore import *
 from PySide6.QtGui import *
@@ -157,10 +158,10 @@ PROJ_SETTINGS = ProjectSetting()
 EXPERIMENT_SETTINGS = ExperimentSetting()
 
 
-def getExperimentPath(name=EXPERIMENT_SETTINGS["name"]):
+def getExperimentPath(name = ""):
     """获取实验路径""" 
     project = PROJ_SETTINGS["name"]
-    experiment = name
+    experiment = name if name != "" else EXPERIMENT_SETTINGS["name"]
     return str(Path(project) / "experiments" / experiment)
 
 def getExistDirectory(*args, **kwargs):
@@ -267,6 +268,24 @@ def init_progress_effect(progress_bar):
     ripple_anim.start() 
 
 
+
+def debounce(delay_ms: int):
+    """防抖装饰器"""
+    def decorator(func):
+        timer = QTimer()
+        timer.setSingleShot(True)
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            timer.start(delay_ms)
+            # 保存最新参数
+            wrapper._args = args
+            wrapper._kwargs = kwargs
+
+        # 连接定时器到实际函数
+        timer.timeout.connect(lambda: func(*wrapper._args, **wrapper._kwargs))
+        return wrapper
+    return decorator
 
 
 

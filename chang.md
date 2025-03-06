@@ -586,3 +586,18 @@ def verify_image(args):
     ...
     return (im_file, cls), nf, nc, msg, shape
 ```
+## 修改九： 检测det数据集默认父路径修改
+### ultralytics.data.utils
++ 在check_det_dataset函数中，修改数据集默认父路径DATASETS_DIR为Path(file).parent
+```python
+def check_det_dataset(dataset, autodownload=True):
+    file = check_file(dataset)
+    ...
+    ...
+    # Resolve paths
+    path = Path(extract_dir or data.get("path") or Path(data.get("yaml_file", "")).parent)  # dataset root
+    if not path.is_absolute():
+        path = (Path(file).parent / path).resolve()   #DATASETS_DIR->Path(file).parent
+    ...
+    ...
+```

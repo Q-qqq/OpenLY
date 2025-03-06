@@ -16,7 +16,7 @@ from ultralytics.data.augment import classify_transforms
 
 
 
-from APP  import PROJ_SETTINGS
+from APP  import PROJ_SETTINGS, debounce
 from APP.Data import readLabelFile, format_im_files, getNoLabelPath
 from APP.Label.base import QInstances
 from APP.Utils import get_widget
@@ -128,9 +128,9 @@ class LabelOps(QObject):
         if not train_val:
             train_val = "no_label" if Path(self.img_label.im_file).parent.name == "no_label" else "results"
         return train_val
-
+    
+    @debounce(300)
     @threaded
-    @ThreadingLocked()
     def save(self):
         """保存标签"""
         if not self.img_label:
@@ -145,9 +145,11 @@ class LabelOps(QObject):
 
         if label:
             if self.painter_tool.train_rb.isChecked():
+                self.painter_tool.setTrainVal("train")
                 set = self.train_set
                 root = self.train_path
             elif self.painter_tool.val_rb.isChecked():
+                self.painter_tool.setTrainVal("val")
                 set = self.val_set
                 root = self.val_path
             else:
@@ -199,6 +201,45 @@ class LabelOps(QObject):
         no_label_path = getNoLabelPath()
         self.painter_tool.setTrainVal("no_label")
         return self.deleteSamples(im_files, no_label_path)
+    
+
+    def nolabel2Train(self, im_files=None):
+        if not im_files:
+            im_files = self.img_label.im_file
+        im_files = format_im_files(im_files)
+        new_im_files = copy.deepcopy(im_files)
+        for i, im_file in enumerate(im_files):
+            if Path(im_file).parent.name != "no_label":
+                continue
+            if self.task == "classify":
+                label = self.getLabel(im_file)
+                new_im_file = self.train_set.addData(im_file, label["cls"])[0]
+            else:
+                new_im_file = self.train_set.addData(im_file, self.train_path)[0]
+            new_im_files[i] = new_im_file
+            if im_file == self.img_label.im_file:
+                self.img_label.im_file = new_im_file
+                self.painter_tool.setTrainVal("train")
+        return new_im_files
+    
+    def nolabel2Val(self, im_files=None):
+        if not im_files:
+            im_files = self.img_label.im_file
+        im_files = format_im_files(im_files)
+        new_im_files = copy.deepcopy(im_files)
+        for i, im_file in enumerate(im_files):
+            if Path(im_file).parent.name != "no_label":
+                continue
+            if self.task == "classify":
+                label = self.getLabel(im_file)
+                new_im_file = self.val_set.addData(im_file, label["cls"])[0]
+            else:
+                new_im_file = self.val_set.addData(im_file, self.val_path)[0]
+            new_im_files[i] = new_im_file
+            if im_file == self.img_label.im_file:
+                self.img_label.im_file = new_im_file
+                self.painter_tool.setTrainVal("val")
+        return new_im_files
 
     def train2Val(self, im_files=None):
         if not im_files:
@@ -260,8 +301,7 @@ class LabelOps(QObject):
         cls = list(names.values()).index(cls_name) if isinstance(cls_name, str) else cls_name
         self.train_set.deleteClass(cls, no_label_path)
         self.val_set.deleteClass(cls, no_label_path)
-        self.img_label.label["names"] = self.train_set.names if self.task == "classify" else self.train_set.data["names"]
-        self.img_label.generateColors()
+        self.img_label.load_image(self.img_label.im_file, self.getLabel(self.img_label.im_file))
         if self.img_label.cls >= len(self.img_label.label["names"]):
             self.img_label.cls = len(self.img_label.label["names"])-1
 
@@ -315,6 +355,10 @@ class PainterTool(QObject):
         self.paint_pb.clicked.connect(self.paintClicked)
 
     def paintClicked(self):
+        if not self.label_ops.img_label:
+            return
+        if not len(self.label_ops.img_label.label["names"]):
+            return
         if not self.label_ops.img_label.paint:
             self.label_ops.img_label.paint = True
             self.paint_pb.setStyleSheet(self.blue_color)
@@ -347,11 +391,19 @@ class PainterTool(QObject):
             self.levels_augment.show()
 
     def fastSelectClicked(self):
+        if not self.label_ops.img_label:    #没有打开图像
+            return
+        if self.label_ops.img_label.task != "segment":
+            return
         if self.label_ops.img_label.im_file:
             self.fast_select.img_label = self.label_ops.img_label
             self.fast_select.show()
 
     def pencilClicked(self):
+        if not self.label_ops.img_label:    #没有打开图像
+            return
+        if self.label_ops.img_label.task != "segment":
+            return
         if not  self.label_ops.img_label.use_pencil:
             self.label_ops.img_label.use_pencil = True
             self.label_ops.img_label.use_pen = False

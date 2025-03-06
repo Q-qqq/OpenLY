@@ -101,7 +101,7 @@ class Start(QWidget, startQT_ui.Ui_Form):
             if not experiments:  #不存在其他实验
                 experiment_path = increment_path(f"{exp_cache_p}\\untitled", mkdir=True)
                 experiment = ".\\expcache\\" +  Path(experiment_path).name
-                EXPERIMENT_SETTINGS.load(experiment_path)
+                EXPERIMENT_SETTINGS.load(experiment)
             else:  #存在其他实验
                 experiment = experiments[0]
         no_label_path = Path(project) / "data" / "no_label"

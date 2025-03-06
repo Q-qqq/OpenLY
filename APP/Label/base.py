@@ -629,6 +629,8 @@ class QTransformerLabel(QSizeLabel):
 
     def init(self):
         """初始化"""
+        self.img =None
+        self.levels_img = None
         self.label = None
         self.im_file = ""
         self.pix = None
@@ -658,6 +660,8 @@ class QTransformerLabel(QSizeLabel):
             self.painting = False
             self.img = cv2.imread(image)
             self.levels_img = None
+            if self.cls >= len(self.label["names"]):
+                self.cls = self.cls - 1 if len(self.label["names"]) > 0 else 0
             super().load_image(image, label)
         else:
             self.init()
@@ -784,20 +788,23 @@ class QTransformerLabel(QSizeLabel):
                 painter.drawPoints([lu, ru, ld, rd])
                 if self.show_cls and self.task == "detect":
                     if not pred:
-                        self.drawText(painter, QPoint(box[0],box[1]-2), self.label["names"][int(c)], 12, color=Qt.GlobalColor.green)
+                        self.drawText(painter, QPoint(box[0],box[1]-4), self.label["names"][int(c)], 12, color=Qt.GlobalColor.green)
                     else:
                         self.drawText(painter, QPoint(box[2], box[3] + 12), self.pred_label["names"][int(c)] + f" {self.pred_label['conf'][i]:3.2f}", 12, color=Qt.GlobalColor.white)
 
-    def drawText(self, painter,point, text, font_size=8, color=Qt.GlobalColor.green):
-        text_w = len(text) * font_size*3/4
-        text_h = font_size
-        brush = QBrush(Qt.BrushStyle.SolidPattern)
+    def drawText(self, painter,point, text, font_size=8, color=Qt.green):
+        font = QFont("幼圆", font_size)
+        # 计算文本宽度
+        font_metrics = QFontMetrics(font)
+        text_w= font_metrics.horizontalAdvance(text)
+        text_h = font_metrics.height()
+        brush = QBrush(Qt.SolidPattern)
         brush.setColor(QColor(255, 0, 0, 150))
         painter.setBrush(brush)
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.drawRect(QRect(point.x()-2, point.y() - font_size-1, text_w+4, text_h+5))
+        painter.setPen(Qt.NoPen)
+        painter.drawRect(QRect(point.x()-2, point.y() -text_h, text_w+4, text_h+2))
         painter.setPen(QPen(color))
-        painter.setFont(QFont("幼圆", font_size))
+        painter.setFont(font)
         painter.drawText(point, text)
 
 
@@ -821,7 +828,7 @@ class QTransformerLabel(QSizeLabel):
             self.Show_Status_Signal.emit(tip)
         # 当前选中标签
         if self.paint and not self.painting and event.buttons() != Qt.MouseButton.LeftButton:
-            if self.label.get("instances") and len(self.label["instances"]):
+            if self.label.get("instances", None) and len(self.label["instances"]):
                 for i, inst in enumerate(self.label["instances"]):
                     instance = copy.deepcopy(inst)
                     self.getLabelSizeInstance(instance)
@@ -847,6 +854,9 @@ class QTransformerLabel(QSizeLabel):
             self.Next_Image_Signal.emit()
         elif ev.key() == Qt.Key.Key_Up:
             self.Last_Image_Signal.emit()
+        elif ev.key() in (Qt.Key.Key_0, Qt.Key.Key_1, Qt.Key.Key_2, Qt.Key.Key_3, Qt.Key.Key_4, Qt.Key.Key_5, Qt.Key.Key_6, Qt.Key.Key_7, Qt.Key.Key_8, Qt.Key.Key_9):
+            if int(ev.text()) < len(self.label["names"]):
+                self.cls = int(ev.text())
 
 
     def contextMenuEvent(self, ev: QContextMenuEvent) -> None:

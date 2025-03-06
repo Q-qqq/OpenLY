@@ -1398,6 +1398,19 @@ class ShowLabel(QLabel):
         if self.dataset not in ("总样本集", "未标注集"):
             self.removeImages(new_im_files)
 
+    def nolabel2Train(self, im_files):
+        new_im_files = self.label_ops.nolabel2Train(im_files)
+        self.label_ops.img_label.label["dataset"] = "train"
+        self.updateImagesFile(im_files, new_im_files)
+        if self.dataset not in ("总样本集", "训练集"):
+            self.removeImages(new_im_files)
+    
+    def nolabel2Val(self, im_files):
+        new_im_files = self.label_ops.nolabel2Val(im_files)
+        self.label_ops.img_label.label["dataset"] = "val"
+        self.updateImagesFile(im_files, new_im_files)
+        if self.dataset not in ("总样本集", "验证集"):
+            self.removeImages(new_im_files)
 
     def deleteImages(self, im_files):
         """删除指定的图像"""
@@ -1521,7 +1534,8 @@ class ShowLabel(QLabel):
         im_file =self.im_files[all_ind]
         self.setToolTip(im_file)
 
-
+    def keyPressEvent(self, ev):
+        self.label_ops.img_label.keyPressEvent(ev)
 
 
     def contextMenuEvent(self, ev:QContextMenuEvent) -> None:
@@ -1529,23 +1543,31 @@ class ShowLabel(QLabel):
         main_menu = QMenu(self)
         main_menu.setObjectName("right_menu")
         delete_a = QAction(text="删除", parent=main_menu)
-        train2val_a = QAction(text="转验证集", parent=main_menu)
-        val2train_a = QAction(text="转训练集", parent=main_menu)
+        to_val_a = QAction(text="转验证集", parent=main_menu)
+        to_train_a = QAction(text="转训练集", parent=main_menu)
         to_noLabel_a = QAction(text="转未标注", parent=main_menu)
 
         main_menu.addActions([delete_a])
         dataset = self.label_ops.judgeDataset(self.im_files[all_ind])
         if dataset == "train":
-            main_menu.addActions([train2val_a,to_noLabel_a])
+            main_menu.addActions([to_val_a,to_noLabel_a])
         elif dataset == "val":
-            main_menu.addActions([val2train_a, to_noLabel_a])
+            main_menu.addActions([to_train_a, to_noLabel_a])
+        elif dataset == "no_label":
+            main_menu.addActions([to_train_a, to_val_a])
         req = main_menu.exec_(self.mapToGlobal(ev.pos()))
         if req == delete_a:
             self.deleteImages(self.im_files[all_ind])
-        elif req == train2val_a:
-            self.train2Val(self.im_files[all_ind])
-        elif req == val2train_a:
-            self.val2Train(self.im_files[all_ind])
+        elif req == to_val_a:
+            if dataset == "train":
+                self.train2Val(self.im_files[all_ind])
+            else:
+                self.nolabel2Val(self.im_files[all_ind])
+        elif req == to_train_a:
+            if dataset == "val":
+                self.val2Train(self.im_files[all_ind])
+            else:
+                self.nolabel2Train(self.im_files[all_ind])
         elif req == to_noLabel_a:
             self.toNolabel(self.im_files[all_ind])
 
