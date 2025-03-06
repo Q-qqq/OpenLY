@@ -159,7 +159,7 @@ class Ui_Form(object):
 
         self.label_5 = QLabel(self.groupBox_2)
         self.label_5.setObjectName(u"label_5")
-        self.label_5.setMaximumSize(QSize(100, 16777215))
+        self.label_5.setMaximumSize(QSize(16777215, 16777215))
         self.label_5.setFont(font2)
 
         self.gridLayout_2.addWidget(self.label_5, 1, 0, 1, 1)

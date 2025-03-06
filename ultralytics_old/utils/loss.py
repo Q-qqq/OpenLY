@@ -533,7 +533,7 @@ class v8DetectionLoss:
         _, target_bboxes, target_scores, fg_mask, _ = self.assigner(
             pred_scores.detach().sigmoid(),
             (pred_bboxes.detach() * stride_tensor).type(gt_bboxes.dtype),
-            anchor_points * stride_tensor,
+            anchor_points * stride_tensor,  #将检测头的描点映射到真实图像上，stride越大越稀疏
             gt_labels,
             gt_bboxes,
             mask_gt

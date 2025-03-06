@@ -110,15 +110,9 @@ QLabel[objectName^="status_"] {         /* 时空状态指示 */
     padding: 8px 15px;
 }
  
-/*===== 动态响应 =====*/
-QLabel:hover {
-    color: #3d7afe;
-    /*shadow: 0 0 15px #3d7afe99;
-}
- 
 QLabel:disabled {                       /* 熵寂灭态 */
     color: #3d7afe55;
-    shadow: none;
+    /*shadow: none;*/
 }
  
 QStatusBar {

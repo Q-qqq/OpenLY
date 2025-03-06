@@ -391,7 +391,7 @@ class CfgsTreeWidget(QTreeWidget):
                     self.last_click_item.setText(1, str(self.getWidgetValue(w)))
                     self.removeItemWidget(self.last_click_item,1)
                     w.deleteLater()
-        self.last_click_color = item.backgroundColor(0)
+        self.last_click_color = item.background(0).color()
         self.last_click_item = item
         selected_color = QColor(9, 38, 229, 100)
         item.setBackground(0, selected_color)
