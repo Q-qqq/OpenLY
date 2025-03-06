@@ -32,6 +32,7 @@ def check_detect_dataset(root, args):
     if len(data["names"]):
         data = check_det_dataset(root)
     else:
+        data["names"] = {}
         data["train"] = (Path(data["path"]) / data["train"]).resolve()
         data["val"] = (Path(data["path"])/ data["val"]).resolve()
 

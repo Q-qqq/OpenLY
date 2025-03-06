@@ -1,3 +1,4 @@
+import colorsys
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
@@ -218,34 +219,35 @@ def cvImg2Qpix(img):
 
 import colorsys
 
-
 def generate_distinct_colors(n, saturation=0.9, value=0.9):
     """
     生成n个视觉可区分的颜色（HEX格式）
-
-    Args：
+    
+    参数：
     n : int - 需要生成的颜色数量
     saturation : float (0-1) - 饱和度，默认90%
     value : float (0-1) - 明度，默认90%
-
-    Returns：
+    
+    返回：
     list - 包含n个HEX颜色代码的列表
     """
     colors = []
     hue_step = 360 / n  # 色相间隔
-
+    
     for i in range(n):
         # 计算HSV值（色相转换为角度制）
         hue = i * hue_step
-        r, g, b = colorsys.hsv_to_rgb(hue / 360, saturation, value)
-
+        r, g, b = colorsys.hsv_to_rgb(hue/360,  saturation, value)
+        
         # 转换为HEX格式
-        hex_code = [int(r * 255),
-            int(g * 255),
+        hex_code = [int(r * 255), 
+            int(g * 255), 
             int(b * 255)]
-        colors.append(hex_code)
-
+        colors.append(hex_code) 
+    
     return colors
+
+
 
 def segmentArea(segment):
     "计算分割多边形面积"

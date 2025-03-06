@@ -195,6 +195,8 @@ class DetectDataset(YOLODataset):
                     Path(new_label_file).parent.mkdir(parents=True, exist_ok=True)
                 shutil.move(label_file, Path(new_label_file).parent)  #已存在，移动标签至数据集路径
             else:
+                if not Path(new_label_file).parent.exists():
+                    Path(new_label_file).parent.mkdir(parents=True, exist_ok=True)
                 with open(new_label_file, "w") as f:  #新建空白txt
                     pass
             self.label_files.append(str(label_file))
@@ -277,7 +279,8 @@ class DetectDataset(YOLODataset):
                         if b[0] > cls:
                             b[0] -= 1
                         new_lb.append(b)
-                writeLabelFile(label_file, new_lb)
+                if len(new_lb) != len(lb):
+                    writeLabelFile(label_file, new_lb)
         #数据集更新标签
         self.labels = self.get_labels() if self.im_files else []
         self.ni = len(self.labels)  # number of images
