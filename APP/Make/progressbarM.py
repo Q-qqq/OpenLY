@@ -55,7 +55,7 @@ class ProgressBar(QWidget, progressbarQT_ui.Ui_Progress):
         self.setWindowTitle(title)
         if not self.is_show:
             self.is_show = True
-            #self.Show_mes_te.clear()
+            self.Show_mes_te.setPlainText("")
             self.Show_mes_te.append(head_txt)
             self.show()
         self.ProgressBar.setRange(range[0], range[1])

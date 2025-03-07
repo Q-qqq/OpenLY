@@ -10,9 +10,10 @@ from PySide6.QtWidgets import *
 from pathlib import Path
 
 
-from APP  import PROJ_SETTINGS, getExistDirectory, getOpenFileName, APP_SETTINGS, loadQssStyleSheet, getExperimentPath, EXPERIMENT_SETTINGS
+from APP  import PROJ_SETTINGS, getExistDirectory, getOpenFileName, APP_SETTINGS, getOpenFileNames, loadQssStyleSheet, getExperimentPath, EXPERIMENT_SETTINGS
 from APP.Utils.filters import MenuFilter
 from APP.Make import VocToYolo, CocoToYolo, PngToYolo
+from ultralytics.data.utils import IMG_FORMATS
 
 
 class MenuTool(QObject):

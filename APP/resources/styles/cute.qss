@@ -393,7 +393,7 @@ QLineEdit {
     border: 2px solid #CD7F32;
     border-radius: 10px;
     padding: 0px;
-    selection-background-color: #E6E0FF;
+    selection-background-color: #CD7F32;
 }
 
 QDockWidget::title {

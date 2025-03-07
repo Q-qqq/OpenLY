@@ -309,6 +309,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
                 if ok and name != "":
                     shutil.copytree(getExperimentPath(), getExperimentPath(name))
                     shutil.rmtree(getExperimentPath())
+                    PROJ_SETTINGS.update({"current_experiment":name})
                 elif ok and name == "":
                     QMessageBox.information(self, "提示", "实验名称不能为空")
                     event.ignore()

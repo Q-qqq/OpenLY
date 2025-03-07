@@ -15,7 +15,7 @@ from pathlib import Path
 import threading
 from multiprocessing.pool import ThreadPool
 
-from ultralytics.utils import yaml_load,NUM_THREADS, PROGRESS_BAR, LOGGER
+from ultralytics.utils import threaded, yaml_load,NUM_THREADS, PROGRESS_BAR, LOGGER
 from ultralytics.data.utils import verify_image
 
 from APP  import  FILL_RULE
@@ -1375,43 +1375,47 @@ class ShowLabel(QLabel):
         self.selecteds = [False for i in self.selecteds]
         self.current_selected = -1
 
+    @threaded
     def train2Val(self, im_files):
         new_im_files = self.label_ops.train2Val(im_files)
         self.label_ops.img_label.label["dataset"] = "val"
         self.updateImagesFile(im_files, new_im_files)  # 更新label对应的图像路径
-        if self.dataset not in ("总样本集", "验证集"):         # 只有总样本集同时包含训练集、验证集、未标注集
-            self.removeImages(new_im_files)                #移除显示列表
+        #if self.dataset not in ("总样本集", "验证集"):         # 只有总样本集同时包含训练集、验证集、未标注集
+        #    self.removeImages(new_im_files)                #移除显示列表
 
-
+    @threaded
     def val2Train(self, im_files):
         new_im_files = self.label_ops.val2Train(im_files)
         self.label_ops.img_label.label["dataset"] = "train"
         self.updateImagesFile(im_files, new_im_files)
-        if self.dataset not in ("总样本集", "训练集"):
-            self.removeImages(new_im_files)
+        #if self.dataset not in ("总样本集", "训练集"):
+        #    self.removeImages(new_im_files)
 
-
+    @threaded
     def toNolabel(self, im_files):
         new_im_files = self.label_ops.toNoLabel(im_files)
         self.label_ops.img_label.label["dataset"] = "no_label"
         self.updateImagesFile(im_files, new_im_files)
-        if self.dataset not in ("总样本集", "未标注集"):
-            self.removeImages(new_im_files)
+        #if self.dataset not in ("总样本集", "未标注集"):
+        #    self.removeImages(new_im_files)
 
+    @threaded
     def nolabel2Train(self, im_files):
         new_im_files = self.label_ops.nolabel2Train(im_files)
         self.label_ops.img_label.label["dataset"] = "train"
         self.updateImagesFile(im_files, new_im_files)
-        if self.dataset not in ("总样本集", "训练集"):
-            self.removeImages(new_im_files)
+        #if self.dataset not in ("总样本集", "训练集"):
+        #    self.removeImages(new_im_files)
     
+    @threaded
     def nolabel2Val(self, im_files):
         new_im_files = self.label_ops.nolabel2Val(im_files)
         self.label_ops.img_label.label["dataset"] = "val"
         self.updateImagesFile(im_files, new_im_files)
-        if self.dataset not in ("总样本集", "验证集"):
-            self.removeImages(new_im_files)
+        #if self.dataset not in ("总样本集", "验证集"):
+        #    self.removeImages(new_im_files)
 
+    @threaded
     def deleteImages(self, im_files):
         """删除指定的图像"""
         im_files = format_im_files(im_files)
@@ -1423,7 +1427,6 @@ class ShowLabel(QLabel):
             self.selecteds.pop(all_ind)
             self.pixes.pop(all_ind)
             self.widths.pop(all_ind)
-            self.selecteds.pop(all_ind)
             self.ori_shapes.pop(all_ind)
 
             if im_file in self.show_files:
@@ -1471,21 +1474,22 @@ class ShowLabel(QLabel):
         self.update()
 
     def updateImagesFile(self, im_files, new_im_files):
-        """更新指定图像的信息"""
+        """更新指定图像的文件路径和所属数据集信息"""
         im_files = format_im_files(im_files)
+        new_im_files = format_im_files(new_im_files)
         for im_file, new_im_file in zip(im_files, new_im_files):
             new_im_file = str(new_im_file)
             all_ind = self.im_files.index(im_file)
-            (new_im_file, cls), nd, nc, msg, shape = verify_image(((new_im_file, 0), ""))
-            if msg != "":
-                LOGGER.warning(f"更新{new_im_file}图像信息失败：{msg}")
-                continue
+            #(new_im_file, cls), nd, nc, msg, shape = verify_image(((new_im_file, 0), ""))
+            #if msg != "":
+            #    LOGGER.warning(f"更新{new_im_file}图像信息失败：{msg}")
+            #    continue
             self.im_files[all_ind] = new_im_file
             if im_file in self.show_files:
                 show_ind = self.show_files.index(im_file)
                 self.show_files[show_ind] = new_im_file
-            self.ori_shapes[all_ind] = list(reversed(shape))   # h, w
-            self.widths[all_ind] = self.height() * (shape[1] / shape[0])
+            #self.ori_shapes[all_ind] = list(reversed(shape))   # h, w
+            #self.widths[all_ind] = self.height() * (shape[1] / shape[0])
         self.label_ops.painter_tool.setTrainVal()
         self.update()
 

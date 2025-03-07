@@ -1,4 +1,5 @@
 import copy
+import time
 
 
 from PySide6.QtCore import *
@@ -11,7 +12,7 @@ from pathlib import Path
 import numpy as np
 
 from ultralytics.data.utils import img2label_paths,IMG_FORMATS
-from ultralytics.utils import yaml_load, ThreadingLocked, threaded
+from ultralytics.utils import PROGRESS_BAR, yaml_load, ThreadingLocked, threaded, TryExcept
 from ultralytics.data.augment import classify_transforms
 
 
@@ -142,41 +143,35 @@ class LabelOps(QObject):
         cls = label.get("cls")
         if self.painter_tool.results_rb.isChecked():  #结果集
             return
+        elif self.painter_tool.train_rb.isChecked() or self.painter_tool.no_label_rb.isChecked():
+            set = self.train_set
+        elif self.painter_tool.val_rb.isChecked():
+            set = self.val_set
 
         if label:
-            if self.painter_tool.train_rb.isChecked():
-                self.painter_tool.setTrainVal("train")
-                set = self.train_set
-                root = self.train_path
-            elif self.painter_tool.val_rb.isChecked():
-                self.painter_tool.setTrainVal("val")
-                set = self.val_set
-                root = self.val_path
-            else:
-                return
-            if Path(im_file).parent.name == "no_label":  #未标注图像
-                if self.task == "classify":
-                    new_im_files = set.addData(im_file, cls)
-                else:
-                    new_im_files = set.addData(im_file, root)
-                    new_label_files = img2label_paths(new_im_files)
-                    instance.save(new_label_files[0], cls, pix_img.width(), pix_img.height())
+            if self.painter_tool.no_label_rb.isChecked():  #未标注图像 默认添加到训练集
+                new_im_file = self.nolabel2Train(im_file)[0]
+                self.img_label.label["dataset"] = "train"
+                self.parent().sift_dataset.sift_tool.images_label.updateImagesFile(im_file, new_im_file)
+                im_file = new_im_file
+            if self.task == "classify":
+                new_im_files = set.changeData(im_file, cls)  #转移至对应种类的文件夹
                 self.img_label.im_file = new_im_files[0]
-            else:    #已标注
-                if self.task == "classify":
-                    new_im_files = set.changeData(im_file, cls)  #转移至对应种类的文件夹
-                    self.img_label.im_file = new_im_files[0]
-                else:
-                    label_file = img2label_paths(im_file)[0]
-                    instance.save(label_file, cls, pix_img.width(), pix_img.height())
-                    set.changeData(im_file)
+            else:
+                label_file = img2label_paths(im_file)[0]
+                instance.save(label_file, cls, pix_img.width(), pix_img.height())
+                set.changeData(im_file)
 
+    @TryExcept(msg="删除/转移样本出错")
     def deleteSamples(self, im_files=None, no_label_path=""):
         """删除样本，当no_label_path不为空时，将样本移动至未标注集"""
         if not im_files:
             im_files = self.img_label.im_file
         im_files = format_im_files(im_files)
         new_im_file = copy.deepcopy(im_files)
+        progress =  len(im_files) > 10
+        if progress: 
+            PROGRESS_BAR.start(f"样本转移至{no_label_path}", "Start...", [0, len(im_files)], False)
         for i, im_file in enumerate(im_files):
             if im_file in self.train_set.im_files:
                 self.train_set.removeData(im_file, no_label_path)
@@ -189,9 +184,14 @@ class LabelOps(QObject):
             else:
                 if Path(im_file).exists() and not no_label_path: #图像存在且no_label_path为空
                     os.remove(im_file)
-            if im_file == self.img_label.im_file:
+            if im_file == self.img_label.im_file and no_label_path == "": #删除
                 self.img_label.init()
                 self.painter_tool.setTrainVal()
+            if progress:
+                PROGRESS_BAR.setValue(i+1, f"{im_file}")
+                time.sleep(0.00001)
+        if progress:
+            PROGRESS_BAR.close()
         if no_label_path:
             return new_im_file
         else:
@@ -202,12 +202,15 @@ class LabelOps(QObject):
         self.painter_tool.setTrainVal("no_label")
         return self.deleteSamples(im_files, no_label_path)
     
-
+    @TryExcept(msg="未标注集转训练集出错")
     def nolabel2Train(self, im_files=None):
         if not im_files:
             im_files = self.img_label.im_file
         im_files = format_im_files(im_files)
         new_im_files = copy.deepcopy(im_files)
+        progress =  len(im_files) > 10
+        if progress: 
+            PROGRESS_BAR.start(f"未标注样本转移至训练集", "Start...", [0, len(im_files)], False)
         for i, im_file in enumerate(im_files):
             if Path(im_file).parent.name != "no_label":
                 continue
@@ -220,13 +223,21 @@ class LabelOps(QObject):
             if im_file == self.img_label.im_file:
                 self.img_label.im_file = new_im_file
                 self.painter_tool.setTrainVal("train")
+            if progress:
+                PROGRESS_BAR.setValue(i+1, f"{im_file}")
+        if progress:
+            PROGRESS_BAR.close()
         return new_im_files
     
+    @TryExcept("未标注集转验证集出错")
     def nolabel2Val(self, im_files=None):
         if not im_files:
             im_files = self.img_label.im_file
         im_files = format_im_files(im_files)
         new_im_files = copy.deepcopy(im_files)
+        progress =  len(im_files) > 10
+        if progress: 
+            PROGRESS_BAR.start(f"未标注样本转移至验证集", "Start...", [0, len(im_files)], False)
         for i, im_file in enumerate(im_files):
             if Path(im_file).parent.name != "no_label":
                 continue
@@ -239,13 +250,21 @@ class LabelOps(QObject):
             if im_file == self.img_label.im_file:
                 self.img_label.im_file = new_im_file
                 self.painter_tool.setTrainVal("val")
+            if progress:
+                PROGRESS_BAR.setValue(i+1, f"{im_file}")
+        if progress:
+            PROGRESS_BAR.close()
         return new_im_files
 
+    @TryExcept("训练集转验证集出错")
     def train2Val(self, im_files=None):
         if not im_files:
             im_files = self.img_label.im_file
         im_files = format_im_files(im_files)
         new_im_files = copy.deepcopy(im_files)
+        progress =  len(im_files) > 10
+        if progress: 
+            PROGRESS_BAR.start(f"训练集样本转移至验证集", "Start...", [0, len(im_files)], False)
         for i, im_file in enumerate(im_files):
             if im_file not in self.train_set.im_files: #筛除验证集、未标注集和结果集
                 continue
@@ -261,13 +280,21 @@ class LabelOps(QObject):
             if im_file == self.img_label.im_file:
                 self.img_label.im_file = new_im_file
                 self.painter_tool.setTrainVal("val")
+            if progress:
+                PROGRESS_BAR.setValue(i+1, f"{im_file}")
+        if progress:
+            PROGRESS_BAR.close()
         return new_im_files
 
+    @TryExcept(msg="验证集转训练集出错")
     def val2Train(self, im_files=None):
         if not im_files:
             im_files = self.img_label.im_file
         im_files = format_im_files(im_files)
         new_im_files = copy.deepcopy(im_files)
+        progress =  len(im_files) > 10
+        if progress: 
+            PROGRESS_BAR.start(f"训练集样本转移至验证集", "Start...", [0, len(im_files)], False)
         for i, im_file in enumerate(im_files):
             if im_file not in self.val_set.im_files:  #确保图像属于验证集
                 continue
@@ -282,6 +309,10 @@ class LabelOps(QObject):
             if im_file == self.img_label.im_file:
                 self.img_label.im_file = new_im_file
                 self.painter_tool.setTrainVal("train")
+            if progress:
+                PROGRESS_BAR.setValue(i+1, f"{im_file}")
+        if progress:
+            PROGRESS_BAR.close()
         return new_im_files
 
     def addClass(self, cls_name):
@@ -292,6 +323,7 @@ class LabelOps(QObject):
         self.img_label.label["names"] = self.train_set.names if self.task == "classify" else self.train_set.data["names"]
         self.img_label.generateColors()
 
+    @threaded
     def deleteClass(self, cls_name):
         """删除种类cls_name
         Args:

@@ -1,3 +1,4 @@
+import contextlib
 import glob
 from pathlib import Path
 from PySide6.QtCore import *
@@ -7,7 +8,7 @@ from PySide6.QtWidgets import *
 import numpy as np
 import torch
 
-from APP  import PROJ_SETTINGS, EXPERIMENT_SETTINGS
+from ultralytics.utils import emojis, LOGGER
 
 def get_widget(parent:QFrame, name):
     """获取父控件中指定objectname的子控件"""
@@ -24,4 +25,5 @@ def get_widget(parent:QFrame, name):
 def getcat(value):
     """获取拼接函数"""
     return torch.cat if isinstance(value, torch.Tensor) else np.concatenate
+
 

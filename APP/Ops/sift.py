@@ -1,5 +1,6 @@
 
 import shutil
+import time
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
@@ -12,7 +13,7 @@ from multiprocessing.pool import ThreadPool
 from itertools import repeat
 
 from ultralytics.data.utils import img2label_paths,IMG_FORMATS, verify_image
-from ultralytics.utils import ThreadingLocked, threaded, yaml_load, NUM_THREADS, LOGGER
+from ultralytics.utils import PROGRESS_BAR, ThreadingLocked, TryExcept, threaded, yaml_load, NUM_THREADS, LOGGER
 
 
 
@@ -39,6 +40,7 @@ class SiftDataset(QObject):
         self.val_path = None
         self.base_items = ["总样本集","训练集", "验证集","未标注集", "结果集"]
         self.sift_tool = SiftTool(self)
+        self.im_shapes = {}
 
     def build(self, data, task , args):
         if task == "classify":
@@ -58,19 +60,32 @@ class SiftDataset(QObject):
         self.sift_tool.siftImageSignal()
         self.sift_tool.image_scroll.resizeEvent(None)
     
+    @TryExcept(msg="添加图像至未标注出错")
     def addNolabels(self, im_files):
         """添加未标注图像"""
         no_label_path = getNoLabelPath()
+        progress = len(im_files) > 10
+        if progress:
+            PROGRESS_BAR.start("检查文件", "Start...", [0, len(im_files)], False)
         all_files_name = [Path(im_file).name for im_file in self.sift_tool.images_label.im_files]  #所有图像文件名
         exist_names = []
         new_im_files = []
-        for im_file in im_files:
+        for i, im_file in enumerate(im_files):
             if Path(im_file).exists():
                 if Path(im_file).name not in all_files_name:
                     shutil.copy(im_file, no_label_path)
                     new_im_files.append(str(Path(no_label_path) / Path(im_file).name))
+                    if progress:
+                        PROGRESS_BAR.setValue(i+1, f"有效文件：{im_file}")
                 else:
                     exist_names.append(Path(im_file).name)
+                    if progress:
+                        PROGRESS_BAR.setValue(i+1, f"无效文件：{im_file}")
+            else:
+                if progress:
+                    PROGRESS_BAR.setValue(i+1, f"错误的文件路径{im_file}")
+        if progress:
+            PROGRESS_BAR.close()
         if new_im_files:
             im_shapes = self.getImShapes(new_im_files)
             self.sift_tool.loadImages(im_shapes)
@@ -78,6 +93,7 @@ class SiftDataset(QObject):
                 self.sift_tool.showImages(new_im_files+ self.sift_tool.images_label.show_files)
         return exist_names
 
+    @TryExcept(msg="sift获取图像尺寸出错")
     def getImShapes(self, im_files):
         """获取图像对应的大小，输出字典{im_file:shape}
         Args:
@@ -86,17 +102,34 @@ class SiftDataset(QObject):
             im_shapes(dict):{im_file:shape}
         """
         im_shapes = {}
-        if len(im_files):
-            cls = [0 for i in im_files]
-            pr = ["" for i in im_files]
+        no_shape_ims = []
+        for im_file in im_files:
+            if im_file in self.im_shapes.keys():
+                im_shapes.update({im_file: self.im_shapes[im_file]})
+            else:
+                no_shape_ims.append(im_file)
+        if len(no_shape_ims):
+            cls = [0 for i in no_shape_ims]
+            pr = ["" for i in no_shape_ims]
+            progress = len(no_shape_ims) > 10
+            if progress:
+                PROGRESS_BAR.start("获取图像尺寸", "Start...", [0, len(no_shape_ims)], False)
             with ThreadPool(NUM_THREADS) as pool:
                 results = pool.imap(func=verify_image,
-                                    iterable=zip(zip(im_files, cls), pr))
-                for (im_file, cls), nf, nc, msg, shape in results:
+                                    iterable=zip(zip(no_shape_ims, cls), pr))
+                for i, ((im_file, cls), nf, nc, msg, shape) in enumerate(results):
                     if msg != "":
-                        LOGGER.warning("未标注图像损坏：" + msg)
+                        LOGGER.warning(f"未标注图像{im_file}损坏：" + msg)
+                        PROGRESS_BAR.setValue(i+1, f"未标注图像{im_file}损坏：" + msg)
                     else:
-                        im_shapes[im_file] = list(reversed(shape))
+                        shape = list(reversed(shape))
+                        self.im_shapes.update({im_file: shape})
+                        im_shapes.update({im_file: shape})
+                        if progress:
+                            PROGRESS_BAR.setValue(i+1, f"w:{shape[0]}, h:{shape[1]}")
+                            time.sleep(0.00001)
+            if progress:
+                PROGRESS_BAR.close()
         return im_shapes
 
     def get_no_label_files(self):
@@ -271,6 +304,7 @@ class SiftTool(QObject):
         self.image_total_l.setText(str(self.images_label.getShowLen()))
         self.sift_image_dw.show()
         self.sift_image_dw.raise_()
+        self.image_scroll.resizeEvent(None)
 
     def selectAll(self):
         self.images_label.selectAllShow()

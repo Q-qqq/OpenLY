@@ -73,8 +73,6 @@ class Start(QWidget, startQT_ui.Ui_Form):
         if not checkProject(project):
             QMessageBox.warning(self,"警告", f"{project}不是一个完整的项目，无法添加")
             return
-        self.createProject(project)
-        self.addItem(project)
         self.openProject(project)
 
     def createProject(self, project):

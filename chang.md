@@ -154,32 +154,38 @@ def cv2_readimg(img_path, color=cv2.IMREAD_COLOR):
 from PySide6.QtCore import *
 class Progress(QObject):
     """进度条"""
-    Start_Signal = Signal(list, str, str)
+    Start_Signal = Signal(str, str, list)
     Set_Value_Signal = Signal(int, str)
     Reset_Signal = Signal()
     Close_Signal = Signal()
     def __init__(self, parent=None):
         super().__init__(parent)
         self._stop = False    #停止进度条对应的加载
-        self.permit_stop = False
+        self.permit_stop = False  #允许中断进度
+        self.loading = False   #进度条加载中
+
 
     def stop(self):
         """停止进度条"""
-        self._stop = True
+        if self.permit_stop:
+            self.loading = False
+            self._stop = True
 
     def isStop(self):
         """判断是否停止"""
         return self._stop
 
-    def start(self, range, title="Load", head_txt="start load...", permit_stop=False):
+    def start(self, title="Load", head_txt="start load...", range=[0,100], permit_stop=False):
         """开始进度条"""
         self._stop = False
+        self.loading = True
         self.permit_stop = permit_stop
-        self.Start_Signal.emit(range, title, head_txt)
+        self.Start_Signal.emit( title, head_txt, range)
 
     def setValue(self, value, text):
         """设置进度条的值"""
         self.Set_Value_Signal.emit(value, text)
+    
 
     def reset(self):
         """重置进度条"""
@@ -188,9 +194,48 @@ class Progress(QObject):
 
     def close(self):
         """关闭进度条"""
+        self.loading = False
         self.Close_Signal.emit()
 
 PROGRESS_BAR = Progress()
+```
++ 修改TryExcept修饰器，使其可以在程序出错时强制中断进度条
+```python
+class TryExcept(contextlib.ContextDecorator):
+    """
+    Ultralytics TryExcept class. Use as @TryExcept() decorator or 'with TryExcept():' context manager.
+
+    Examples:
+        As a decorator:
+        >>> @TryExcept(msg="Error occurred in func", verbose=True)
+        >>> def func():
+        >>> # Function logic here
+        >>>     pass
+
+        As a context manager:
+        >>> with TryExcept(msg="Error occurred in block", verbose=True):
+        >>> # Code block here
+        >>>     pass
+    """
+
+    def __init__(self, msg="", verbose=True):
+        """Initialize TryExcept class with optional message and verbosity settings."""
+        self.msg = msg
+        self.verbose = verbose
+
+    def __enter__(self):
+        """Executes when entering TryExcept context, initializes instance."""
+        pass
+
+    def __exit__(self, exc_type, value, traceback):
+        """Defines behavior when exiting a 'with' block, prints error message if necessary."""
+        if value:
+            if self.verbose:
+                LOGGER.error(f"{self.msg}{': ' if self.msg else ''}{value}")
+            if PROGRESS_BAR.loadiing:
+                PROGRESS_BAR._stop = True
+                PROGRESS_BAR.close()
+        return True
 ```
 ### ultralytics.data.dataset
 + YoloDataset类中cache_labels进行标签的加载，对其进行进度条显示

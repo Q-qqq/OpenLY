@@ -131,12 +131,15 @@ class Progress(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._stop = False    #停止进度条对应的加载
-        self.permit_stop = False
+        self.permit_stop = False  #允许中断进度
+        self.loading = False   #进度条加载中
 
 
     def stop(self):
         """停止进度条"""
-        self._stop = True
+        if self.permit_stop:
+            self.loading = False
+            self._stop = True
 
     def isStop(self):
         """判断是否停止"""
@@ -145,8 +148,8 @@ class Progress(QObject):
     def start(self, title="Load", head_txt="start load...", range=[0,100], permit_stop=False):
         """开始进度条"""
         self._stop = False
+        self.loading = True
         self.permit_stop = permit_stop
-        
         self.Start_Signal.emit( title, head_txt, range)
 
     def setValue(self, value, text):
@@ -161,6 +164,7 @@ class Progress(QObject):
 
     def close(self):
         """关闭进度条"""
+        self.loading = False
         self.Close_Signal.emit()
 
 PROGRESS_BAR = Progress()
@@ -1044,8 +1048,12 @@ class TryExcept(contextlib.ContextDecorator):
 
     def __exit__(self, exc_type, value, traceback):
         """Defines behavior when exiting a 'with' block, prints error message if necessary."""
-        if self.verbose and value:
-            print(emojis(f"{self.msg}{': ' if self.msg else ''}{value}"))
+        if value:
+            if self.verbose:
+                LOGGER.error(f"{self.msg}{': ' if self.msg else ''}{value}")
+            if PROGRESS_BAR.loadiing:
+                PROGRESS_BAR._stop = True
+                PROGRESS_BAR.close()
         return True
 
 
