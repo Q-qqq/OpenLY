@@ -73,6 +73,13 @@ class DetectDataset(YOLODataset):
             im_files = im_files[: round(len(im_files) * self.fraction)]
         im_files = [str(Path(f)) for f in im_files]
         return im_files
+
+    def get_labels(self):
+        """Returns dictionary of labels for YOLO training."""
+        if self.im_files:
+            return super().get_labels()
+        else:
+            return []
     
     def cache_labels(self,path, im_files=[], progress=True):
         if not len(im_files):
@@ -96,8 +103,8 @@ class DetectDataset(YOLODataset):
             results = pool.imap(
                 func=verify_image_label,
                 iterable=zip(
-                    self.im_files,
-                    self.label_files,
+                    im_files,
+                    label_files,
                     repeat(self.prefix),
                     repeat(self.use_keypoints),
                     repeat(len(self.data["names"])),
@@ -133,7 +140,7 @@ class DetectDataset(YOLODataset):
         if msgs:
             LOGGER.info("\n".join(msgs))
         if nf == 0:
-            LOGGER.warning(f"{self.prefix}WARNING ⚠️ No labels found in {path}. {HELP_URL}")
+            LOGGER.warning(f"{self.prefix}WARNING ⚠️ No labels found in {path}.")
         x["hash"] = get_hash(label_files + im_files)
         x["results"] = nf, nm, ne, nc, len(im_files)
         x["msgs"] = msgs  # warnings
@@ -189,7 +196,7 @@ class DetectDataset(YOLODataset):
             shutil.move(im_file, data_path)
             self.im_files.append(new_im_file)
             #label
-            new_label_file = img2label_paths(new_im_file)[0]
+            new_label_file = img2label_paths([new_im_file])[0]
             if Path(label_file).exists():
                 if not Path(new_label_file).parent.exists():
                     Path(new_label_file).parent.mkdir(parents=True, exist_ok=True)

@@ -16,7 +16,7 @@ def getDefaultDataset():
     with open(Path(project_p) / "data" / "val.txt", "w") as f:
         pass #创建空白验证集txt文件
     return {"names": [],
-            "path": ".//data",
+            "path": "./",
             "train": "train.txt",
             "val": "val.txt"}
 
@@ -110,7 +110,7 @@ def guess_dataset_task(dataset):
             return "null"
         if len(train_img) != 0:
             for img in train_img:
-                label_path = img2label_paths(img)[0]
+                label_path = img2label_paths([img])[0]
                 label = readLabelFile(label_path)
                 if len(label) == 0:
                     continue
@@ -123,7 +123,7 @@ def guess_dataset_task(dataset):
                         return ["segment", "keypoint"]
         else:
             for img in val_img:
-                label_path = img2label_paths(img)[0]
+                label_path = img2label_paths([img])[0]
                 label = readLabelFile(label_path)
                 if len(label) == 0:
                     continue

@@ -50,7 +50,7 @@ class DetectTransformerLabel(QTransformerLabel):
                 self.ori_y = p[1]
             elif len(self.label["instances"]._bboxes) - 1 == self.index:
                 self.painting = False
-        if not self.painting and self.paint and event.button() == Qt.MouseButton.LeftButton and self.cursor() != Qt.CursorShape.CrossCursor:
+        if not self.painting and self.paint and event.button() == Qt.MouseButton.LeftButton and self.cursor().shape() != Qt.CursorShape.CrossCursor:
             self.getOri()
 
     def getOri(self):
@@ -106,17 +106,17 @@ class DetectTransformerLabel(QTransformerLabel):
                 tx = event.x() - self.start.x()
                 ty = event.y() - self.start.y()
                 self.start = QPoint(event.x(), event.y())
-                if self.cursor() != Qt.CursorShape.CrossCursor:
+                if self.cursor().shape() != Qt.CursorShape.CrossCursor:
                     instance = self.label["instances"][self.index]
                     if instance.bboxes is not None:  # 移动矩形框
                         self.getLabelSizeInstance(instance)
-                        if self.cursor() == Qt.CursorShape.SizeVerCursor:
+                        if self.cursor().shape() == Qt.CursorShape.SizeVerCursor:
                             instance._bboxes.translateVer(0, self.ori_y, event.y())  # 上下移动
-                        elif self.cursor() == Qt.CursorShape.SizeHorCursor:
+                        elif self.cursor().shape() == Qt.CursorShape.SizeHorCursor:
                             instance._bboxes.translateHor(0, self.ori_x, event.x())  # 左右移动
-                        elif self.cursor() == Qt.CursorShape.SizeFDiagCursor or self.cursor() == Qt.CursorShape.SizeBDiagCursor:
+                        elif self.cursor().shape() == Qt.CursorShape.SizeFDiagCursor or self.cursor().shape() == Qt.CursorShape.SizeBDiagCursor:
                             instance._bboxes.translatePoint(0, self.ori_x, self.ori_y, event.x(), event.y())
-                        elif self.cursor() == Qt.CursorShape.SizeAllCursor:
+                        elif self.cursor().shape() == Qt.CursorShape.SizeAllCursor:
                             instance._bboxes.moveBox(0, event.x(), event.y())
                         self.getPixSizeInstance(instance)
                         self.label["instances"].setItem(self.index, instance)
@@ -222,7 +222,7 @@ class DetectTransformerLabel(QTransformerLabel):
             self.painting = False
             self.Change_Label_Signal.emit()
             return
-        if self.cursor() == Qt.CursorShape.CrossCursor:
+        if self.cursor().shape() == Qt.CursorShape.CrossCursor:
             super().contextMenuEvent(ev)
         else:
             main_menu = QMenu(self)
@@ -546,7 +546,7 @@ class SegmentTransformerLabel(QTransformerLabel):
             elif self.painting:  #下一个点
                 self.setPoint(self.index, -1, point)
                 self.addPoint(self.index, point)
-            elif self.cursor() == Qt.CursorShape.PointingHandCursor:  #插入点
+            elif self.cursor().shape() == Qt.CursorShape.PointingHandCursor:  #插入点
                 self.insertPoint(self.index, self.point_ind2, point)
                 self.Change_Label_Signal.emit()
             self.update()
@@ -603,11 +603,11 @@ class SegmentTransformerLabel(QTransformerLabel):
                     tx = event.x() - self.start.x()  # 鼠标位置移动X距离
                     ty = event.y() - self.start.y()  # 鼠标位置移动Y距离
                     self.start = QPoint(event.x(), event.y())
-                    if self.cursor() != Qt.CursorShape.CrossCursor:
+                    if self.cursor().shape() != Qt.CursorShape.CrossCursor:
                         instance = self.label["instances"][self.index]
                         if instance.segments is not None:
                             self.getLabelSizeInstance(instance)
-                            if self.cursor() == Qt.CursorShape.SizeAllCursor:  # 移动选中的点
+                            if self.cursor().shape() == Qt.CursorShape.SizeAllCursor:  # 移动选中的点
                                 instance.segments[0][self.point_ind1, 0] += tx
                                 instance.segments[0][self.point_ind1, 1] += ty
                             self.getPixSizeInstance(instance)
@@ -644,7 +644,7 @@ class SegmentTransformerLabel(QTransformerLabel):
             self.Change_Label_Signal.emit()
             self.update()
             return
-        if self.cursor() == Qt.CursorShape.SizeAllCursor:
+        if self.cursor().shape() == Qt.CursorShape.SizeAllCursor:
             main_menu = QMenu(self)
             main_menu.setObjectName("right_menu")
             delete_point_a = QAction(text="删除点", parent=main_menu)
@@ -769,9 +769,9 @@ class KeypointsTransformerLabel(QTransformerLabel):
 
         if self.paint and not self.painting:
             if event.buttons() == Qt.MouseButton.LeftButton and event.modifiers() != Qt.KeyboardModifier.ControlModifier:
-                if self.cursor() != Qt.CursorShape.CrossCursor:
+                if self.cursor().shape() != Qt.CursorShape.CrossCursor:
                     if self.label["instances"].keypoints is not None:
-                        if self.cursor() == Qt.CursorShape.SizeAllCursor:
+                        if self.cursor().shape() == Qt.CursorShape.SizeAllCursor:
                             self.setKeypoint(self.index, self.point_ind1, event.pos())
                             self.Change_Label_Signal.emit()
         self.update()
@@ -793,7 +793,7 @@ class KeypointsTransformerLabel(QTransformerLabel):
             self.Change_Label_Signal.emit()
             self.update()
             return
-        if self.cursor() == Qt.CursorShape.SizeAllCursor:
+        if self.cursor().shape() == Qt.CursorShape.SizeAllCursor:
             main_menu = QMenu(self)
             main_menu.setObjectName("right_menu")
             visible_a = QAction(text="可见", parent=main_menu)
@@ -1013,14 +1013,14 @@ class ObbTransformerLabel(QTransformerLabel):
             elif self.point_ind1 == self.point_ind2 == 2:
                 self.setPoint23(self.index,event.pos())
         elif self.paint and event.buttons() == Qt.MouseButton.LeftButton and event.modifiers() is not Qt.MouseButton.ControlModifier:
-            if self.cursor() == Qt.CursorShape.SizeAllCursor:
+            if self.cursor().shape() == Qt.CursorShape.SizeAllCursor:
                 if self.point_ind1 == self.point_ind2  in [0, 1, 2, 3]:
                     self.movePoint(self.index, self.point_ind1, event.pos())   #移动定向框某一点
                 elif self.point_ind1 == self.point_ind2 == 4:
                     self.moveObb(self.index,self.start, event.pos()) #移动定向框
                     self.start = event.pos()
                 self.Change_Label_Signal.emit()
-            elif self.cursor() == Qt.CursorShape.WaitCursor:
+            elif self.cursor().shape() == Qt.CursorShape.WaitCursor:
                 self.rotateObb(self.index, event.pos())   #旋转定向框
                 self.Change_Label_Signal.emit()
         self.update()
@@ -1046,7 +1046,7 @@ class ObbTransformerLabel(QTransformerLabel):
             self.Change_Label_Signal.emit()
             self.update()
             return
-        if self.cursor() == Qt.CursorShape.SizeAllCursor or self.cursor() == Qt.CursorShape.WaitCursor:
+        if self.cursor().shape() == Qt.CursorShape.SizeAllCursor or self.cursor().shape() == Qt.CursorShape.WaitCursor:
             main_menu = QMenu(self)
             main_menu.setObjectName("right_menu")
 

@@ -273,7 +273,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 1057, 33))
+        self.menubar.setGeometry(QRect(0, 0, 1057, 21))
         self.menubar.setStyleSheet(u"")
         self.menu = QMenu(self.menubar)
         self.menu.setObjectName(u"menu")
@@ -323,6 +323,9 @@ class Ui_MainWindow(object):
         self.splitter.setOrientation(Qt.Orientation.Horizontal)
         self.Tip_te = QTextEdit(self.splitter)
         self.Tip_te.setObjectName(u"Tip_te")
+        font1 = QFont()
+        font1.setFamilies([u"Arial"])
+        self.Tip_te.setFont(font1)
         self.Tip_te.setStyleSheet(u"")
         self.Tip_te.setFrameShape(QFrame.Shape.Box)
         self.splitter.addWidget(self.Tip_te)
@@ -337,7 +340,10 @@ class Ui_MainWindow(object):
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.Run_mes_te = QTextEdit(self.frame_3)
         self.Run_mes_te.setObjectName(u"Run_mes_te")
-        self.Run_mes_te.setFont(font)
+        font2 = QFont()
+        font2.setFamilies([u"Arial"])
+        font2.setPointSize(9)
+        self.Run_mes_te.setFont(font2)
         self.Run_mes_te.setStyleSheet(u"")
 
         self.verticalLayout.addWidget(self.Run_mes_te)
@@ -434,42 +440,7 @@ class Ui_MainWindow(object):
         self.Image_select_f = QFrame(self.Select_image_spliter)
         self.Image_select_f.setObjectName(u"Image_select_f")
         self.Image_select_f.setMinimumSize(QSize(0, 0))
-        self.Image_select_f.setStyleSheet(u"/* \u57fa\u7840\u6846\u67b6\u6837\u5f0f */\n"
-"\n"
-"/* \u88c5\u9970\u6027\u5bb9\u5668 */\n"
-"QFrame[frameShape=\"Panel\"] {\n"
-"    background-color: #FFFFFF;\n"
-"    border: 2px solid #CD7F32;\n"
-"    border-radius: 10px;\n"
-"    padding: 8px;\n"
-"    box-shadow: 1px 1px 4px rgba(205,127,50, 0.15);\n"
-"}\n"
-"\n"
-"/* \u6c34\u5e73\u5206\u9694\u7ebf */\n"
-"QFrame[frameShape=\"HLine\"] {\n"
-"    background-color: transparent;\n"
-"    border-top: 2px solid #C8A2C8;\n"
-"    margin: 8px 0;\n"
-"}\n"
-"\n"
-"/* \u5782\u76f4\u5206\u9694\u7ebf */\n"
-"QFrame[frameShape=\"VLine\"] {\n"
-"    background-color: transparent;\n"
-"    border-left: 2px solid #C8A2C8;\n"
-"    margin: 0 8px;\n"
-"}\n"
-"\n"
-"/* \u7279\u6b8a\u6837\u5f0f-\u5e26\u6e10\u53d8\u6807\u9898 */\n"
-"QFrame[frameShape=\"StyledPanel\"]::title {\n"
-"    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,\n"
-"                              stop:0 #D8BFD8, stop:1 #B19CD9);\n"
-"    color: #4A4453;\n"
-"    padding: 4px 12px;\n"
-"    border: 1px solid #CD7F32;\n"
-"    b"
-                        "order-radius: 5px;\n"
-"    margin-bottom: 6px;\n"
-"}")
+        self.Image_select_f.setStyleSheet(u"")
         self.Image_select_f.setFrameShape(QFrame.Shape.Box)
         self.Image_select_f.setFrameShadow(QFrame.Shadow.Raised)
         self.Select_image_spliter.addWidget(self.Image_select_f)

@@ -246,9 +246,9 @@ class BasePredictor:
                 ops.Profile(device=self.device),
             )
             self.run_callbacks("on_predict_start")
-            PROGRESS_BAR.start("Predict", "Start predicting...", [0, len(self.data)], True)
+            PROGRESS_BAR.start("Predict", "Start predicting...", [0, len(self.dataset)], True)
             try:
-                for self.batch in self.dataset:
+                for data_i, self.batch in enumerate(self.dataset):
                     self.run_callbacks("on_predict_batch_start")
                     paths, im0s, s = self.batch
 
@@ -287,7 +287,7 @@ class BasePredictor:
 
                     self.run_callbacks("on_predict_batch_end")
                     yield from self.results
-                    PROGRESS_BAR.setValue(self.seen, f"{s} {profilers[1].dt *1e3:.1f}ms")
+                    PROGRESS_BAR.setValue(data_i+1, f"{s} {profilers[1].dt *1e3:.1f}ms")
                     if PROGRESS_BAR.isStop():
                         PROGRESS_BAR.close()
                         break

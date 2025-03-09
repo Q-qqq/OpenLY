@@ -258,7 +258,8 @@ QPushButton:hover {
 }
 
 /* 输入控件 */
-QLineEdit, QTextEdit, QPlainTextEdit {
+QLineEdit, QPlainTextEdit {
+    font-size: 10px;
     background: #12283d; /* 深色背景 */
     border: 1px solid #00ffff;
     selection-background-color: #00ffff40; /* 半透明选择背景 */
@@ -268,16 +269,77 @@ QLineEdit:focus, QTextEdit:focus {
     border-color: #00ff9d; /* 聚焦霓虹色 */
 }
 
-/* 滚动条 */
-QScrollBar:vertical {
-    background: #0a192f;
-    width: 12px;
+/*===== 量子真空基底 =====*/
+QTextEdit {
+    background: #0a0e17;                /* 暗能量密度 1.3×10²⁹ kg/m³ */
+    color: #00f3e6;                     /* 切伦科夫辐射色 */
+    font: 10pt "Quantum Sans";          /* 超弦谐振字体 */
+    border: 3px solid qconicalgradient( /* 引力波环 */
+        cx:0.5, cy:0.5,
+        angle: 0,
+        stop:0 #3d7afe55,
+        stop:0.25 #8a2be255,
+        stop:0.5 #00f3e655,
+        stop:0.75 #ff355e55,
+        stop:1 #3d7afe55 
+    );
+    border-radius: 8px;
+    padding: 15px;
+    selection-background-color: #8a2be277; /* 量子纠缠态 */
 }
 
-QScrollBar::handle:vertical {
-    background: #245b78;
-    min-height: 20px;
+QTextEdit:focus {
+    border: 3px solid qradialgradient(  /* 曲速核心激活 */
+        cx:0.3, cy:0.3,
+        radius: 0.8,
+        stop:0 #00f3e6, 
+        stop:1 #3d7afe00 
+    );
+}
+ 
+@keyframes spacetime-warp {
+    0% { border-color: #3d7afe55; }
+    33% { border-color: #8a2be255; }
+    66% { border-color: #00f3e655; }
+    100% { border-color: #3d7afe55; }
+}
+
+QTextEdit:hover {
+    background: qlineargradient(        /* 高维膜渗透 */
+        x1:0, y1:0,
+        x2:1, y2:1,
+        stop:0 #0a0e17, 
+        stop:1 #0a0e17ee 
+    );
+    border-width: 4px;
+}
+
+QScrollBar:vertical {
+    background: #0a0e1733;
+    width: 12px;
     border-radius: 6px;
+}
+ 
+QScrollBar::handle:vertical {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:1, y2:0,
+        stop:0 #3d7afe, 
+        stop:1 #8a2be2 
+    );
+    min-height: 30px;
+    border-radius: 6px;
+}
+
+QTextEdit::cursor {
+    background-color: #00f3e6;
+    border: 1px solid #3d7afe;         /* 泡利不相容效应 */
+    width: 2px;
+}
+ 
+@keyframes cursor-blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
 }
 
 /* 复合控件 */

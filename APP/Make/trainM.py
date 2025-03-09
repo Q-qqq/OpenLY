@@ -162,7 +162,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
             if results.exists():
                 data = pd.read_csv(results)
                 x = data.values[:, 0]
-                if model.ckpt is None or (model.ckpt is not None and model.ckpt["epoch"] != int(x[-1])-1):
+                if not model.ckpt or ( model.ckpt and model.ckpt["epoch"] != int(x[-1])-1):  #ckpt为空 或 不为空切epoch。。。
                     req = QMessageBox.warning(self, "训练提示", "实验已存在训练结果，是否重新进行训练", QMessageBox.Yes, QMessageBox.No)
                     if req == QMessageBox.Yes:
                         os.remove(results)

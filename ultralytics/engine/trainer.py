@@ -367,6 +367,7 @@ class BaseTrainer:
             total_instance = 0 # all instances
             for i, batch in pbar:
                 if LOGGER.stop:
+                    self._clear_memory()
                     LOGGER.trainInterrupt()
                     raise ProcessLookupError(f"中断：训练中断成功,已训练{epoch}epoch")
                 self.run_callbacks("on_train_batch_start")
@@ -416,8 +417,9 @@ class BaseTrainer:
                     total_instance += batch["cls"].shape[0]
                     instances = batch["cls"].shape[0] if i < len(self.train_loader)-1 else total_instance
                     loss_length = self.tloss.shape[0] if len(self.tloss.shape) else 1
-                    loss_mes = ("%11s" * 2 + "%11.4g" * (2 + loss_length))% (
+                    loss_mes = ("%11s" * 3 + "%11.4g" * (2 + loss_length))% (
                             f"{epoch + 1}/{self.epochs}",
+                            f"{i+1}/{len(self.train_loader)}",
                             f"{self._get_memory():.3g}G",  # (GB) GPU memory util
                             *(self.tloss if loss_length > 1 else torch.unsqueeze(self.tloss, 0)),  # losses
                             instances,  # batch size, i.e. 8

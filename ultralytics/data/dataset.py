@@ -119,7 +119,7 @@ class YOLODataset(BaseDataset):
                     )
                 if msg:
                     msgs.append(msg)
-                    PROGRESS_BAR.setValue(i+1, f"Dataset loading...{im_file if im_file else msg}")
+                PROGRESS_BAR.setValue(i+1, f"Dataset loading...{im_file if im_file else msg}")
                 pbar.desc = f"{desc} {nf} images, {nm + ne} backgrounds, {nc} corrupt"
                 LOGGER.info(pbar.desc)
             pbar.close()

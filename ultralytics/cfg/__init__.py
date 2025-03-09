@@ -153,7 +153,6 @@ CFG_FLOAT_KEYS = {  # integer or float arguments, i.e. x=2 and x=2.0
     "shear",
     "time",
     "workspace",
-    "batch",
 }
 CFG_FRACTION_KEYS = {  # fractional float arguments with 0.0<=values<=1.0
     "dropout",
@@ -191,6 +190,7 @@ CFG_INT_KEYS = {  # integer-only arguments
     "line_width",
     "nbs",
     "save_period",
+    "batch",
 }
 CFG_BOOL_KEYS = {  # boolean-only arguments
     "save",

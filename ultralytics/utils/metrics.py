@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from ultralytics.utils import LOGGER, SimpleClass, TryExcept, plt_settings
+from ultralytics.utils import LOGGER, SimpleClass, TryExcept, plt_settings, yaml_save
 
 OKS_SIGMA = (
     np.array([0.26, 0.25, 0.25, 0.35, 0.35, 0.79, 0.79, 0.72, 0.72, 0.62, 0.62, 1.07, 1.07, 0.87, 0.87, 0.89, 0.89])
@@ -310,7 +310,7 @@ class ConfusionMatrix:
         self.nc = nc  # number of classes
         self.conf = 0.25 if conf in {None, 0.001} else conf  # apply 0.25 if default val conf is passed
         self.iou_thres = iou_thres
-        self.im_files = [[[] for i in range(nc)] for j in range(nc)] if self.task != "classify" \
+        self.im_files = [[[] for i in range(nc)] for j in range(nc)] if self.task == "classify" \
                     else [[[] for i in range(nc+1)] for j in range(nc+1)]   # pred,true:im_files
         
     def addImFile(self, pred_cls, gt_cls, im_file):
@@ -320,6 +320,8 @@ class ConfusionMatrix:
             gt_cls: im_file或其中某个目标真实的种类
             im_file: 目标文件
         """
+        if isinstance(gt_cls, torch.Tensor):
+            gt_cls = gt_cls.item()
         if im_file not in self.im_files[pred_cls][gt_cls]:
             self.im_files[pred_cls][gt_cls].append(im_file)
 
@@ -433,7 +435,7 @@ class ConfusionMatrix:
         nc, nn = self.nc, len(names)  # number of classes, names
         seaborn.set_theme(font_scale=1.0 if nc < 50 else 0.8)  # for label size
         labels = (0 < nn < 99) and (nn == nc)  # apply names to ticklabels
-        ticklabels = [str(i) for i in range(len(names + 1))] if labels else "auto" #only class number
+        ticklabels = [str(i) for i in range(nn + 1)] if labels else "auto" #only class number
         #ticklabels = (list(names) + ["background"]) if labels else "auto"
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")  # suppress empty matrix RuntimeWarning: All-NaN slice encountered
@@ -456,12 +458,22 @@ class ConfusionMatrix:
         plt.xticks(fontsize=8)
         plt.yticks(fontsize=8)
         plot_fname = Path(save_dir) / f"{title.lower().replace(' ', '_')}.png"
-        fig.savefig(plot_fname, dpi=250)
+        fig.savefig(plot_fname, dpi=150)
         plt.close(fig)
         if normalize:   #save once for im_files
             self.saveImageFiles(save_dir, names)
         if on_plot:
             on_plot(plot_fname)
+            
+    def saveImageFiles(self, save_dir, names):
+        save_dict = {}
+        names = list(names)
+        if self.task == "detect":
+            names.append("null")
+        for pred_c in range(len(self.im_files)):
+            for gt_c in range(len(self.im_files[pred_c])):
+                save_dict[f"pred-{names[pred_c]},true-{names[gt_c]}${pred_c},{gt_c}"] = self.im_files[pred_c][gt_c]
+        yaml_save(Path(save_dir) /"Confusion_Matrix_Imfiles.yaml",save_dict)
 
     def print(self):
         """Print the confusion matrix to the console."""

@@ -24,4 +24,4 @@ if __name__ == "__main__":
     train_ui.show()
     progress_bar = ProgressBar(train_ui)
     init_progress_effect(progress_bar.ProgressBar)
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

@@ -610,6 +610,11 @@
         <enum>Qt::Orientation::Horizontal</enum>
        </property>
        <widget class="QTextEdit" name="Tip_te">
+        <property name="font">
+         <font>
+          <family>Arial</family>
+         </font>
+        </property>
         <property name="styleSheet">
          <string notr="true"/>
         </property>
@@ -647,8 +652,8 @@
           <widget class="QTextEdit" name="Run_mes_te">
            <property name="font">
             <font>
-             <family>Segoe UI</family>
-             <pointsize>12</pointsize>
+             <family>Arial</family>
+             <pointsize>9</pointsize>
             </font>
            </property>
            <property name="styleSheet">

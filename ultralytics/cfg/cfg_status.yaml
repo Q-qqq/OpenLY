@@ -55,7 +55,7 @@
   学习周期: epochs：训练周期数$widgetType~sb$type~int$default~300$min~0$max~10000
   训练时间（h）: time：学习周期和训练时间其中之一决定训练时长，训练时间的优先级高于学习周期$widgetType~dsb$type~单位：h$default~0$min~0.0$max~10000.0$decimal~3
   早停周期数: patience：当patience个周期模型效果没有明显提高触发早停，停止训练$widgetType~sb$type~int$default~100$min~0$max~10000
-  批大小: batch：每一次迭代的样本数量，增多可增强泛化能力，但太大会引起内存爆炸；过小的batch会使得模型梯度下降不准确，需要降低学习率$widgetType~sb$type~int$default~8$min~0$max~10000
+  批大小: batch：每一次迭代的样本数量，增多可增强泛化能力，但太大会引起内存爆炸；过小的batch会使得模型梯度下降不准确，需要降低学习率$widgetType~sb$type~int$default~8$min~-1$max~10000
   图像大小: imgsz：模型输入图像的尺寸大小，不是导入图像的尺寸大小；尺寸分宽度和高度，当训练和验证时，尺寸大小取长边，推理和导出时尺寸正常使用（w,h）$widgetType~le$type~int|list$default~640
   保存: save：是否保存训练节点和推理结果$widgetType~cb$type~bool$default~True
   保存周期: save_period：保存周期，每save_period个学习周期单独保存一次训练节点，当小于-1时，不使能此功能。保存周期与每一次epoch保存是分开的$widgetType~sb$type~int$default~-1$min~-1$max~10000

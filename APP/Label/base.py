@@ -730,7 +730,7 @@ class QTransformerLabel(QSizeLabel):
         label["instances"].getBoundingRect()
         instance = copy.deepcopy(label["instances"])
         if instance._bboxes is not None and len(instance._bboxes) > 0:  #存在标签
-            if not self.painting and self.cursor() == Qt.CrossCursor:
+            if not self.painting and self.cursor().shape() == Qt.CrossCursor:
                 label["instances"].remove_zero_area_boxes()
             label["instances"].clip(self.pix.width(), self.pix.height())
             instance.convert_bbox("xyxy")
@@ -833,7 +833,7 @@ class QTransformerLabel(QSizeLabel):
                     instance = copy.deepcopy(inst)
                     self.getLabelSizeInstance(instance)
                     self.setInstanceCursor(instance, self.mouse_point)
-                    if self.cursor() != Qt.CursorShape.CrossCursor:
+                    if self.cursor().shape() != Qt.CursorShape.CrossCursor:
                         if self.index != i:
                             self.index = i
                         break

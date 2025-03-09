@@ -158,7 +158,7 @@ class LabelOps(QObject):
                 new_im_files = set.changeData(im_file, cls)  #转移至对应种类的文件夹
                 self.img_label.im_file = new_im_files[0]
             else:
-                label_file = img2label_paths(im_file)[0]
+                label_file = img2label_paths([im_file])[0]
                 instance.save(label_file, cls, pix_img.width(), pix_img.height())
                 set.changeData(im_file)
 

@@ -93,11 +93,16 @@ def qpolygon2points(polygon: QPolygon):
     return torch.Tensor(ps)[None, :]
 
 def box2qrect(box, format= "xywh"):
-    """将指定的矩形数据转换为矩形类"""
+    """将指定的矩形数据转换为矩形类
+    Args:
+        box(Tensor | ndarray): shape(1,4)
+        format(str): 输入box的格式 xywh or xyxy"""
     if box.ndim == 2:
         box = box[0,:]
-    if isinstance(box, torch.Tensor):
-        box = box.tolist()
+    
+    box = box.tolist()
+    box = [int(b) for b in box]
+
     assert format in ["xywh", "xyxy"]
     if format == "xywh":
         point1 = QPoint(box[0] - box[2]/2, box[1] - box[3]/2)

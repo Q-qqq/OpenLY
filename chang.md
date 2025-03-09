@@ -1,7 +1,11 @@
 # ultralytics 适应性修改
+
 ## 修改一：验证时混淆矩阵输出验证结果正反例对应的文件路径  
+
 ### ultralytics.utils.metrics.ConfusionMatrix  
+
 + 初始化添加文件存储参数self.im_files
+
 ```python
 def __init__(self, nc, conf=0.25, iou_thres=0.45, task="detect"):
     ...
@@ -11,6 +15,7 @@ def __init__(self, nc, conf=0.25, iou_thres=0.45, task="detect"):
 ```
 
 + 增加函数addImFile(...）向self.im_files添加路径
+
 ```python
 def addImFile(self, pred_cls, gt_cls, im_file):
     """添加对应种类的图像文件到self.im_files中
@@ -19,10 +24,14 @@ def addImFile(self, pred_cls, gt_cls, im_file):
         gt_cls: im_file或其中某个目标真实的种类
         im_file: 目标文件
     """
+    if isinstance(gt_cls, torch.Tensor):
+        gt_cls = gt_cls.item()
     if im_file not in self.im_files[pred_cls][gt_cls]:
         self.im_files[pred_cls][gt_cls].append(im_file)
 ```
+
 + 对于分类任务，在process_cls_preds函数中增加输入参数im_files，并使用addImFile将对应路径添加到self.im_files中
+
 ```python
 def process_cls_preds(self, preds, targets, im_files):
     ...
@@ -31,7 +40,9 @@ def process_cls_preds(self, preds, targets, im_files):
         self.matrix[p][t] += 1
         self.addImFile(p, t, im_file)  #add
 ```
+
 + 对于目标检测、分割、定向框和姿态任务，在process_batch中使用addImFile添加路径（5个位置需要添加）
+
 ```python
 def process_batch(self, detections, gt_bboxes, gt_cls, im_file):
     ...
@@ -65,14 +76,16 @@ def process_batch(self, detections, gt_bboxes, gt_cls, im_file):
             self.matrix[dc, self.nc] += 1  # predicted background
             self.addImFile(dc, self.nc, im_file)  #add
 ```
-+ 最后在绘制混淆矩阵的时候进行保存，并修改显示只显示种类序号，修改xy轴字体大小
+
++ 最后在绘制混淆矩阵的时候进行保存，并修改显示只显示种类序号，修改xy轴字体大小, 并添加保存结果的函数
+
 ```python
 @TryExcept("WARNING ⚠️ ConfusionMatrix plot failure")
 @plt_settings()
 def plot(self, normalize=True, save_dir="", names=(), on_plot=None):
     ...
     ...
-    ticklabels = [str(i) for i in range(len(names + 1))] if labels else "auto" #only class number
+    ticklabels = [str(i) for i in range(nn + 1)] if labels else "auto" #only class number
     #ticklabels = (list(names) + ["background"]) if labels else "auto"
     ...
     ...
@@ -84,24 +97,40 @@ def plot(self, normalize=True, save_dir="", names=(), on_plot=None):
         self.saveImageFiles(save_dir, names)
     if on_plot:
         on_plot(plot_fname)
+
+def saveImageFiles(self, save_dir, names):
+        save_dict = {}
+        names = list(names)
+        if self.task == "detect":
+            names.append("null")
+        for pred_c in range(len(self.im_files)):
+            for gt_c in range(len(self.im_files[pred_c])):
+                save_dict[f"pred-{names[pred_c]},true-{names[gt_c]}${pred_c},{gt_c}"] = self.im_files[pred_c][gt_c]
+        yaml_save(Path(save_dir) /"Confusion_Matrix_Imfiles.yaml",save_dict)
 ```
 
-### ultralytics.models.yolo.classify.val  
+### ultralytics.models.yolo.classify.val
+
 + 初始化评估指标时，初始化self.im_files参数，其将存储所有验证图像路径
+
 ```python
 def init_metrics(self, model):
     ...
     ...
     self.im_files = []   #metris files name
 ```  
+
 + 每一次更新指标时，将验证的图像按验证顺序添加到im_files中
+
 ```python
 def update_metrics(self, preds, batch):
     ...
     ...
     self.im_files.append(batch["im_file"])
 ```
+
 + 在完成评估指标更新时，将self.im_files传入ConfusionMatrix中
+
 ```python
 def finalize_metrics(self, *args, **kwargs):
     """Finalizes metrics of the model such as confusion_matrix and speed."""
@@ -109,8 +138,11 @@ def finalize_metrics(self, *args, **kwargs):
     ...
     ...
 ```
+
 ### ultralytics.models.yolo.detect.val
+
 + 每一次更新都将对应的路径传入ConfusionMatrix中
+
 ```python
 def update_metrics(self, preds, batch):
     """Metrics."""
@@ -131,11 +163,17 @@ def update_metrics(self, preds, batch):
         ...
         ...
 ```
+
 ### ultralytics.models.yolo.segment.val 同 ultralytics.models.yolo.detect.val
+
 ### ultralytics.models.yolo.pose.val 同 ultralytics.models.yolo.detect.val
+
 ## 修改二：适应中文图像路径输入
+
 ### ultralytics.data.utils
+
 + 自定义读取中文路径的cv2_readimg
+
 ```python
 def cv2_readimg(img_path, color=cv2.IMREAD_COLOR):
     """使用cv2读取图像
@@ -145,11 +183,17 @@ def cv2_readimg(img_path, color=cv2.IMREAD_COLOR):
     img = cv2.imdecode(np.fromfile(img_path,dtype=np.uint8), color)
     return img
 ```
+
 ### ultralytics.data
+
 + 在data文件夹使用替换，将cv2.imread全部替换为cv2_readimg, 且在各文件中添加from ultralytics.data.utils import cv2_readimg
+
 ## 修改三：进度条
-### ultralytics.utils.__init__
-+ 添加Qt类Progress， 通过对其信号进行槽连接获取进度数据从而进行进度条的显示，实例化为全局变量PROGRESS_BAR，
+
+### ultralytics.utils.__init
+
++ 添加Qt类Progress， 通过对其信号进行槽连接获取进度数据从而进行进度条的显示，实例化为全局变量PROGRESS_BAR
+
 ```python
 from PySide6.QtCore import *
 class Progress(QObject):
@@ -199,7 +243,9 @@ class Progress(QObject):
 
 PROGRESS_BAR = Progress()
 ```
+
 + 修改TryExcept修饰器，使其可以在程序出错时强制中断进度条
+
 ```python
 class TryExcept(contextlib.ContextDecorator):
     """
@@ -237,13 +283,16 @@ class TryExcept(contextlib.ContextDecorator):
                 PROGRESS_BAR.close()
         return True
 ```
+
 ### ultralytics.data.dataset
+
 + YoloDataset类中cache_labels进行标签的加载，对其进行进度条显示
+
 ```python
 def cache_labels(self, path=Path("./labels.cache")):
     ...
     ...
-    PROGRESS_BAR.start([0, total], "DataLoader", "Start...", False)
+    PROGRESS_BAR.start("DataLoader", "Start...", [0, total], False)
     with ThreadPool(NUM_THREADS) as pool:
         results = pool.imap(
             ...
@@ -255,7 +304,7 @@ def cache_labels(self, path=Path("./labels.cache")):
             ...
             if msg:
                 msgs.append(msg)
-                PROGRESS_BAR.setValue(i+1, f"Dataset loading...{im_file if im_file else msg}")
+            PROGRESS_BAR.setValue(i+1, f"Dataset loading...{im_file if im_file else msg}")
             pbar.desc = f"{desc} {nf} images, {nm + ne} backgrounds, {nc} corrupt"
             LOGGER.info(pbar.desc)
         pbar.close()
@@ -264,7 +313,9 @@ def cache_labels(self, path=Path("./labels.cache")):
     ...
     return x
 ```
+
 + ClassifyDataset类中verify_images进行图像的检测，对其进行进度条显示
+
 ```python
  def verify_images(self):
     ...
@@ -287,14 +338,17 @@ def cache_labels(self, path=Path("./labels.cache")):
         ...
         ...
 ```
+
 ### ultralytics.data.base
+
 + BaseDataset类中cache_images进行图像的缓存，对其进行进度条显示
+
 ```python
 def cache_images(self):
     """Cache images to memory or disk."""
     b, gb = 0, 1 << 30  # bytes of cached images, bytes per gigabytes
     fcn, storage = (self.cache_images_to_disk, "Disk") if self.cache == "disk" else (self.load_image, "RAM")
-    PROGRESS_BAR.start([0, self.ni], "Caching images...")
+    PROGRESS_BAR.start("Cache images", "Start...", [0, self.ni], False)
     with ThreadPool(NUM_THREADS) as pool:
         results = pool.imap(fcn, range(self.ni))
         pbar = TQDM(enumerate(results), total=self.ni, disable=LOCAL_RANK > 0)
@@ -309,8 +363,11 @@ def cache_images(self):
         PROGRESS_BAR.close()
         pbar.close()
 ```
+
 ### ultralytics.engine.validator
+
 + BaseValidator类中__call__进行数据集的验证。对其在非训练期间进行验证进度条显示
+
 ```python
 @smart_inference_mode()
 def __call__(self, trainer=None, model=None):
@@ -335,8 +392,11 @@ def __call__(self, trainer=None, model=None):
     i...
     ...
 ```
+
 ### ultralytics.engine.predictor
+
 + BasePredictor类中stram_inference进行流推理，对其进行进度条显示, 并且将预测结果self.results转移至cpu，减少显存的占用
+
 ```python
 @smart_inference_mode()
 def stream_inference(self, source=None, model=None, *args, **kwargs):
@@ -346,18 +406,14 @@ def stream_inference(self, source=None, model=None, *args, **kwargs):
         ...
         ...
         self.run_callbacks("on_predict_start")
-        PROGRESS_BAR.start("Predict", "Start predicting...", [0, len(self.data)], True)
+        PROGRESS_BAR.start("Predict", "Start predicting...", [0, len(self.dataset)], True)
         try:
-            for self.batch in self.dataset:
+            for data_i, self.batch in enumerate(self.dataset):
                 ...
                 ...
-                for i in range(n):
-                    self.seen += 1
-                    self.results[i] = self.results[i].cpu() #Reduce memory
-                    ...
-                ...
+                self.run_callbacks("on_predict_batch_end")
                 yield from self.results
-                PROGRESS_BAR.setValue(self.seen, f"{s} {profilers[1].dt *1e3:.1f}ms")
+                PROGRESS_BAR.setValue(data_i+1, f"{s} {profilers[1].dt *1e3:.1f}ms")
                 if PROGRESS_BAR.isStop():
                     PROGRESS_BAR.close()
                     break
@@ -365,12 +421,13 @@ def stream_inference(self, source=None, model=None, *args, **kwargs):
         except Exception as ex:
             PROGRESS_BAR.stop()
             PROGRESS_BAR.close()
-            raise ProcessLookupError(f"预测失败：{ex}")                
-    ...
-    ...
+            raise ProcessLookupError(f"预测失败：{ex}")
 ```
+
 ### ultralytics.data.loaders
+
 + 在LoadPilAndNumpy类中，需要对每个输入图像进行check，对其checks进行进度条显示
+
 ```python
 def __init__(self, im0):
     ...
@@ -392,9 +449,13 @@ def checkImgs(self, ims):
                 raise ProcessLookupError("Interrupt：Load img of predict interrupt success")
     return imgs
 ```
+
 ## 修改四：加载预测图像时不要一次性加载，一次一张，减少显存需求
+
 ### ultralytics.data.loader
+
 + 在LoadPilAndNumpy类中，修改__next__函数，获取每一次迭代的值为一张图像
+
 ```python
 def __next__(self):
         """Returns the next batch of images, paths, and metadata for processing."""
@@ -403,10 +464,15 @@ def __next__(self):
         self.count += 1
         return [self.paths[self.count-1]], [self.im0[self.count-1]],[""]
 ```
+
 + 在LoadTensor类中，同LoadPilAndNumpy一样修改
+
 ## 修改五：验证图像和标签时确保加载文件的线程安全
+
 ### ultralytics.data.utils
+
 + 在verify_iamge_label函数中添加线程锁
+
 ```python
 _LOCK = threading.Lock()
 def verify_image_label(args):
@@ -416,9 +482,13 @@ def verify_image_label(args):
         ...
         ...
 ```
+
 ## 修改六：验证结果绘制自定义
+
 ### ultralytics.engine.validator
+
 + 在BaseValidator类的__call__函数中，注释掉训练期间self.args.plot的赋值，使其自定义是否绘制结果且每次验证重绘一次
+
 ```python
 @smart_inference_mode()
 def __call__(self, trainer=None, model=None):
@@ -433,9 +503,13 @@ def __call__(self, trainer=None, model=None):
     ...
     ...
 ```
+
 ## 修改七：添加Keys
+
 ### ultralytics.cfg.__init__.py
+
 + 往全部变量中添加CFG_OTHERS_KEYS, 使KEYS全局变量包含全部参数
+
 ```python
 CFG_OTHER_KEYS = (
     "task",  #(str)detect, YOLO task, i.e. detect, segmetn, classify, pose
@@ -463,9 +537,13 @@ CFG_OTHER_KEYS = (
     "imgsz",     #(int | list)640, image size  width,height
 )
 ```
+
 ## 修改七：LOGGER
+
 ### ultralytics.utils.__init__
+
 + 添加Logging类，并实例化为LOGGER， 替换原先的LOGGER. 其中定义了多个信号对训练、验证信息进行界面显示
+
 ```python
 # Set logger
 _LOGGER = set_logging(LOGGING_NAME, verbose=VERBOSE)  # define globally (used in train.py, val.py, predict.py, etc.)
@@ -542,8 +620,11 @@ class Logger:
         self.Val_Finish_Signal.emit(msg)
 LOGGER  = Logger()
 ```
+
 ### ultralytics.engine.trainer
+
 + 在BaseTrainer类的_do_train函数中添加LOGGER对训练进度信息进行显示, 并添加total_instances变量计算每一次训练的总实例数量，在最后一个batch输出
+
 ```python
 def _do_train(self, world_size=1):
     ...
@@ -610,8 +691,11 @@ def _do_train(self, world_size=1):
     self._clear_memory()
     self.run_callbacks("teardown")
 ```
+
 ### ultralytics.engine.validator
+
 + 在BaseValidator类的__call__函数中添加LOGGER发送验证完成信号
+
 ```python
 @smart_inference_mode()
     def __call__(self, trainer=None, model=None):
@@ -622,18 +706,26 @@ def _do_train(self, world_size=1):
         ...
         ...
 ```
+
 ## 修改八：验证图像增加输出shape
+
 ### ultralytics.data.utils
+
 + 在verify_image函数中添加图像shape的输出
+
 ```python
 def verify_image(args):
     ...
     ...
     return (im_file, cls), nf, nc, msg, shape
 ```
+
 ## 修改九： 检测det数据集默认父路径修改
+
 ### ultralytics.data.utils
+
 + 在check_det_dataset函数中，修改数据集默认父路径DATASETS_DIR为Path(file).parent
+
 ```python
 def check_det_dataset(dataset, autodownload=True):
     file = check_file(dataset)
@@ -646,3 +738,4 @@ def check_det_dataset(dataset, autodownload=True):
     ...
     ...
 ```
+

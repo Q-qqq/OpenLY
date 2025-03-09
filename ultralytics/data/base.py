@@ -71,7 +71,7 @@ class BaseDataset(Dataset):
         self.prefix = prefix
         self.fraction = fraction
         self.im_files = self.get_img_files(self.img_path)
-        self.labels = self.get_labels()
+        self.labels = self.get_labels() if self.im_files else []
         self.update_labels(include_class=classes)  # single_cls and include_class
         self.ni = len(self.labels)  # number of images
         self.rect = rect
@@ -190,7 +190,7 @@ class BaseDataset(Dataset):
         """Cache images to memory or disk."""
         b, gb = 0, 1 << 30  # bytes of cached images, bytes per gigabytes
         fcn, storage = (self.cache_images_to_disk, "Disk") if self.cache == "disk" else (self.load_image, "RAM")
-        PROGRESS_BAR.start([0, self.ni], "Caching images...")
+        PROGRESS_BAR.start("Cache images", "Start...", [0, self.ni], False)
         with ThreadPool(NUM_THREADS) as pool:
             results = pool.imap(fcn, range(self.ni))
             pbar = TQDM(enumerate(results), total=self.ni, disable=LOCAL_RANK > 0)
