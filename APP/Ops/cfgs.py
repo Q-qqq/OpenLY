@@ -33,7 +33,7 @@ class CfgsTreeWidget(QTreeWidget):
         self.last_click_color =None
         self.click_widget = False
         self.roots = []
-        self.setAlternatingRowColors(True)
+
 
         self.eventConnect()
         self.args = DEFAULT_CFG_DICT
@@ -47,7 +47,6 @@ class CfgsTreeWidget(QTreeWidget):
         self.setRootColor()
         self.showArgs(False)
         self.expandAll()
-        #self.setStyleSheet(u"QTreeWidget::branch:!has-children{background-color: rgb(221, 255, 238);}")
 
 
 
@@ -102,7 +101,7 @@ class CfgsTreeWidget(QTreeWidget):
         if APP_SETTINGS["style"] == "cute":
             color = QColor(205, 127, 50, 255)
         elif APP_SETTINGS["style"] == "technology":
-            color = QColor(138, 43, 224, 255)
+            color = QColor(61, 122, 254, 150)
         for i in range(self.topLevelItemCount()):
             root = self.topLevelItem(i)
             root.setBackground(0, color)

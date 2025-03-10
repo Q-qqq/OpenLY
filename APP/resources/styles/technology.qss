@@ -69,7 +69,7 @@ QMenu#right_menu::item {
     border-left: 3px solid transparent;
 }
  
-QMen#right_menuu::item:selected {
+QMenu#right_menuu::item:selected {
     background-color: #245b78;
     border-left: 3px solid #00ff9d;
 }
@@ -258,14 +258,14 @@ QPushButton:hover {
 }
 
 /* 输入控件 */
-QLineEdit, QPlainTextEdit {
+QPlainTextEdit {
     font-size: 10px;
     background: #12283d; /* 深色背景 */
     border: 1px solid #00ffff;
     selection-background-color: #00ffff40; /* 半透明选择背景 */
 }
 
-QLineEdit:focus, QTextEdit:focus {
+QTextEdit:focus {
     border-color: #00ff9d; /* 聚焦霓虹色 */
 }
 
@@ -273,7 +273,6 @@ QLineEdit:focus, QTextEdit:focus {
 QTextEdit {
     background: #0a0e17;                /* 暗能量密度 1.3×10²⁹ kg/m³ */
     color: #00f3e6;                     /* 切伦科夫辐射色 */
-    font: 10pt "Quantum Sans";          /* 超弦谐振字体 */
     border: 3px solid qconicalgradient( /* 引力波环 */
         cx:0.5, cy:0.5,
         angle: 0,
@@ -342,15 +341,7 @@ QTextEdit::cursor {
     51%, 100% { opacity: 0.3; }
 }
 
-/* 复合控件 */
-QComboBox {
-    selection-background-color: #245b78;
-}
 
-QComboBox QAbstractItemView {
-    background: #12283d;
-    border: 1px solid #00ffff;
-}
 
 /* 特殊状态处理 */
 QCheckBox::indicator:checked, QRadioButton::indicator:checked {
@@ -506,3 +497,254 @@ QToolTip {
     padding: 1px 3px;
 }
 
+QTreeWidget {
+    background: #0a0e17;                /* 暗物质密度矩阵 */
+    border: 2px solid qlineargradient( /* 曲率引擎护盾 */
+        x1:0, y1:0.5, 
+        x2:1, y2:0.5,
+        stop:0 #3d7afe33, 
+        stop:0.5 #00f3e6aa,
+        stop:1 #8a2be233 
+    );
+    border-radius: 6px;
+    color: #00f3e6;                     /* 量子荧光素 */
+    font: 12pt "Tachyon Console";       /* 超光速粒子字体 */
+    margin: 5px;
+}
+
+
+ 
+QTreeWidget::item:hover {
+    background: qlineargradient(        /* 量子隧穿效应 */
+        x1:0, y1:0.5,
+        x2:1, y2:0.5,
+        stop:0 #3d7afe11,
+        stop:1 #8a2be211 
+    );
+    border-left: 4px solid #00f3e6;    /* 能级跃迁指示器 */
+}
+
+QTreeWidget::branch:open {
+    margin-right: 8px;
+}
+ 
+QTreeWidget::branch:closed {
+}
+
+/* 一级节点 - 恒星核心 */
+QTreeWidget::item[level="1"] {
+    background: #3d7afe08;
+    font-size: 14pt;
+}
+ 
+/* 二级节点 - 行星环带 */
+QTreeWidget::item[level="2"] {
+    padding-left: 40px;
+    border-color: #00f3e633;
+}
+ 
+/* 三级节点 - 卫星轨道 */
+QTreeWidget::item[level="3"] {
+    padding-left: 60px;
+    color: #8a2be2;
+}
+
+
+
+QSpinBox, QDoubleSpinBox {
+    background: #0a0e17;                /* 暗物质密度 3.5×10²⁶ kg/m³ */
+    color: #00f3e6;                     /* 量子纠缠荧光 */
+    border: 1px solid qlineargradient(  /* 曲速环流 */
+        x1:0, y1:0.5, 
+        x2:1, y2:0.5,
+        stop:0 #3d7afe33,
+        stop:0.5 #00f3e6aa,
+        stop:1 #8a2be233 
+    );
+    border-radius: 2px;
+    padding: 1px 2px;
+    selection-background-color: #8a2be277;
+}
+
+
+QSpinBox:focus, QDoubleSpinBox:focus {
+    border-color: qconicalgradient(    /* 奇点聚焦环 */
+        cx:0.5, cy:0.5,
+        angle: 0,
+        stop:0 #00f3e6,
+        stop:0.25 #3d7afe,
+        stop:0.5 #8a2be2,
+        stop:0.75 #ff355e 
+    );
+}
+ 
+@keyframes warp-core {
+    0% { border-color: #00f3e6; }
+    25% { border-color: #3d7afe; }
+    50% { border-color: #8a2be2; }
+    75% { border-color: #ff355e; }
+    100% { border-color: #00f3e6; }
+}
+
+QSpinBox[alert="critical"], QDoubleSpinBox[alert="critical"] {
+    color: #ff355e;
+    border-color: qlineargradient(
+        x1:0, y1:0.5,
+        x2:1, y2:0.5,
+        stop:0 #ff355e,
+        stop:1 #ff355e00 
+    );
+}
+
+QLineEdit {
+    background: #0a0e17ee;              /* 高密度暗物质（1.5×10²⁷ kg/m³） */
+    color: #00f3e6;                    /* 切伦科夫辐射色 */
+    font: 12pt "Quantum Sans";         /* 超弦谐振字体 */
+    border: 1px solid qlineargradient( /* 事件视界边界 */
+        x1:0, y1:0.5,
+        x2:1, y2:0.5,
+        stop:0 #3d7afe33,
+        stop:0.5 #b6cca809,
+        stop:1 #8a2be233 
+    );
+    border-radius: 2px;
+    padding: 1px 3px;
+    selection-background-color: #8a2be277; /* 量子选择态 */
+}
+
+QLineEdit::placeholder {
+    color: #00f3e655;                  /* 量子涨落微光 */
+    font-style: italic;
+}
+
+QLineEdit:focus {
+    border: 2px solid qconicalgradient( /* 克尔黑洞能层 */
+        cx:0.5, cy:0.5,
+        angle: 0,
+        stop:0 #00f3e6,
+        stop:0.3 #3d7afe,
+        stop:0.6 #8a2be2,
+        stop:1 #00f3e6 
+    );
+}
+ 
+@keyframes singularity-pulse {
+    0% { border-width: 2px; }
+    50% { border-width: 4px; }
+    100% { border-width: 2px; }
+}
+
+QLineEdit[valid="false"] {
+    border-color: qlineargradient(    /* 时空断裂警报 */
+        x1:0, y1:0.5,
+        x2:1, y2:0.5,
+        stop:0 #ff355e,
+        stop:1 #ff355e00 
+    );
+}
+
+QLineEdit:hover {
+    background: #0a0e17;             /* 暗物质密度衰减 */
+    border-color: qlineargradient(
+        x1:0, y1:0.5,
+        x2:1, y2:0.5,
+        stop:0 #3d7afe,
+        stop:1 #8a2be2 
+    );
+}
+
+QComboBox {
+    background: #0a0e17ee;              /* 暗物质凝聚态 */
+    color: #00f3e6;                    /* 量子隧穿荧光 */
+    font: 12pt "Tachyon Interface";    /* 超光速界面字体 */
+    border: 2px solid qconicalgradient(/* 粒子加速环 */
+        cx:0.5, cy:0.5,
+        angle: 0,
+        stop:0 #3d7afe33,
+        stop:0.3 #b4ddb608,
+        stop:0.6 #8a2be233,
+        stop:1 #3d7afe33 
+    );
+    border-radius: 8px;
+    padding: 1px 2px 1px 2px;
+    selection-background-color: #3d7afe55;
+}
+
+QComboBox::drop-down {
+    width: 40px;
+    background: qradialgradient(        /* 微型黑洞引擎 */
+        cx:0.7, cy:0.3,
+        radius: 0.9,
+        stop:0 #3d7afe33,
+        stop:1 #00f3e600 
+    );
+    border-left: 1px solid #00f3e633;
+}
+ 
+QComboBox::down-arrow {
+    width: 20px;
+    height: 20px;
+}
+
+QComboBox:on {  /* 下拉展开时 */
+    border-color: qlineargradient(
+        x1:0, y1:0.5,
+        x2:1, y2:0.5,
+        stop:0 #3d7afe,
+        stop:1 #8a2be2 
+    );
+}
+ 
+@keyframes event-horizon {
+    0% { border-color: #3d7afe; }
+    50% { border-color: #00f3e6; }
+    100% { border-color: #8a2be2; }
+}
+
+QComboBox:hover {
+    background: #0a0e17;
+    border-color: qconicalgradient(
+        cx:0.5, cy:0.5,
+        angle: 0,
+        stop:0 #00f3e6,
+        stop:0.5 #3d7afe,
+        stop:1 #8a2be2 
+    );
+}
+
+QComboBox QAbstractItemView {
+    background: #0a0e17dd;            /* 高维膜投影 */
+    border: 2px solid #3d7afe33;
+    border-radius: 6px;
+    selection-background-color: #8a2be277;
+}
+ 
+QComboBox QAbstractItemView::item {
+    min-height: 25px;                /* 普朗克尺度优化 */
+    padding: 3px 6px;
+    border-bottom: 1px solid #3d7afe15;
+}
+ 
+QComboBox QAbstractItemView::item:hover {
+    background: qlineargradient(      /* 量子概率云 */
+        x1:0, y1:0.5,
+        x2:1, y2:0.5,
+        stop:0 #3d7afe11,
+        stop:1 #8a2be211 
+    );
+}
+
+QComboBox QScrollBar:vertical {
+    width: 8px;
+    background: transparent;
+}
+ 
+QComboBox QScrollBar::handle:vertical {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:1, y2:0,
+        stop:0 #3d7afe, 
+        stop:1 #8a2be2 
+    );
+    min-height: 30px;
+}

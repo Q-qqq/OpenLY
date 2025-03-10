@@ -34,7 +34,7 @@ def append_formatted_text(text_edit, text, font_size, color=None, bold=False):
     
     # 创建格式并设置属性
     fmt = QTextCharFormat()
-    fmt.setFont(QFont("Cascadia Mono", font_size))  # 字体大小
+    fmt.setFont(QFont("Consolas", font_size))  # 字体大小
     if color:
         fmt.setForeground(color)
     if bold:
