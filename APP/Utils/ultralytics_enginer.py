@@ -10,11 +10,11 @@ from APP.Label.base import QInstances
 
 class Yolo(YOLO):
     @threaded
-    #@TryExcept(msg="Train error", verbose=True)
+    @TryExcept(msg="Train error", verbose=True)
     def lyTrain(self, trainer=None, threaded=True, **kwargs):
         self.train(trainer, **kwargs)
 
-    #@threaded
+    @threaded
     @TryExcept(msg="Val error", verbose=True)
     def lyVal(self, validator=None, threaded=True, **kwargs):
         LOGGER.info("开始验证")

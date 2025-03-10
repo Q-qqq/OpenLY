@@ -443,39 +443,35 @@ def set_logging(name="LOGGING_NAME", verbose=True):
 _LOGGER = set_logging(LOGGING_NAME, verbose=VERBOSE)  # define globally (used in train.py, val.py, predict.py, etc.)
 class Logger(QObject):
     """信息显示"""
-    Show_Mes_Signal = Signal(str)
+    Show_Mes_Signal = Signal(str, str)
     Start_Train_Signal = Signal(list)
     Batch_Finish_Signal = Signal(str)
     Epoch_Finish_Signal = Signal(list)
     Train_Finish_Signal = Signal(str)
-    Train_Interrupt_Signal = Signal()
+    interrupt_error_Signal = Signal(str)
     Start_Val_Signal = Signal(str)
     Val_Finish_Signal = Signal(str)
     Error_Signal = Signal(str)
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.errorFormat = '<font color="red" size="5">{}</font>'
-        self.warningFormat = '<font color="orange" size="4">{}</font>'
         self.stop = False  #停止训练
 
 
     def error(self,msg):
         """错误信号"""
         _LOGGER.error(msg)
-        errorMsg = self.errorFormat.format(msg)
         self.Error_Signal.emit(msg)
-        self.Show_Mes_Signal.emit(errorMsg)
+        self.Show_Mes_Signal.emit("error", msg)
 
     def warning(self,msg):
         """警告信号"""
         _LOGGER.warning(msg)
-        warningMsg = self.warningFormat.format(msg)
-        self.Show_Mes_Signal.emit(warningMsg)
+        self.Show_Mes_Signal.emit("warning", msg)
 
     def info(self,msg):
         """正常信号"""
         _LOGGER.info(msg)
-        self.Show_Mes_Signal.emit(msg)
+        self.Show_Mes_Signal.emit("info", msg)
 
     def startTrain(self, msg_epochs):
         """开始训练信号"""
@@ -497,9 +493,9 @@ class Logger(QObject):
         _LOGGER.info(msg)
         self.Train_Finish_Signal.emit(msg)
 
-    def trainInterrupt(self):
-        """训练停止信号"""
-        self.Train_Interrupt_Signal.emit()
+    def interruptError(self, msg):
+        """中断信号"""
+        self.interrupt_error_Signal.emit(msg)
 
     def startVal(self, msg):
         """开始验证信号"""
@@ -1047,7 +1043,10 @@ class TryExcept(contextlib.ContextDecorator):
     def __exit__(self, exc_type, value, traceback):
         """Defines behavior when exiting a 'with' block, prints error message if necessary."""
         if value:
-            if self.verbose:
+            value = str(value).replace("：", ":")
+            if value.startswith("Interrupt"):
+                LOGGER.interruptError(value.split(":")[1].strip())
+            elif self.verbose:
                 LOGGER.error(f"{self.msg}{': ' if self.msg else ''}{value}")
             if PROGRESS_BAR.loading:
                 PROGRESS_BAR._stop = True

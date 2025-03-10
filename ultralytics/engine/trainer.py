@@ -368,8 +368,7 @@ class BaseTrainer:
             for i, batch in pbar:
                 if LOGGER.stop:
                     self._clear_memory()
-                    LOGGER.trainInterrupt()
-                    raise ProcessLookupError(f"中断：训练中断成功,已训练{epoch}epoch")
+                    raise ProcessLookupError(f"Interrupt: Train interrupt success, trained {epoch} epoch")
                 self.run_callbacks("on_train_batch_start")
                 # Warmup
                 ni = i + nb * epoch
@@ -383,7 +382,6 @@ class BaseTrainer:
                         )
                         if "momentum" in x:
                             x["momentum"] = np.interp(ni, xi, [self.args.warmup_momentum, self.args.momentum])
-
                 # Forward
                 with autocast(self.amp):
                     batch = self.preprocess_batch(batch)

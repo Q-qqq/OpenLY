@@ -244,7 +244,7 @@ class Progress(QObject):
 PROGRESS_BAR = Progress()
 ```
 
-+ 修改TryExcept修饰器，使其可以在程序出错时强制中断进度条
++ 修改TryExcept修饰器，使其可以在程序出错时强制中断进度条, 并输出训练中断信号
 
 ```python
 class TryExcept(contextlib.ContextDecorator):
@@ -276,9 +276,12 @@ class TryExcept(contextlib.ContextDecorator):
     def __exit__(self, exc_type, value, traceback):
         """Defines behavior when exiting a 'with' block, prints error message if necessary."""
         if value:
-            if self.verbose:
+            value = str(value).replace("：", ":")
+            if value.startswith("Interrupt"):
+                LOGGER.interruptError(value.split(":")[1].strip())
+            elif self.verbose:
                 LOGGER.error(f"{self.msg}{': ' if self.msg else ''}{value}")
-            if PROGRESS_BAR.loadiing:
+            if PROGRESS_BAR.loading:
                 PROGRESS_BAR._stop = True
                 PROGRESS_BAR.close()
         return True
@@ -547,41 +550,37 @@ CFG_OTHER_KEYS = (
 ```python
 # Set logger
 _LOGGER = set_logging(LOGGING_NAME, verbose=VERBOSE)  # define globally (used in train.py, val.py, predict.py, etc.)
-class Logger:
+class Logger(QObject):
     """信息显示"""
-    Show_Mes_Signal = Signal(str)
+    Show_Mes_Signal = Signal(str, str)
     Start_Train_Signal = Signal(list)
     Batch_Finish_Signal = Signal(str)
     Epoch_Finish_Signal = Signal(list)
     Train_Finish_Signal = Signal(str)
-    Train_Interrupt_Signal = Signal()
+    interrupt_error_Signal = Signal(str)
     Start_Val_Signal = Signal(str)
     Val_Finish_Signal = Signal(str)
     Error_Signal = Signal(str)
     def __init__(self, parent=None):
-        super(Logger, self).__init__(parent)
-        self.errorFormat = '<font color="red" size="5">{}</font>'
-        self.warningFormat = '<font color="orange" size="5">{}</font>'
+        super().__init__(parent)
         self.stop = False  #停止训练
 
 
     def error(self,msg):
         """错误信号"""
         _LOGGER.error(msg)
-        errorMsg = self.errorFormat.format(msg)
         self.Error_Signal.emit(msg)
-        self.Show_Mes_Signal.emit(errorMsg)
+        self.Show_Mes_Signal.emit("error", msg)
 
     def warning(self,msg):
         """警告信号"""
         _LOGGER.warning(msg)
-        warningMsg = self.warningFormat.format(msg)
-        self.Show_Mes_Signal.emit(warningMsg)
+        self.Show_Mes_Signal.emit("warning", msg)
 
     def info(self,msg):
         """正常信号"""
         _LOGGER.info(msg)
-        self.Show_Mes_Signal.emit(msg)
+        self.Show_Mes_Signal.emit("info", msg)
 
     def startTrain(self, msg_epochs):
         """开始训练信号"""
@@ -590,7 +589,6 @@ class Logger:
 
     def batchFinish(self, msg):
         """完成一个batch信号"""
-        _LOGGER.info(msg)
         self.Batch_Finish_Signal.emit(msg)
 
     def epochFinish(self, msg_epoch):
@@ -604,10 +602,9 @@ class Logger:
         _LOGGER.info(msg)
         self.Train_Finish_Signal.emit(msg)
 
-    def trainInterrupt(self):
-        """训练停止信号"""
-        _LOGGER.info(msg)
-        self.Train_Interrupt_Signal.emit()
+    def interruptError(self, msg):
+        """中断信号"""
+        self.interrupt_error_Signal.emit(msg)
 
     def startVal(self, msg):
         """开始验证信号"""
@@ -618,6 +615,7 @@ class Logger:
         """验证结束信号"""
         _LOGGER.info(msg)
         self.Val_Finish_Signal.emit(msg)
+
 LOGGER  = Logger()
 ```
 
@@ -737,5 +735,61 @@ def check_det_dataset(dataset, autodownload=True):
         path = (Path(file).parent / path).resolve()   #DATASETS_DIR->Path(file).parent
     ...
     ...
+```
+
+## 修改十： 增加/修改训练进行时输出参数
+
+### ultralytics.enginer.trainer
+
++ 在BaseTrainer类的_do_train函数中，增加训练时输出batch信息，修改每一个epoch最后的输出instances为该epoch的总instances
+
+```python
+def _do_train(self, world_size=1):
+    ...
+    ...
+    self.optimizer.zero_grad()  # zero any resumed gradients to ensure stability on train start
+    while True:
+       ...
+       ...
+            ...
+            # Log
+            if RANK in {-1, 0}:
+                total_instance += batch["cls"].shape[0]
+                instances = batch["cls"].shape[0] if i < len(self.train_loader)-1 else total_instance
+                loss_length = self.tloss.shape[0] if len(self.tloss.shape) else 1
+                loss_mes = ("%11s" * 3 + "%11.4g" * (2 + loss_length))% (
+                        f"{epoch + 1}/{self.epochs}",
+                        f"{i+1}/{len(self.train_loader)}",   #batch
+                        f"{self._get_memory():.3g}G",  # (GB) GPU memory util
+                        *(self.tloss if loss_length > 1 else torch.unsqueeze(self.tloss, 0)),  # losses
+                        instances,  # batch size, i.e. 8
+                        batch["img"].shape[-1],  # imgsz, i.e 640
+                    )
+                pbar.set_description(loss_mes)
+                LOGGER.batchFinish(loss_mes)
+                self.run_callbacks("on_batch_end")
+                if self.args.plots and ni in self.plot_idx:
+                    self.plot_training_samples(batch, ni)
+
+            self.run_callbacks("on_train_batch_end")
+        ...
+        ...
+```
+
+### ultralytics.models.yolo.detect.train
+
++ 在DetectionTrainer类的progress_string函数中添加batch输出
+
+```python
+def progress_string(self):
+        """Returns a formatted string of training progress with epoch, GPU memory, loss, instances and size."""
+        return ("\n" + "%11s" * (5 + len(self.loss_names))) % (
+            "Epoch",
+            "batch",
+            "GPU_mem",
+            *self.loss_names,
+            "Instances",
+            "Size",
+        )
 ```
 
