@@ -144,6 +144,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
         self.Train_a.triggered.connect(self.startTrain)
         self.Val_a.triggered.connect(self.startVal)
         self.Predict_a.triggered.connect(self.startPredict)
+        self.Export_a.triggered.connect(self.startExport)
         self.confusion_norm_label.Select_signal.connect(self.ConfusionImagesSlot)
         self.confusion_denorm_label.Select_signal.connect(self.ConfusionImagesSlot)
 
@@ -196,13 +197,17 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
         else:
             source = self.cfgs_widget.args["source"]
         yolo = Yolo(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
-        yolo.overrides = self.cfgs_widget.args
+        yolo.overrides = {**self.cfgs_widget.args, **yolo.overrides}
         self.pred_labels = yolo.lyPredict(source=source, save_dir=getExperimentPath,conf=self.cfgs_widget.args["conf"])
         if self.pred_labels is None:
             self.pred_labels = {}
         if self.img_label.im_file in self.pred_labels.keys():
             self.img_label.loadPredLabel(self.pred_labels[self.img_label.im_file])
 
+    def startExport(self):
+        yolo = Yolo(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
+        yolo.overrides = {**self.cfgs_widget.args, **yolo.overrides}
+        yolo.lyExport()
 
     #SLOT 外部槽
     def changeTaskSlot(self, task):

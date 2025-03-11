@@ -70,4 +70,8 @@ class Yolo(YOLO):
             PROGRESS_BAR.close()
         return labels
 
+    @threaded
+    @TryExcept(msg="Export error", verbose=True)
+    def lyExport(self):
+        self.export()
 

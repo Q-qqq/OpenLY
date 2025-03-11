@@ -453,6 +453,21 @@ def checkImgs(self, ims):
     return imgs
 ```
 
+### ultralytics.enginer.exporter
+
++ 在Exporter类的__call__函数中，添加导出进度条显示
+```python
+def __call__(self, model=None) -> str:
+        """Returns list of exported files/dirs after running callbacks."""
+        PROGRESS_BAR.start("模型导出， ”导出中", 0, 0, False)
+        self.run_callbacks("on_export_start")
+        ...
+        ...
+        self.run_callbacks("on_export_end")
+        PROGRESS_BAR.close()
+        return f  # return list of exported files/dirs
+```
+
 ## 修改四：加载预测图像时不要一次性加载，一次一张，减少显存需求
 
 ### ultralytics.data.loader
@@ -792,4 +807,3 @@ def progress_string(self):
             "Size",
         )
 ```
-

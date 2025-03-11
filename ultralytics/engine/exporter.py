@@ -90,6 +90,7 @@ from ultralytics.utils import (
     colorstr,
     get_default_args,
     yaml_save,
+    PROGRESS_BAR,
 )
 from ultralytics.utils.checks import (
     check_imgsz,
@@ -205,6 +206,7 @@ class Exporter:
 
     def __call__(self, model=None) -> str:
         """Returns list of exported files/dirs after running callbacks."""
+        PROGRESS_BAR.start("模型导出， ”导出中", 0, 0, False)
         self.run_callbacks("on_export_start")
         t = time.time()
         fmt = self.args.format.lower()  # to lowercase
@@ -441,6 +443,7 @@ class Exporter:
             )
 
         self.run_callbacks("on_export_end")
+        PROGRESS_BAR.close()
         return f  # return list of exported files/dirs
 
     def get_int8_calibration_dataloader(self, prefix=""):

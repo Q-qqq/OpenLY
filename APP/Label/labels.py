@@ -43,12 +43,7 @@ class DetectTransformerLabel(QTransformerLabel):
     def mousePressEvent(self, event: QMouseEvent):
         super().mousePressEvent(event)
         if self.painting and event.button() == Qt.MouseButton.LeftButton:
-            if len(self.label["instances"]._bboxes) == self.index:  #未添加框
-                p = self.getPixSizePoint(event.x(), event.y())
-                self.addBox([p[0], p[1], p[0], p[1]], self.cls)   #添加框
-                self.ori_x = p[0]
-                self.ori_y = p[1]
-            elif len(self.label["instances"]._bboxes) - 1 == self.index:
+            if len(self.label["instances"]._bboxes) - 1 == self.index:
                 self.painting = False
         if not self.painting and self.paint and event.button() == Qt.MouseButton.LeftButton and self.cursor().shape() != Qt.CursorShape.CrossCursor:
             self.getOri()
@@ -92,6 +87,12 @@ class DetectTransformerLabel(QTransformerLabel):
         super().mouseMoveEvent(event)
         if self.pix == None:
             return
+        
+        if self.painting and event.buttons() == Qt.LeftButton and len(self.label["instances"]._bboxes) == self.index: #未添加框
+            p = self.getPixSizePoint(event.x(), event.y())
+            self.addBox([p[0], p[1], 0, 0], self.cls)   #添加框
+            self.ori_x = p[0]
+            self.ori_y = p[1]
 
         if self.painting and len(self.label["instances"]._bboxes)-1 == self.index:  #绘制中且已添加新框
             p = self.getPixSizePoint(event.x(), event.y())
@@ -211,6 +212,7 @@ class DetectTransformerLabel(QTransformerLabel):
         if ev.text() == "\r" and self.paint and not self.painting:  #绘制下一个标签
             self.index = len(self.label["instances"]._bboxes)   #下一个标签索引，未添加
             self.painting = True
+            self.update()
 
     def mouseReleaseEvent(self, ev):
         super().mouseReleaseEvent(ev)
