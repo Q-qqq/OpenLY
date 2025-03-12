@@ -164,7 +164,6 @@ V5参数:
   置信度损失权值: obj：通过网络预测出的置信度计算该位置有无目标的损失，该损失再乘以此权值为最终置信度损失$widgetType~dsb$type~float$default~0.7$min~0.0$max~1000.0$decimal~3
   置信度正例权值: obj_pw：计算置信度损失时，给到正样本目标的权重$widgetType~dsb$type~float$default~1$min~0.0$max~1000.0$decimal~3
   置信度iou比值: gr：置信度损失占iou比值 (1-gr) + gr*iou$widgetType~dsb$type~float$default~0.4$min~0.0$max~1.0$decimal~3
-  训练IoU: iou_t：训练时使用的iou阈值，计算真实框与先验框的iou，给真实框划分先验框，不使用，使用anchor_t$widgetType~dsb$type~float$default~0.2$min~0.0$max~1.0$decimal~3
   先验框阈值: anchor_t：通过计算真实框和先验框的长度比和宽度比，若最大的比小于此阈值，则该先验框属于此真实框$widgetType~dsb$type~float$default~4$min~0.0$max~1000.0$decimal~3
   fl_gamma: fl_gamma：当fl_gamma大于0时，计算种类和置信度损失的算法由BCELoss换成FocalLoss,FocalLoss通过使用alpha和gamma参数修改BCEWithLogitsLoss算法来克服类不平衡和难分样本问题，gamma值越大，难分样本损失重要性越大，大于0时默认值为1.5$widgetType~dsb$type~float$default~0$min~0.0$max~1000.0$decimal~3
   标签平滑: label_smoothing：往真实种类分数的one-hot加入噪点，正常真实种类分数为0/1，当加入label_smoothing后，正例为1-0.5*label_smoothing，反例为0.5*smoothing$widgetType~dsb$type~float$default~0$min~0.0$max~1.0$decimal~3

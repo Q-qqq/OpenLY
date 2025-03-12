@@ -11,7 +11,10 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>OpenLY</string>
+  </property>
+  <property name="windowOpacity">
+   <double>1.000000000000000</double>
   </property>
   <property name="styleSheet">
    <string notr="true"/>
@@ -20,23 +23,23 @@
    <enum>QTabWidget::TabShape::Rounded</enum>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout_7">
+   <layout class="QGridLayout" name="gridLayout" columnstretch="0,0">
     <property name="leftMargin">
-     <number>1</number>
+     <number>2</number>
     </property>
     <property name="topMargin">
-     <number>1</number>
+     <number>2</number>
     </property>
     <property name="rightMargin">
-     <number>1</number>
+     <number>2</number>
     </property>
     <property name="bottomMargin">
-     <number>1</number>
+     <number>2</number>
     </property>
     <property name="spacing">
      <number>1</number>
     </property>
-    <item row="0" column="0">
+    <item row="0" column="0" colspan="2">
      <widget class="QFrame" name="Painter_tool_f">
       <property name="minimumSize">
        <size>
@@ -433,7 +436,23 @@
        <enum>QFrame::Shape::Box</enum>
       </property>
       <property name="frameShadow">
-       <enum>QFrame::Shadow::Raised</enum>
+       <enum>QFrame::Shadow::Plain</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QListView" name="Classes_lv">
+      <property name="maximumSize">
+       <size>
+        <width>0</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Shape::Panel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Shadow::Plain</enum>
       </property>
      </widget>
     </item>

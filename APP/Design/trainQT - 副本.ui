@@ -6,15 +6,18 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1057</width>
-    <height>743</height>
+    <width>1082</width>
+    <height>804</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
   <property name="tabShape">
-   <enum>QTabWidget::Rounded</enum>
+   <enum>QTabWidget::TabShape::Rounded</enum>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_7">
@@ -48,13 +51,13 @@
        </size>
       </property>
       <property name="styleSheet">
-       <string notr="true">background-color: rgb(247, 255, 246);</string>
+       <string notr="true"/>
       </property>
       <property name="frameShape">
-       <enum>QFrame::Box</enum>
+       <enum>QFrame::Shape::Box</enum>
       </property>
       <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
+       <enum>QFrame::Shadow::Raised</enum>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_4">
        <property name="spacing">
@@ -88,12 +91,12 @@
          </property>
          <property name="font">
           <font>
-           <family>宋体</family>
+           <family>Segoe UI</family>
            <pointsize>12</pointsize>
           </font>
          </property>
          <property name="styleSheet">
-          <string notr="true">background-color: rgba(255, 255, 255);</string>
+          <string notr="true"/>
          </property>
          <property name="text">
           <string>标注</string>
@@ -106,7 +109,7 @@
           <number>10</number>
          </property>
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
         </widget>
        </item>
@@ -126,12 +129,12 @@
          </property>
          <property name="font">
           <font>
-           <family>宋体</family>
+           <family>Segoe UI</family>
            <pointsize>12</pointsize>
           </font>
          </property>
          <property name="styleSheet">
-          <string notr="true">background-color: rgba(255, 255, 255);</string>
+          <string notr="true"/>
          </property>
          <property name="text">
           <string>铅笔</string>
@@ -154,12 +157,12 @@
          </property>
          <property name="font">
           <font>
-           <family>宋体</family>
+           <family>Segoe UI</family>
            <pointsize>12</pointsize>
           </font>
          </property>
          <property name="styleSheet">
-          <string notr="true">background-color: rgba(255, 255, 255);</string>
+          <string notr="true"/>
          </property>
          <property name="text">
           <string>钢笔</string>
@@ -172,7 +175,7 @@
           <number>10</number>
          </property>
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
         </widget>
        </item>
@@ -192,12 +195,12 @@
          </property>
          <property name="font">
           <font>
-           <family>宋体</family>
+           <family>Segoe UI</family>
            <pointsize>12</pointsize>
           </font>
          </property>
          <property name="styleSheet">
-          <string notr="true">background-color: rgba(255, 255, 255);</string>
+          <string notr="true"/>
          </property>
          <property name="text">
           <string>快速选择</string>
@@ -220,12 +223,12 @@
          </property>
          <property name="font">
           <font>
-           <family>宋体</family>
+           <family>Segoe UI</family>
            <pointsize>12</pointsize>
           </font>
          </property>
          <property name="styleSheet">
-          <string notr="true">background-color: rgba(255, 255, 255);</string>
+          <string notr="true"/>
          </property>
          <property name="text">
           <string>色阶</string>
@@ -241,7 +244,7 @@
           <number>20</number>
          </property>
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
         </widget>
        </item>
@@ -261,12 +264,12 @@
          </property>
          <property name="font">
           <font>
-           <family>宋体</family>
-           <pointsize>14</pointsize>
+           <family>Segoe UI</family>
+           <pointsize>12</pointsize>
           </font>
          </property>
          <property name="styleSheet">
-          <string notr="true">background-color: rgba(255, 255, 255);</string>
+          <string notr="true"/>
          </property>
          <property name="text">
           <string>P</string>
@@ -289,12 +292,12 @@
          </property>
          <property name="font">
           <font>
-           <family>宋体</family>
-           <pointsize>14</pointsize>
+           <family>Segoe UI</family>
+           <pointsize>12</pointsize>
           </font>
          </property>
          <property name="styleSheet">
-          <string notr="true">background-color: rgba(255, 255, 255);</string>
+          <string notr="true"/>
          </property>
          <property name="text">
           <string>T</string>
@@ -304,7 +307,7 @@
        <item>
         <spacer name="horizontalSpacer_3">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -344,7 +347,7 @@
              <number>20</number>
             </property>
             <property name="orientation">
-             <enum>Qt::Vertical</enum>
+             <enum>Qt::Orientation::Vertical</enum>
             </property>
            </widget>
           </item>
@@ -353,10 +356,16 @@
             <property name="enabled">
              <bool>false</bool>
             </property>
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
             <property name="text">
              <string>train</string>
             </property>
             <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="checked">
              <bool>true</bool>
             </property>
            </widget>
@@ -365,6 +374,9 @@
            <widget class="QRadioButton" name="Tool_val_rb">
             <property name="enabled">
              <bool>false</bool>
+            </property>
+            <property name="styleSheet">
+             <string notr="true"/>
             </property>
             <property name="text">
              <string>val</string>
@@ -379,6 +391,9 @@
             <property name="enabled">
              <bool>false</bool>
             </property>
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
             <property name="text">
              <string>no_label</string>
             </property>
@@ -391,6 +406,9 @@
            <widget class="QRadioButton" name="Tool_results_rb">
             <property name="enabled">
              <bool>false</bool>
+            </property>
+            <property name="styleSheet">
+             <string notr="true"/>
             </property>
             <property name="text">
              <string>results</string>
@@ -412,10 +430,10 @@
        <string notr="true"/>
       </property>
       <property name="frameShape">
-       <enum>QFrame::Box</enum>
+       <enum>QFrame::Shape::Box</enum>
       </property>
       <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
+       <enum>QFrame::Shadow::Raised</enum>
       </property>
      </widget>
     </item>
@@ -426,9 +444,12 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1057</width>
-     <height>23</height>
+     <width>1082</width>
+     <height>33</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
    </property>
    <widget class="QMenu" name="menu">
     <property name="title">
@@ -448,11 +469,29 @@
      <addaction name="Open_project_a"/>
      <addaction name="Open_experiment_a"/>
     </widget>
+    <widget class="QMenu" name="Settings_menu">
+     <property name="toolTip">
+      <string>Settings</string>
+     </property>
+     <property name="title">
+      <string>设置</string>
+     </property>
+     <widget class="QMenu" name="Styles_menu">
+      <property name="title">
+       <string>主题风格</string>
+      </property>
+      <addaction name="Style_cute_a"/>
+      <addaction name="Style_technology_a"/>
+      <addaction name="Style_light_a"/>
+     </widget>
+     <addaction name="Styles_menu"/>
+    </widget>
     <addaction name="Back_start_a"/>
     <addaction name="menunew"/>
     <addaction name="menuopen"/>
     <addaction name="Save_a"/>
     <addaction name="Save_as_a"/>
+    <addaction name="Settings_menu"/>
     <addaction name="Exit_a"/>
    </widget>
    <widget class="QMenu" name="Edit_menu">
@@ -470,7 +509,7 @@
      </property>
      <addaction name="Load_dataset_a"/>
      <addaction name="Load_zip_a"/>
-     <addaction name="Add_no_label_a"/>
+     <addaction name="Add_no_labels_a"/>
     </widget>
     <widget class="QMenu" name="menu_2">
      <property name="title">
@@ -536,8 +575,11 @@
    <addaction name="Export_a"/>
   </widget>
   <widget class="QDockWidget" name="Progress_dw">
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
    <property name="allowedAreas">
-    <set>Qt::BottomDockWidgetArea|Qt::TopDockWidgetArea</set>
+    <set>Qt::DockWidgetArea::BottomDockWidgetArea|Qt::DockWidgetArea::TopDockWidgetArea</set>
    </property>
    <property name="windowTitle">
     <string>训练进程显示器</string>
@@ -546,68 +588,59 @@
     <number>8</number>
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_3">
-    <layout class="QGridLayout" name="gridLayout_4">
-     <property name="leftMargin">
-      <number>1</number>
-     </property>
-     <property name="topMargin">
-      <number>1</number>
-     </property>
-     <property name="rightMargin">
-      <number>1</number>
-     </property>
-     <property name="bottomMargin">
-      <number>1</number>
-     </property>
-     <property name="spacing">
-      <number>1</number>
-     </property>
-     <item row="0" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout_3">
+     <item>
       <widget class="QSplitter" name="splitter">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
        <widget class="QTextEdit" name="Tip_te">
-        <property name="styleSheet">
-         <string notr="true">background-color: rgb(248, 255, 255);</string>
+        <property name="font">
+         <font>
+          <family>Arial</family>
+          <pointsize>9</pointsize>
+         </font>
         </property>
-        <property name="frameShape">
-         <enum>QFrame::Box</enum>
+        <property name="styleSheet">
+         <string notr="true"/>
         </property>
        </widget>
        <widget class="QFrame" name="frame_3">
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
         <property name="frameShape">
-         <enum>QFrame::Box</enum>
+         <enum>QFrame::Shape::Box</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
+         <enum>QFrame::Shadow::Raised</enum>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout">
+        <layout class="QVBoxLayout" name="verticalLayout_2">
          <property name="spacing">
           <number>0</number>
          </property>
          <property name="leftMargin">
-          <number>0</number>
+          <number>2</number>
          </property>
          <property name="topMargin">
-          <number>0</number>
+          <number>2</number>
          </property>
          <property name="rightMargin">
-          <number>0</number>
+          <number>2</number>
          </property>
          <property name="bottomMargin">
-          <number>0</number>
+          <number>2</number>
          </property>
          <item>
           <widget class="QTextEdit" name="Run_mes_te">
            <property name="font">
             <font>
-             <family>宋体</family>
-             <pointsize>10</pointsize>
+             <family>Arial</family>
+             <pointsize>9</pointsize>
             </font>
            </property>
            <property name="styleSheet">
-            <string notr="true">background-color: rgb(246, 254, 255);</string>
+            <string notr="true"/>
            </property>
           </widget>
          </item>
@@ -615,9 +648,12 @@
           <widget class="QLineEdit" name="Batch_mes_le">
            <property name="font">
             <font>
-             <family>宋体</family>
-             <pointsize>8</pointsize>
+             <family>Segoe UI</family>
+             <pointsize>12</pointsize>
             </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true"/>
            </property>
           </widget>
          </item>
@@ -625,18 +661,10 @@
        </widget>
       </widget>
      </item>
-     <item row="1" column="0">
+     <item>
       <widget class="QProgressBar" name="Train_progressbar">
        <property name="styleSheet">
-        <string notr="true">QProgressBar::chunk {
-    background-color: #b2ffac;
-    width: 20px;
-}
-QProgressBar {
-	border: 1px solid grey;
-    border-radius: 5px;
-    text-align: center;
-}</string>
+        <string notr="true"/>
        </property>
        <property name="maximum">
         <number>100</number>
@@ -655,6 +683,9 @@ QProgressBar {
      <width>0</width>
      <height>0</height>
     </size>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
    </property>
    <property name="windowTitle">
     <string>损失曲线显示器</string>
@@ -682,13 +713,13 @@ QProgressBar {
      <item row="0" column="0">
       <widget class="QFrame" name="Show_loss_f">
        <property name="styleSheet">
-        <string notr="true">background-color: rgb(255, 255, 243);</string>
+        <string notr="true"/>
        </property>
        <property name="frameShape">
-        <enum>QFrame::Box</enum>
+        <enum>QFrame::Shape::Box</enum>
        </property>
        <property name="frameShadow">
-        <enum>QFrame::Raised</enum>
+        <enum>QFrame::Shadow::Raised</enum>
        </property>
       </widget>
      </item>
@@ -696,6 +727,9 @@ QProgressBar {
    </widget>
   </widget>
   <widget class="QDockWidget" name="Args_dw">
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
    <property name="floating">
     <bool>false</bool>
    </property>
@@ -708,6 +742,9 @@ QProgressBar {
    <widget class="QWidget" name="Args_dwc"/>
   </widget>
   <widget class="QDockWidget" name="Confusion_dw">
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
    <property name="windowTitle">
     <string>混淆矩阵显示器</string>
    </property>
@@ -731,7 +768,7 @@ QProgressBar {
      <item row="0" column="0">
       <widget class="QTabWidget" name="tabWidget">
        <property name="styleSheet">
-        <string notr="true">background-color: rgb(253, 255, 244);</string>
+        <string notr="true"/>
        </property>
        <property name="currentIndex">
         <number>0</number>
@@ -752,6 +789,9 @@ QProgressBar {
    </widget>
   </widget>
   <widget class="QDockWidget" name="Sift_image_dw">
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
    <property name="windowTitle">
     <string>图像筛选器</string>
    </property>
@@ -775,10 +815,10 @@ QProgressBar {
      <item>
       <widget class="QFrame" name="Sift_f">
        <property name="frameShape">
-        <enum>QFrame::StyledPanel</enum>
+        <enum>QFrame::Shape::StyledPanel</enum>
        </property>
        <property name="frameShadow">
-        <enum>QFrame::Raised</enum>
+        <enum>QFrame::Shadow::Raised</enum>
        </property>
        <layout class="QGridLayout" name="gridLayout_8">
         <property name="leftMargin">
@@ -796,7 +836,7 @@ QProgressBar {
         <item row="0" column="0">
          <widget class="QSplitter" name="Select_image_spliter">
           <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+           <enum>Qt::Orientation::Horizontal</enum>
           </property>
           <widget class="QFrame" name="Image_select_f">
            <property name="minimumSize">
@@ -806,13 +846,13 @@ QProgressBar {
             </size>
            </property>
            <property name="styleSheet">
-            <string notr="true">background-color: rgb(247, 253, 255);</string>
+            <string notr="true"/>
            </property>
            <property name="frameShape">
-            <enum>QFrame::Box</enum>
+            <enum>QFrame::Shape::Box</enum>
            </property>
            <property name="frameShadow">
-            <enum>QFrame::Raised</enum>
+            <enum>QFrame::Shadow::Raised</enum>
            </property>
           </widget>
           <widget class="QGroupBox" name="Sift_gb">
@@ -824,12 +864,12 @@ QProgressBar {
            </property>
            <property name="font">
             <font>
-             <family>宋体</family>
+             <family>Segoe UI</family>
              <pointsize>12</pointsize>
             </font>
            </property>
            <property name="styleSheet">
-            <string notr="true">background-color: rgb(247, 254, 255);</string>
+            <string notr="true"/>
            </property>
            <property name="title">
             <string>筛选</string>
@@ -842,7 +882,7 @@ QProgressBar {
            </property>
            <layout class="QGridLayout" name="gridLayout_3">
             <property name="sizeConstraint">
-             <enum>QLayout::SetDefaultConstraint</enum>
+             <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
             </property>
             <item row="1" column="0">
              <widget class="QWidget" name="widget_2" native="true">
@@ -869,12 +909,15 @@ QProgressBar {
                 <widget class="QComboBox" name="Select_dataset_cbb">
                  <property name="font">
                   <font>
-                   <family>宋体</family>
+                   <family>Segoe UI</family>
                    <pointsize>12</pointsize>
                   </font>
                  </property>
                  <property name="focusPolicy">
-                  <enum>Qt::ClickFocus</enum>
+                  <enum>Qt::FocusPolicy::ClickFocus</enum>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true"/>
                  </property>
                  <item>
                   <property name="text">
@@ -907,9 +950,12 @@ QProgressBar {
                 <widget class="QComboBox" name="Select_class_cbb">
                  <property name="font">
                   <font>
-                   <family>宋体</family>
+                   <family>Segoe UI</family>
                    <pointsize>12</pointsize>
                   </font>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true"/>
                  </property>
                  <item>
                   <property name="text">
@@ -922,7 +968,7 @@ QProgressBar {
                 <widget class="QLabel" name="label_4">
                  <property name="font">
                   <font>
-                   <family>宋体</family>
+                   <family>Segoe UI</family>
                    <pointsize>12</pointsize>
                   </font>
                  </property>
@@ -935,7 +981,7 @@ QProgressBar {
                 <widget class="QLabel" name="label_5">
                  <property name="font">
                   <font>
-                   <family>宋体</family>
+                   <family>Segoe UI</family>
                    <pointsize>12</pointsize>
                   </font>
                  </property>
@@ -948,8 +994,8 @@ QProgressBar {
                 <widget class="QLineEdit" name="Select_search_le">
                  <property name="font">
                   <font>
-                   <family>宋体</family>
-                   <pointsize>11</pointsize>
+                   <family>Segoe UI</family>
+                   <pointsize>12</pointsize>
                   </font>
                  </property>
                  <property name="inputMask">
@@ -964,7 +1010,7 @@ QProgressBar {
                 <widget class="QLabel" name="label_6">
                  <property name="font">
                   <font>
-                   <family>宋体</family>
+                   <family>Segoe UI</family>
                    <pointsize>12</pointsize>
                   </font>
                  </property>
@@ -995,7 +1041,7 @@ QProgressBar {
                 <widget class="QLabel" name="label_3">
                  <property name="font">
                   <font>
-                   <family>宋体</family>
+                   <family>Segoe UI</family>
                    <pointsize>12</pointsize>
                   </font>
                  </property>
@@ -1008,7 +1054,7 @@ QProgressBar {
                 <widget class="QLineEdit" name="Image_num_le">
                  <property name="font">
                   <font>
-                   <family>宋体</family>
+                   <family>Segoe UI</family>
                    <pointsize>12</pointsize>
                   </font>
                  </property>
@@ -1018,7 +1064,7 @@ QProgressBar {
                 <widget class="QLabel" name="label">
                  <property name="font">
                   <font>
-                   <family>宋体</family>
+                   <family>Segoe UI</family>
                    <pointsize>12</pointsize>
                   </font>
                  </property>
@@ -1031,7 +1077,7 @@ QProgressBar {
                 <widget class="QLabel" name="Image_total_l">
                  <property name="font">
                   <font>
-                   <family>宋体</family>
+                   <family>Segoe UI</family>
                    <pointsize>12</pointsize>
                   </font>
                  </property>
@@ -1043,7 +1089,7 @@ QProgressBar {
                <item>
                 <spacer name="horizontalSpacer_4">
                  <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
+                  <enum>Qt::Orientation::Horizontal</enum>
                  </property>
                  <property name="sizeHint" stdset="0">
                   <size>
@@ -1078,9 +1124,12 @@ QProgressBar {
                 <widget class="QComboBox" name="Select_ops_cbb">
                  <property name="font">
                   <font>
-                   <family>Agency FB</family>
+                   <family>Segoe UI</family>
                    <pointsize>12</pointsize>
                   </font>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true"/>
                  </property>
                  <item>
                   <property name="text">
@@ -1114,7 +1163,7 @@ QProgressBar {
                  </property>
                  <property name="font">
                   <font>
-                   <family>Agency FB</family>
+                   <family>Segoe UI</family>
                    <pointsize>12</pointsize>
                   </font>
                  </property>
@@ -1127,7 +1176,7 @@ QProgressBar {
                 <widget class="QPushButton" name="Select_batch_ops_pb">
                  <property name="font">
                   <font>
-                   <family>Agency FB</family>
+                   <family>Segoe UI</family>
                    <pointsize>12</pointsize>
                   </font>
                  </property>
@@ -1142,7 +1191,7 @@ QProgressBar {
             <item row="3" column="0">
              <spacer name="verticalSpacer">
               <property name="orientation">
-               <enum>Qt::Vertical</enum>
+               <enum>Qt::Orientation::Vertical</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
@@ -1163,10 +1212,6 @@ QProgressBar {
    </widget>
   </widget>
   <action name="Train_a">
-   <property name="icon">
-    <iconset>
-     <normaloff>:/aa/F:/Download_icon/MdiBulma.svg</normaloff>:/aa/F:/Download_icon/MdiBulma.svg</iconset>
-   </property>
    <property name="text">
     <string>训练</string>
    </property>
@@ -1366,7 +1411,7 @@ QProgressBar {
     <string>导入压缩包</string>
    </property>
   </action>
-  <action name="Add_no_label_a">
+  <action name="Add_no_labels_a">
    <property name="text">
     <string>添加</string>
    </property>
@@ -1401,6 +1446,30 @@ QProgressBar {
   <action name="Png_to_yolo_a">
    <property name="text">
     <string>PNG转YOLO</string>
+   </property>
+  </action>
+  <action name="Style_cute_a">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>cute</string>
+   </property>
+  </action>
+  <action name="Style_technology_a">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>technology</string>
+   </property>
+  </action>
+  <action name="Style_light_a">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>light</string>
    </property>
   </action>
  </widget>

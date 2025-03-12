@@ -582,6 +582,7 @@ class QTransformerLabel(QSizeLabel):
     Create_Select_Signal = Signal()  #创建选区完成信号
     Create_Mask_Signal = Signal()  #创建掩膜完成信号
     Show_Status_Signal = Signal(str) #显示图像坐标信号
+    Show_Classes_Signal = Signal()  #显示种类信号
     def __init__(self, parent):
         """
         Attriabute:
@@ -803,6 +804,12 @@ class QTransformerLabel(QSizeLabel):
 
     def mouseMoveEvent(self, event: QMouseEvent):
         super().mouseMoveEvent(event)
+        #显示种类
+        if self.label is not None:
+            rect = QRect(self.width()- 5, 0, 5, self.height())
+            if rect.contains(event.pos()):
+                self.Show_Classes_Signal.emit()
+        #显示像素值
         if self.img is not None:
             x = event.x()
             y = event.y()

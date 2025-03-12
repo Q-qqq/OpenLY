@@ -363,7 +363,7 @@ QProgressBar {
     border-radius: 8px;
     text-align: center;
     font: bold 12pt "Orbitron";         /* 星舰控制台字体 */
-    color: #00f3e6;                     /* 量子荧光 */
+    color: #b62be234;                     /* 量子荧光 */
     padding: 2px;
 }
  
@@ -373,8 +373,8 @@ QProgressBar::chunk {
         x1:0, y1:0, 
         x2:1, y2:0,
         stop:0 #3d7afe,
-        stop:0.3 #8a2be2,
-        stop:0.7 #00f3e6,
+        stop:0.5 #8a2be2,
+        stop:0.8 #00f3e6,
         stop:1 #3d7afe 
     );
     border-radius: 6px;
@@ -747,4 +747,62 @@ QComboBox QScrollBar::handle:vertical {
         stop:1 #8a2be2 
     );
     min-height: 30px;
+}
+
+
+ QListView#Classes_lv {
+    background: #0a0e17dd;              /* 暗能量凝聚态（密度8.5×10⁻²⁷ kg/m³） */
+    border: 2px solid qlineargradient( /* 时空曲率护盾 */
+        x1:0, y1:0.5, 
+        x2:1, y2:0.5,
+        stop:0 #3d7afe33,
+        stop:0.5 #00f3e6aa,
+        stop:1 #8a2be233 
+    );
+    border-radius: 6px;
+    color: #ffffff;                    /* 量子涨落荧光 */
+    font: 14pt "Tachyon Interface";    /* 超光速粒子字体 */
+    padding: 5px;
+    outline: none;
+}
+ QListView {
+    background: #0a0e17dd;              /* 暗能量凝聚态（密度8.5×10⁻²⁷ kg/m³） */
+    border: 2px solid qlineargradient( /* 时空曲率护盾 */
+        x1:0, y1:0.5, 
+        x2:1, y2:0.5,
+        stop:0 #3d7afe33,
+        stop:0.5 #00f3e6aa,
+        stop:1 #8a2be233 
+    );
+    border-radius: 6px;
+    color: #00f3e6;                    /* 量子涨落荧光 */
+    font: 14pt "Tachyon Interface";    /* 超光速粒子字体 */
+    padding: 5px;
+    outline: none;
+}
+
+QListView::item {
+    height: 20px;                     /* 德布罗意波长优化 */
+    padding: 5px 15px;
+    margin: 2px 0;
+}
+
+QListView::item:hover {
+    background: qlineargradient(       /* 玻色-爱因斯坦凝聚态 */
+        x1:0, y1:0.5,
+        x2:1, y2:0.5,
+        stop:0 #3d7afe11,
+        stop:1 #8a2be211 
+    );
+}
+
+QListView::item:selected {
+    background: qradialgradient(       /* 黑洞吸积盘效应 */
+        cx:0.3, cy:0.5,
+        radius: 0.7,
+        stop:0 #3d7afe33,
+        stop:1 transparent 
+    );
+    border-left: 4px solid #00f3e6;   /* 能层跃迁指示器 */
+    color: #ffffff; 
 }

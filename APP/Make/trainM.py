@@ -29,6 +29,7 @@ from APP.Label.labels import (DetectTransformerLabel,
                              ConfusionMatrixLabel,
                              ShowLabel)
 from APP.Ops.cfgs import CfgsTreeWidget
+from APP.Ops.classes_show import ClassesView
 from APP.Utils.scroll import ImageScroll
 from APP.Utils.plotting import PgPlotLossWidget
 from APP.Ops import SiftDataset, LabelOps, MenuTool, RunMes
@@ -51,6 +52,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
         self.img_label = None
         self.image_scroll=None
         self.label_ops = LabelOps(self)
+        self.classes_view = ClassesView(self.Classes_lv)
         self.setUI()
         self.setPlot()
         self.sift_dataset = SiftDataset(self.Sift_f)
@@ -121,6 +123,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
         self.img_label.Show_Status_Signal.connect(self.showStatusMessage)
         self.show_img_gl.addWidget(self.img_label, 0, 0, 1, 1)
         self.show_img_gl.setContentsMargins(0,0,0,0)
+        self.classes_view.setImgLabel(self.img_label)
 
         if self.label_ops:
             self.label_ops.updateImgLabel(self.img_label)

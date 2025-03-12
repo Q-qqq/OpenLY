@@ -18,17 +18,18 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QDockWidget, QFrame,
     QGridLayout, QGroupBox, QHBoxLayout, QLabel,
-    QLayout, QLineEdit, QMainWindow, QMenu,
-    QMenuBar, QProgressBar, QPushButton, QRadioButton,
-    QSizePolicy, QSpacerItem, QSplitter, QStatusBar,
-    QTabWidget, QTextEdit, QToolBar, QVBoxLayout,
-    QWidget)
+    QLayout, QLineEdit, QListView, QMainWindow,
+    QMenu, QMenuBar, QProgressBar, QPushButton,
+    QRadioButton, QSizePolicy, QSpacerItem, QSplitter,
+    QStatusBar, QTabWidget, QTextEdit, QToolBar,
+    QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.resize(1082, 804)
+        MainWindow.setWindowOpacity(1.000000000000000)
         MainWindow.setStyleSheet(u"")
         MainWindow.setTabShape(QTabWidget.TabShape.Rounded)
         self.Train_a = QAction(MainWindow)
@@ -97,10 +98,10 @@ class Ui_MainWindow(object):
         self.Style_light_a.setCheckable(True)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
-        self.gridLayout_7 = QGridLayout(self.centralwidget)
-        self.gridLayout_7.setSpacing(1)
-        self.gridLayout_7.setObjectName(u"gridLayout_7")
-        self.gridLayout_7.setContentsMargins(1, 1, 1, 1)
+        self.gridLayout = QGridLayout(self.centralwidget)
+        self.gridLayout.setSpacing(1)
+        self.gridLayout.setObjectName(u"gridLayout")
+        self.gridLayout.setContentsMargins(2, 2, 2, 2)
         self.Painter_tool_f = QFrame(self.centralwidget)
         self.Painter_tool_f.setObjectName(u"Painter_tool_f")
         self.Painter_tool_f.setMinimumSize(QSize(0, 0))
@@ -260,15 +261,23 @@ class Ui_MainWindow(object):
         self.horizontalLayout_4.addWidget(self.widget_4)
 
 
-        self.gridLayout_7.addWidget(self.Painter_tool_f, 0, 0, 1, 1)
+        self.gridLayout.addWidget(self.Painter_tool_f, 0, 0, 1, 2)
 
         self.Source_show_f = QFrame(self.centralwidget)
         self.Source_show_f.setObjectName(u"Source_show_f")
         self.Source_show_f.setStyleSheet(u"")
         self.Source_show_f.setFrameShape(QFrame.Shape.Box)
-        self.Source_show_f.setFrameShadow(QFrame.Shadow.Raised)
+        self.Source_show_f.setFrameShadow(QFrame.Shadow.Plain)
 
-        self.gridLayout_7.addWidget(self.Source_show_f, 1, 0, 1, 1)
+        self.gridLayout.addWidget(self.Source_show_f, 1, 0, 1, 1)
+
+        self.Classes_lv = QListView(self.centralwidget)
+        self.Classes_lv.setObjectName(u"Classes_lv")
+        self.Classes_lv.setMaximumSize(QSize(0, 16777215))
+        self.Classes_lv.setFrameShape(QFrame.Shape.Panel)
+        self.Classes_lv.setFrameShadow(QFrame.Shadow.Plain)
+
+        self.gridLayout.addWidget(self.Classes_lv, 1, 1, 1, 1)
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
@@ -654,7 +663,7 @@ class Ui_MainWindow(object):
     # setupUi
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
+        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"OpenLY", None))
         self.Train_a.setText(QCoreApplication.translate("MainWindow", u"\u8bad\u7ec3", None))
 #if QT_CONFIG(tooltip)
         self.Train_a.setToolTip(QCoreApplication.translate("MainWindow", u"\u8bad\u7ec3", None))
