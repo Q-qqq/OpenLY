@@ -140,6 +140,10 @@ class LabelOps(QObject):
         pix_img = self.img_label.pix
         label = self.img_label.label
         instance = copy.deepcopy(label.get("instances"))
+        if len(label["instances"]):
+            good = label["instances"].remove_zero_area_boxes()
+            clss = np.array(label["cls"], dtype=np.int32)
+            label["cls"] = clss[good].tolist()
         cls = label.get("cls")
         if self.painter_tool.results_rb.isChecked():  #结果集
             return

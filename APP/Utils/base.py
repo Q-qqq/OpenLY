@@ -726,7 +726,9 @@ class QTransformerLabel(QSizeLabel):
         instance = copy.deepcopy(label["instances"])
         if instance._bboxes is not None and len(instance._bboxes) > 0:  #存在标签
             if not self.painting and self.cursor() == Qt.CrossCursor:
-                label["instances"].remove_zero_area_boxes()
+                good = label["instances"].remove_zero_area_boxes()
+                clss = np.array(label["cls"], dtype=np.int32)
+                label["cls"] = clss[good].tolist()
             label["instances"].clip(self.pix.width(), self.pix.height())
             instance.convert_bbox("xyxy")
             self.getLabelSizeInstance(instance)  # 将标签缩放移动至显示大小位置

@@ -56,6 +56,10 @@ class YOLO(Model):
                 "validator": yolo.obb.OBBValidator,
                 "predictor": yolo.obb.OBBPredictor,
             },
+            "v5detect":{
+                "model": V5DetectionModel,
+                "trainer": yolo.v5detect.
+            }
         }
 
 

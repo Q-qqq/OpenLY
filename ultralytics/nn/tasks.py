@@ -64,12 +64,16 @@ from ultralytics.nn.modules import (
     TorchVision,
     WorldDetect,
     v10Detect,
+    v5Detect,
+    v5Segment,
     A2C2f,
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, DEFAULT_CFG_KEYS, LOGGER, colorstr, emojis, yaml_load
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
 from ultralytics.utils.loss import (
     E2EDetectLoss,
+    V5DetectLoss,
+    V5SegmentLoss,
     v8ClassificationLoss,
     v8DetectionLoss,
     v8OBBLoss,
@@ -87,6 +91,7 @@ from ultralytics.utils.torch_utils import (
     scale_img,
     time_sync,
 )
+from ultralytics.utils import autoanchor
 
 
 class BaseModel(nn.Module):
@@ -330,11 +335,19 @@ class DetectionModel(BaseModel):
                 """Performs a forward pass through the model, handling different Detect subclass types accordingly."""
                 if self.end2end:
                     return self.forward(x)["one2many"]
-                return self.forward(x)[0] if isinstance(m, (Segment, Pose, OBB)) else self.forward(x)
+                return self.forward(x)[0] if isinstance(m, (v5Segment, Segment, Pose, OBB)) else self.forward(x)
 
             m.stride = torch.tensor([s / x.shape[-2] for x in _forward(torch.zeros(1, ch, s, s))])  # forward
             self.stride = m.stride
             m.bias_init()  # only run once
+        elif isinstance(m, (v5Detect, v5Segment)):
+            s=256
+            m.inplace = self.inplace
+            m.stride = torch.tensor([s / x.shape[-2] for x in _forward(torch.zeros(1, ch, s, s))])  # forward
+            autoanchor.check_anchors_order(m)
+            m.anchors /= m.stride.view(-1, 1, 1)  # 将预选框缩放到grid_size大小
+            self.stride = m.stride
+            m.bias_init()
         else:
             self.stride = torch.Tensor([32])  # default stride for i.e. RTDETR
 
@@ -478,6 +491,20 @@ class ClassificationModel(BaseModel):
         """Initialize the loss criterion for the ClassificationModel."""
         return v8ClassificationLoss()
 
+
+class V5DetectionModel(DetectionModel):
+    def __init__(self, cfg="yolov5-anchors.yaml", ch=3, nc=None, verbose=True):
+        super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
+
+    def init_criterion(self):
+        return V5DetectLoss(self)
+
+class V5SegmentationModel(DetectionModel):
+    def __init__(self, cfg="yolov5-seg-anchors.yaml", ch=3, nc=None, verbose=True):
+        super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
+
+    def init_criterion(self):
+        return V5SegmentLoss(self, overlap=self.args.overlap_mask)
 
 class RTDETRDetectionModel(DetectionModel):
     """
@@ -683,6 +710,7 @@ class WorldModel(DetectionModel):
         if preds is None:
             preds = self.forward(batch["img"], txt_feats=batch["txt_feats"])
         return self.criterion(preds, batch)
+
 
 
 class Ensemble(nn.ModuleList):
@@ -937,7 +965,9 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
     # Args
     legacy = True  # backward compatibility for v3/v5/v8/v9 models
     max_channels = float("inf")
-    nc, act, scales = (d.get(x) for x in ("nc", "activation", "scales"))
+    nc, act, scales, anchors = (d.get(x) for x in ("nc", "activation", "scales","anchors"))   #v5 add anchors
+    na = (len(anchors[0]) // 2) if isinstance(anchors, list) else anchors  # number of anchors
+    no = na * (nc + 5)   # number of outputs = anchors * (classes + 5)
     depth, width, kpt_shape = (d.get(x, 1.0) for x in ("depth_multiple", "width_multiple", "kpt_shape"))
     if scales:
         scale = d.get("scale")
@@ -999,8 +1029,9 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             A2C2f,
         }:
             c1, c2 = ch[f], args[0]
-            if c2 != nc:  # if c2 not equal to number of classes (i.e. for Classify() output)
+            if c2 != nc and c2 != no:  # if c2 not equal to number of classes (i.e. for Classify() output) and c2 no equal to no for yolov5 output to detect head
                 c2 = make_divisible(min(c2, max_channels) * width, 8)
+
             if m is C2fAttn:
                 args[1] = make_divisible(min(args[1], max_channels // 2) * width, 8)  # embed channels
                 args[2] = int(
@@ -1050,10 +1081,12 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             args = [ch[f]]
         elif m is Concat:
             c2 = sum(ch[x] for x in f)
-        elif m in {Detect, WorldDetect, Segment, Pose, OBB, ImagePoolingAttn, v10Detect}:
-            args.append([ch[x] for x in f])
-            if m is Segment:
-                args[2] = make_divisible(min(args[2], max_channels) * width, 8)
+        elif m in {Detect, WorldDetect, Segment, Pose, OBB, ImagePoolingAttn, v10Detect, v5Detect, v5Segment}:
+            args.append([ch[x] for x in f])  #n个检测头对应输入的channels
+            if isinstance(args[1], int) and m in (v5Segment, v5Detect):  # number of anchors
+                args[1] = [list(range(args[1] * 2))] * len(f)
+            if m in [Segment,v5Segment]:
+                args[2] = make_divisible(min(args[2], max_channels) * width, 8) #number of masks
             if m in {Detect, Segment, Pose, OBB}:
                 m.legacy = legacy
         elif m is RTDETRDecoder:  # special case, channels arg must be passed in index 1

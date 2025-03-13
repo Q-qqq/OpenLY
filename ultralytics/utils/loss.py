@@ -741,3 +741,348 @@ class E2EDetectLoss:
         one2one = preds["one2one"]
         loss_one2one = self.one2one(one2one, batch)
         return loss_one2many[0] + loss_one2one[0], loss_one2many[1] + loss_one2one[1]
+
+
+class V5DetectLoss:
+    def __init__(self,model, autobalance=False):
+        device = next(model.parameters()).device  # get model device
+        h = model.args  # hyperparameters
+
+        # Define criteria
+        BCEcls = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([h.cls_pw], device=device),reduction="mean")
+        BCEobj = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([h.obj_pw], device=device),reduction="mean")
+
+        # Class label smoothing https://arxiv.org/pdf/1902.04103.pdf eqn 3
+        self.cp, self.cn = self.smooth_BCE(eps= h.label_smoothing)  # positive, negative BCE targets
+
+        # Focal loss
+        g = h.fl_gamma  # focal loss gamma
+        if g > 0:
+            BCEcls, BCEobj = FocalLoss(BCEcls, g), FocalLoss(BCEobj, g)
+
+        m = model.model[-1]  # Detect() module
+        self.model = model
+        self.balance = {3: [4.0, 1.0, 0.4]}.get(m.nl, [4.0, 1.0, 0.25, 0.06, 0.02])  # P3-P7
+        self.ssi = list(m.stride).index(16) if autobalance else 0  # stride 16 index
+        self.BCEcls, self.BCEobj, self.gr, self.hyp, self.autobalance = BCEcls, BCEobj, h.gr, h, autobalance
+        self.na = m.na  # number of anchors
+        self.nc = m.nc  # number of classes
+        self.nl = m.nl  # number of layers
+        self.anchors = m.anchors
+        self.device = device
+
+    def smooth_BCE(self, eps=0.5):
+        # 返回类别正负样本的值 0< eps < 2
+        return 1. - 0.5 * eps, 0.5 * eps
+
+    def __call__(self, pred_out,targets):  # predictions, targets
+        pred_out = pred_out[1] if isinstance(pred_out, tuple) else pred_out
+        lcls = torch.zeros(1, device=self.device)  # class loss
+        lbox = torch.zeros(1, device=self.device)  # box loss
+        lobj = torch.zeros(1, device=self.device)  # object loss
+        img = targets["batch_idx"].unsqueeze(1)
+        cls = targets["cls"] if targets["cls"].ndim == 2 else targets["cls"].unsqueeze(1)
+        box = targets["bboxes"]
+        new_targets = torch.cat((img, cls, box),-1)
+
+        tcls, tbox, indices, anchors = self.build_targets(pred_out, new_targets.to(self.device), self.model)
+        nt = 0
+        for i, p in enumerate(pred_out):
+            im, a, gj, gi = indices[i]  # image anchors grid_y grid_x
+            tobj = torch.zeros_like(p[..., 4], dtype=p.dtype, device=self.device)
+
+            nb = im.shape[0]  # target数量
+            if nb > 0:
+                nt += nb  # 总target数量
+                p_sub = p[im, a, gj, gi]  # 从总预测值中抽出真实框对应位置的预测值
+
+                # Giou
+                pxy = p_sub[:, :2].sigmoid() * 2. - 0.5  # 使中点不落在方格边界上
+                pwh = (p_sub[:, 2:4].sigmoid() * 2) ** 2 * anchors[i]  # wh = an*(wh*2)^2
+                pbox = torch.cat((pxy, pwh), 1)
+                iou = bbox_iou(pbox, tbox[i], xywh=True,CIoU=True).squeeze()  # 计算ciou
+                #iou_index = iou > self.hyp["iou_t"]
+                #iou = iou*iou_index
+                lbox += (1.0 - iou).mean()  # box的giou损失
+
+                # obj
+                tobj[im, a, gj, gi] = (1 - self.gr) + self.gr * iou.detach().clamp(0).type(tobj.dtype)  # 用ciou代替真实置信度
+
+
+                # cls
+                if self.nc > 1:  # cls loss (only if multiple classes)
+                    tc = torch.full_like(p_sub[:, 5:], self.cn)  # 种类负样本
+                    tc[range(nb), tcls[i]] = self.cp  # 种类正样本 one-hot形式
+                    lcls += self.BCEcls(p_sub[:, 5:], tc)
+            lobj += self.BCEobj(p[..., 4], tobj)
+            if self.autobalance:
+                self.balance[i] = self.balance[i] * 0.9999 + 0.0001 / lobj.detach().item()
+
+        if self.autobalance:
+            self.balance = [x / self.balance[self.ssi] for x in self.balance]
+
+        lbox *= self.hyp.v5_box
+        lcls *= self.hyp.v5_cls
+        lobj *= self.hyp.obj
+
+        bs = tobj.shape[0]
+        loss = lbox + lcls + lobj
+        return loss * bs, torch.cat((lbox, lcls, lobj)).detach()
+
+
+    def build_targets(self, p, targets, model):
+        # p：（nl,batch_size,anchors,gs,gs,cls+5]
+        # targets:(image,cls,x,y,w,h)
+        det = model.module.model[-1] if type(model) in (nn.parallel.DataParallel, nn.parallel.DistributedDataParallel) \
+            else model.model[-1]  # Detect() module
+        na, nt = det.na, targets.shape[0]  # 单个检测头的预选框数量，物体框数量
+        tcls, tbox, indices, anch = [], [], [], []  # 定义输出
+        gain = torch.ones(7, device=targets.device)
+        at = torch.arange(na).view(na, 1).repeat(1, nt).to(targets.device)  # [na,nt] y方向递增网格grid
+        targets = torch.cat((targets.repeat(na, 1, 1), at[..., None]),2)  # append anchor indices[anchors_num,targets_num,7(img,cls,x,y,w,h,anchor)]
+        g = 0.5  # bias
+        off = torch.tensor(
+            [
+                [0, 0],
+                [1, 0],
+                [0, 1],
+                [-1, 0],
+                [0, -1],  # j,k,l,m
+                # [1, 1], [1, -1], [-1, 1], [-1, -1],  # jk,jm,lk,lm
+            ],
+            device=targets.device).float() * g  # offsets
+
+        for i in range(det.nl):  # Detect头数量
+            anchors = det.anchors[i]  # 该层检测头的预选框，已经在Model初始化时将其缩放至gridsize
+            shape = p[i].shape
+            gain[2:6] = torch.tensor(shape)[[3, 2, 3, 2]]  # [1,1,grid_w,grid_h,grid_w,grid_h]
+
+            # 将真实框与预选框进行匹配
+            t = targets * gain  # 将targets的x,y,w,h转为检测头grid_size的大小
+            a = []  # 预选框索引
+            offsets = 0
+            if nt:  # 有物体
+                radio = t[..., 4:6] / anchors[:, None]  # 将每一个真实框的wh分别除以检测头内的每一个anchors的wh，得到wh的比值[na,nt,2]
+                index_t_head_anch = torch.max(radio, 1. / radio).max(2)[0] < self.hyp.anchor_t  # 获取合适比值的索引即属于该检测头的真实框各对应预选框的索引[na,nt]：torch.max(r,1./r)过滤小的比值，将小比值变大，相当于将比值限定在1/anchors_t  ~~  anchors_t
+                a = at[index_t_head_anch]  # 真实框对应的预选框[0,0,1,2,2]  0表示第一个预选框，1表示第二个，以此类推
+                t = t[index_t_head_anch]  # 根据索引获取属于这一层检测头的真实框[[box0],[box0],[box1],[box2],[box2]]
+
+                gxy = t[:, 2:4]  # 真实框在grid中的中点
+                gxi = gain[[2, 3]] - gxy  # inverse
+                z = torch.zeros_like(gxy)
+
+                # 将框中心点扩增到上下左右四个方格
+                j, k = ((gxy % 1 < g) & (gxy > 1)).T  # 真实框中点x，y分别位于各小方格左边，上边，且不属于左边和上边的第一排方格
+                l, m = ((gxi % 1 < g) & (gxi > 1)).T  # 真实框中点x，y分别位于各小方格右边，下边，且不属于右边和下边的第一排方格
+                j = torch.stack((torch.ones_like(j), j, k, l, m))
+                t = t.repeat((5, 1, 1))[j]    # 将属于上下左右的框中心整合到一起
+                offsets = (torch.zeros_like(gxy)[None] + off[:, None])[j]  # 分别对左上右下补偿xyxy->gg-g-g
+            else:
+                t = targets[0]
+                offsets = 0
+
+            # Define
+            imc, gxy, gwh, a = t.chunk(4, 1)  # (image, class), grid xy, grid wh, anchors
+            a, (im, c) = a.long().view(-1), imc.long().T  # anchors, image, class
+            gij = (gxy - offsets).long()  # 原中心框不变，靠近左边的t[lf]向左边移动0.5，落入左边方格内，靠近上边的t[tp]向上移动0.5，落入上边方格内，以此类推
+            gi, gj = gij.T                  #grid indices    框中心在grid中的坐标
+
+            # Append
+            indices.append((im, a, gj.clamp_(0, shape[2] - 1), gi.clamp_(0, shape[3] - 1)))  # image, anchor, grid
+            tbox.append(torch.cat((gxy - gij, gwh), 1))  # box真实框 [中心点相对方格右上点的坐标，真实框长宽]
+            anch.append(anchors[a])  # anchors 根据索引获取各预测框对应预选框
+            tcls.append(c)  # class
+
+        return tcls, tbox, indices, anch
+
+class V5SegmentLoss:
+    """Computes the YOLOv5 model's loss components including classification, objectness, box, and mask losses."""
+
+    def __init__(self, model, autobalance=False, overlap=False):
+        """Initializes the compute loss function for YOLOv5 models with options for autobalancing and overlap
+        handling.
+        """
+        self.sort_obj_iou = False
+        self.overlap = overlap
+        device = next(model.parameters()).device  # get model device
+        h = model.args  # hyperparameters
+
+        # Define criteria
+        BCEcls = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([h.cls_pw], device=device))
+        BCEobj = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([h.obj_pw], device=device))
+
+        # Class label smoothing https://arxiv.org/pdf/1902.04103.pdf eqn 3
+        self.cp, self.cn = smooth_BCE(eps=h.label_smoothing)  # positive, negative BCE targets
+
+        # Focal loss
+        g = h.fl_gamma  # focal loss gamma
+        if g > 0:
+            BCEcls, BCEobj = FocalLoss(BCEcls, g), FocalLoss(BCEobj, g)
+
+        m = de_parallel(model).model[-1]  # Detect() module
+        self.balance = {3: [4.0, 1.0, 0.4]}.get(m.nl, [4.0, 1.0, 0.25, 0.06, 0.02])  # P3-P7
+        self.ssi = list(m.stride).index(16) if autobalance else 0  # stride 16 index
+        self.BCEcls, self.BCEobj, self.gr, self.hyp, self.autobalance = BCEcls, BCEobj, h.gr, h, autobalance
+        self.na = m.na  # number of anchors
+        self.nc = m.nc  # number of classes
+        self.nl = m.nl  # number of layers
+        self.nm = m.nm  # number of masks
+        self.anchors = m.anchors
+        self.device = device
+
+    def __call__(self, preds, batch):  # predictions, batch, model
+        """Evaluates YOLOv5 model's loss for given predictions, batch, returns total loss components."""
+        p, proto = preds if len(preds) == 2 else (preds[2], preds[1])
+        bs, nm, mask_h, mask_w = proto.shape  # batch size, number of masks, mask height, mask width
+        lcls = torch.zeros(1, device=self.device)
+        lbox = torch.zeros(1, device=self.device)
+        lobj = torch.zeros(1, device=self.device)
+        lseg = torch.zeros(1, device=self.device)
+
+        img = batch["batch_idx"].unsqueeze(1)
+        cls = batch["cls"] if batch["cls"].ndim == 2 else batch["cls"].unsqueeze(1)
+        box = batch["bboxes"]
+        masks = batch["masks"].to(self.device).float()
+        new_targets = torch.cat((img, cls, box),-1)
+        tcls, tbox, indices, anchors, tidxs, xywhn = self.build_targets(p, new_targets.to(self.device))
+
+
+        # Losses
+        for i, pi in enumerate(p):  # layer index, layer predictions
+            b, a, gj, gi = indices[i]  # image, anchor, gridy, gridx
+            tobj = torch.zeros(pi.shape[:4], dtype=pi.dtype, device=self.device)  # target obj
+
+            if n := b.shape[0]:
+                pxy, pwh, _, pcls, pmask = pi[b, a, gj, gi].split((2, 2, 1, self.nc, nm), 1)  # subset of predictions
+
+                # Box regression
+                pxy = pxy.sigmoid() * 2 - 0.5
+                pwh = (pwh.sigmoid() * 2) ** 2 * anchors[i]
+                pbox = torch.cat((pxy, pwh), 1)  # predicted box
+                iou = bbox_iou(pbox, tbox[i], CIoU=True).squeeze()  # iou(prediction, target)
+                lbox += (1.0 - iou).mean()  # iou loss
+
+                # Objectness
+                iou = iou.detach().clamp(0).type(tobj.dtype)
+                if self.sort_obj_iou:
+                    j = iou.argsort()
+                    b, a, gj, gi, iou = b[j], a[j], gj[j], gi[j], iou[j]
+                if self.gr < 1:
+                    iou = (1.0 - self.gr) + self.gr * iou
+                tobj[b, a, gj, gi] = iou  # iou ratio
+
+                # Classification
+                if self.nc > 1:  # cls loss (only if multiple classes)
+                    t = torch.full_like(pcls, self.cn, device=self.device)  # targets
+                    t[range(n), tcls[i]] = self.cp
+                    lcls += self.BCEcls(pcls, t)  # BCE
+
+                # Mask regression
+                if tuple(masks.shape[-2:]) != (mask_h, mask_w):  # downsample
+                    masks = F.interpolate(masks[None], (mask_h, mask_w), mode="nearest")[0]
+                marea = xywhn[i][:, 2:].prod(1)  # mask width, height normalized
+                mxyxy = xywh2xyxy(xywhn[i] * torch.tensor([mask_w, mask_h, mask_w, mask_h], device=self.device))
+                for bi in b.unique():
+                    j = b == bi  # matching index
+                    if self.overlap:
+                        mask_gti = torch.where(masks[bi][None] == tidxs[i][j].view(-1, 1, 1), 1.0, 0.0)
+                    else:
+                        mask_gti = masks[tidxs[i]][j]
+                    lseg += self.single_mask_loss(mask_gti, pmask[j], proto[bi], mxyxy[j], marea[j])
+
+            obji = self.BCEobj(pi[..., 4], tobj)
+            lobj += obji #* self.balance[i]  # obj loss
+            if self.autobalance:
+                self.balance[i] = self.balance[i] * 0.9999 + 0.0001 / obji.detach().item()
+
+        if self.autobalance:
+            self.balance = [x / self.balance[self.ssi] for x in self.balance]
+        lbox *= self.hyp.v5_box
+        lobj *= self.hyp.obj
+        lcls *= self.hyp.v5_cls
+        lseg *= self.hyp.v5_box / bs
+
+        loss = lbox + lobj + lcls + lseg
+        return loss * bs, torch.cat((lbox, lseg, lobj, lcls)).detach()
+
+    def single_mask_loss(self, gt_mask, pred, proto, xyxy, area):
+        """Calculates and normalizes single mask loss for YOLOv5 between predicted and ground truth masks."""
+        pred_mask = (pred @ proto.view(self.nm, -1)).view(-1, *proto.shape[1:])  # (n,32) @ (32,80,80) -> (n,80,80)
+        loss = F.binary_cross_entropy_with_logits(pred_mask, gt_mask, reduction="none")
+        return (crop_mask(loss, xyxy).mean(dim=(1, 2)) / area).mean()
+
+    def build_targets(self, p, targets):
+        """Prepares YOLOv5 targets for loss computation; inputs targets (image, class, x, y, w, h), output target
+        classes/boxes.
+        """
+        na, nt = self.na, targets.shape[0]  # number of anchors, targets
+        tcls, tbox, indices, anch, tidxs, xywhn = [], [], [], [], [], []
+        gain = torch.ones(8, device=self.device)  # normalized to gridspace gain
+        ai = torch.arange(na, device=self.device).float().view(na, 1).repeat(1, nt)  # same as .repeat_interleave(nt)
+        if self.overlap:
+            batch = p[0].shape[0]
+            ti = []
+            for i in range(batch):
+                num = (targets[:, 0] == i).sum()  # find number of targets of each image
+                ti.append(torch.arange(num, device=self.device).float().view(1, num).repeat(na, 1) + 1)  # (na, num)
+            ti = torch.cat(ti, 1)  # (na, nt)
+        else:
+            ti = torch.arange(nt, device=self.device).float().view(1, nt).repeat(na, 1)
+        targets = torch.cat((targets.repeat(na, 1, 1), ai[..., None], ti[..., None]), 2)  # append anchor indices
+
+        g = 0.5  # bias
+        off = (
+            torch.tensor(
+                [
+                    [0, 0],
+                    [1, 0],
+                    [0, 1],
+                    [-1, 0],
+                    [0, -1],  # j,k,l,m
+                    # [1, 1], [1, -1], [-1, 1], [-1, -1],  # jk,jm,lk,lm
+                ],
+                device=self.device,
+            ).float()
+            * g
+        )  # offsets
+
+        for i in range(self.nl):
+            anchors, shape = self.anchors[i], p[i].shape
+            gain[2:6] = torch.tensor(shape)[[3, 2, 3, 2]]  # xyxy gain
+
+            # Match targets to anchors
+            t = targets * gain  # shape(3,n,7)
+            if nt:
+                # Matches
+                r = t[..., 4:6] / anchors[:, None]  # wh ratio
+                j = torch.max(r, 1 / r).max(2)[0] < self.hyp.anchor_t  # compare
+                # j = wh_iou(anchors, t[:, 4:6]) > model.hyp['iou_t']  # iou(3,n)=wh_iou(anchors(3,2), gwh(n,2))
+                t = t[j]  # filter
+
+                # Offsets
+                gxy = t[:, 2:4]  # grid xy
+                gxi = gain[[2, 3]] - gxy  # inverse
+                j, k = ((gxy % 1 < g) & (gxy > 1)).T
+                l, m = ((gxi % 1 < g) & (gxi > 1)).T
+                j = torch.stack((torch.ones_like(j), j, k, l, m))
+                t = t.repeat((5, 1, 1))[j]
+                offsets = (torch.zeros_like(gxy)[None] + off[:, None])[j]
+            else:
+                t = targets[0]
+                offsets = 0
+
+            # Define
+            bc, gxy, gwh, at = t.chunk(4, 1)  # (image, class), grid xy, grid wh, anchors
+            (a, tidx), (b, c) = at.long().T, bc.long().T  # anchors, image, class
+            gij = (gxy - offsets).long()
+            gi, gj = gij.T  # grid indices
+
+            # Append
+            indices.append((b, a, gj.clamp_(0, shape[2] - 1), gi.clamp_(0, shape[3] - 1)))  # image, anchor, grid
+            tbox.append(torch.cat((gxy - gij, gwh), 1))  # box
+            anch.append(anchors[a])  # anchors
+            tcls.append(c)  # class
+            tidxs.append(tidx)
+            xywhn.append(torch.cat((gxy, gwh), 1) / gain[2:6])  # xywh normalized
+
+        return tcls, tbox, indices, anch, tidxs, xywhn
