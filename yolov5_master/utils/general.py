@@ -1,8 +1,6 @@
 # Ultralytics YOLOv5 🚀, AGPL-3.0 license
 """General utils."""
 
-from PySide2.QtCore import *
-
 import contextlib
 import glob
 import inspect

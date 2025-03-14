@@ -1,6 +1,6 @@
 
 from ultralytics.utils import ops
-from ultralytics_old.models.yolo.segment.val import SegmentationValidator
+from ultralytics.models.yolo.segment.val import SegmentationValidator
 
 class V5SegmentationValidator(SegmentationValidator):
     """
