@@ -54,7 +54,7 @@ class ClassesView(QObject):
             animal.setStartValue(0)
             animal.setEndValue(100)
             animal.setDuration(300)   # 动画时长300ms
-            animal.setEasingCurve(QEasingCurve.Type.OutBounce)   # 弹性效果
+            animal.setEasingCurve(QEasingCurve.Type.InCubic)
             animal.start()
         
     

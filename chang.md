@@ -556,7 +556,7 @@ CFG_OTHER_KEYS = (
 )
 ```
 
-## 修改七：LOGGER
+## 修改八：LOGGER
 
 ### ultralytics.utils.__init__
 
@@ -720,7 +720,7 @@ def _do_train(self, world_size=1):
         ...
 ```
 
-## 修改八：验证图像增加输出shape
+## 修改九：验证图像增加输出shape
 
 ### ultralytics.data.utils
 
@@ -733,7 +733,7 @@ def verify_image(args):
     return (im_file, cls), nf, nc, msg, shape
 ```
 
-## 修改九： 检测det数据集默认父路径修改
+## 修改十： 检测det数据集默认父路径修改
 
 ### ultralytics.data.utils
 
@@ -752,7 +752,7 @@ def check_det_dataset(dataset, autodownload=True):
     ...
 ```
 
-## 修改十： 增加/修改训练进行时输出参数
+## 修改十一： 增加/修改训练进行时输出参数
 
 ### ultralytics.enginer.trainer
 
@@ -808,13 +808,14 @@ def progress_string(self):
         )
 ```
 
-## 修改十一： 增加旧版yoloV5预选框训练方式
+## 修改十二： 增加旧版yoloV5预选框训练方式
 
-### ultralytics.cfg.models.v5
+### 解析yolov5模型
+1. ultralytics.cfg.models.v5
 
 + 添加yoloV5神经网络文件夹yolov5-anchors.yaml和yolov5-seg-anchors
 
-### ultralytics.nn.head
+2. ultralytics.nn.head
 
 + 添加检测头v5Detect
 
@@ -918,7 +919,7 @@ class v5Segment(v5Detect):
 __all__ = "Detect", "Segment", "Pose", "Classify", "OBB", "RTDETRDecoder", "v10Detect", "v5Detect", "v5Sefment"
 ```
 
-### ultralytics.nn.modules.__init__
+3。 ultralytics.nn.modules.__init__
 
 + 将v5Detect和v5Segment添加到modules.__init__的引用
 
@@ -926,7 +927,107 @@ __all__ = "Detect", "Segment", "Pose", "Classify", "OBB", "RTDETRDecoder", "v10D
 from .head import OBB, Classify, Detect, Pose, RTDETRDecoder, Segment, WorldDetect, v10Detect, v5Detect, v5Segment
 ```
 
-### ultralytics.utils.loss
+4. ultralytics.nn.task
+
++ 添加引用 v5Detect和v5Segment
+
+```python
+from ultralytics.nn.modules import (
+    ...
+    ...
+    Segment,
+    TorchVision,
+    WorldDetect,
+    v10Detect,
+    v5Detect,   #<-
+    v5Segment,  #<-
+    A2C2f,
+)
+```
+
++ 修改解析模型函数parse_model，使其能解析yolov5神经网路
+
+```python
+def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
+    ...
+    ...
+    nc, act, scales, anchors = (d.get(x) for x in ("nc", "activation", "scales","anchors"))   #v5 add anchors
+    na = (len(anchors[0]) // 2) if isinstance(anchors, list) else anchors  # number of anchors
+    no = na * (nc + 5)   # number of outputs = anchors * (classes + 5)
+    ...
+    ...
+    for i, (f, n, m, args) in enumerate(d["backbone"] + d["head"]):  # from, number, module, args
+        ...
+        ...
+        if m in {
+            ...
+            ...
+        }:
+            c1, c2 = ch[f], args[0]
+            if c2 != nc and c2 != no:  # if c2 not equal to number of classes (i.e. for Classify() output) and c2 no equal to no for yolov5 output to detect head
+                c2 = make_divisible(min(c2, max_channels) * width, 8)
+
+            ...
+            ...
+        elif m in {Detect, WorldDetect, Segment, Pose, OBB, ImagePoolingAttn, v10Detect, v5Detect, v5Segment}:
+            args.append([ch[x] for x in f])  #n个检测头对应输入的channels
+            if isinstance(args[1], int) and m in (v5Segment, v5Detect):  # number of anchors
+                args[1] = [list(range(args[1] * 2))] * len(f)
+            if m in [Segment,v5Segment]:
+                args[2] = make_divisible(min(args[2], max_channels) * width, 8) #number of masks
+            if m in {Detect, Segment, Pose, OBB}:
+                m.legacy = legacy
+        ...
+        ...
+```
+
++ 修改DetectionModel类的初始化函数，使其对yolov5的检测头进行初始化
+
+```python
+def __init__(self, cfg="yolov8n.yaml", ch=3, nc=None, verbose=True):  # model, input channels, number of classes
+        ...
+        ...
+        if isinstance(m, Detect):  # includes all Detect subclasses like Segment, Pose, OBB, WorldDetect
+            ...
+            ...
+        elif isinstance(m, (v5Detect, v5Segment)):
+            s=256
+            m.inplace = self.inplace
+            m.stride = torch.tensor([s / x.shape[-2] for x in _forward(torch.zeros(1, ch, s, s))])  # forward
+            autoanchor.check_anchors_order(m)
+            m.anchors /= m.stride.view(-1, 1, 1)  # 将预选框缩放到grid_size大小
+            self.stride = m.stride
+            m.bias_init()
+        else:
+            self.stride = torch.Tensor([32])  # default stride for i.e. RTDETR
+        ...
+        ...
+```
+
++ 添加v5 detection模型
+
+``` python
+class V5DetectionModel(DetectionModel):
+    def __init__(self, cfg="yolov5-anchors.yaml", ch=3, nc=None, verbose=True):
+        super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
+
+    def init_criterion(self):
+        return V5DetectLoss(self)
+```
+
++ 添加v5 segmentation模型
+
+```python
+class V5SegmentationModel(DetectionModel):
+    def __init__(self, cfg="yolov5-seg-anchors.yaml", ch=3, nc=None, verbose=True):
+        super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
+
+    def init_criterion(self):
+        return V5SegmentLoss(self, overlap=self.args.overlap_mask)
+```
+
+### 计算yolov5损失值
+1. ultralytics.utils.loss
 
 + 添加v5目标检测损失函数
 ```python
@@ -1278,112 +1379,166 @@ class V5SegmentLoss:
         return tcls, tbox, indices, anch, tidxs, xywhn
 ```
 
-### ultralytics.utils
-+ 将yolov5的autoanchor.py文件复制到utils目录下，该文件用于yolov5自适应瞄框
+### 自适应预选框
 
+1. 将yolov5的autoanchor.py文件复制到utils目录下，该文件用于yolov5自适应瞄框
 
-### ultralytics.nn.task
+2. ultralytics.models.yolo.detect.train
 
-+ 添加引用 v5Detect和v5Segment
++ 在DetectionTrainer类中修改get_dataloder方法，使其输出loader和dataset
 
 ```python
-from ultralytics.nn.modules import (
-    ...
-    ...
-    Segment,
-    TorchVision,
-    WorldDetect,
-    v10Detect,
-    v5Detect,   #<-
-    v5Segment,  #<-
-    A2C2f,
-)
+def get_dataloader(self, dataset_path, batch_size=16, rank=0, mode="train"):
+        """Construct and return dataloader."""
+        assert mode in {"train", "val"}, f"Mode must be 'train' or 'val', not {mode}."
+        with torch_distributed_zero_first(rank):  # init dataset *.cache only once if DDP
+            dataset = self.build_dataset(dataset_path, mode, batch_size)
+        shuffle = mode == "train"
+        if getattr(dataset, "rect", False) and shuffle:
+            LOGGER.warning("WARNING ⚠️ 'rect=True' is incompatible with DataLoader shuffle, setting shuffle=False")
+            shuffle = False
+        workers = self.args.workers if mode == "train" else self.args.workers * 2
+        loder = build_dataloader(dataset, batch_size, workers, shuffle, rank)  #  dataloader
+        return loder, dataset
 ```
 
-+ 修改解析模型函数parse_model，使其能解析yolov5神经网路
+3. ultralytics.engine.trainer
+
++ 在BaseTrainer类的_setup_train函数中修改get_dataloader函数的调用输出，使其适应lader和dataset两输出， 并添加自适应预选框代码
 
 ```python
-def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
+def _setup_train(self, world_size):
     ...
     ...
-    nc, act, scales, anchors = (d.get(x) for x in ("nc", "activation", "scales","anchors"))   #v5 add anchors
-    na = (len(anchors[0]) // 2) if isinstance(anchors, list) else anchors  # number of anchors
-    no = na * (nc + 5)   # number of outputs = anchors * (classes + 5)
-    ...
-    ...
-    for i, (f, n, m, args) in enumerate(d["backbone"] + d["head"]):  # from, number, module, args
+    # Dataloaders
+    batch_size = self.batch_size // max(world_size, 1)
+    self.train_loader, dataset = self.get_dataloader(self.trainset, batch_size=batch_size, rank=LOCAL_RANK, mode="train")
+    if RANK in {-1, 0}:
+        # Note: When training DOTA dataset, double batch size could get OOM on images with >2000 objects.
+        self.test_loader = self.get_dataloader(
+            self.testset, batch_size=batch_size if self.args.task == "obb" else batch_size * 2, rank=-1, mode="val"
+        )[0]
         ...
         ...
-        if m in {
-            ...
-            ...
-        }:
-            c1, c2 = ch[f], args[0]
-            if c2 != nc and c2 != no:  # if c2 not equal to number of classes (i.e. for Classify() output) and c2 no equal to no for yolov5 output to detect head
-                c2 = make_divisible(min(c2, max_channels) * width, 8)
 
-            ...
-            ...
-        elif m in {Detect, WorldDetect, Segment, Pose, OBB, ImagePoolingAttn, v10Detect, v5Detect, v5Segment}:
-            args.append([ch[x] for x in f])  #n个检测头对应输入的channels
-            if isinstance(args[1], int) and m in (v5Segment, v5Detect):  # number of anchors
-                args[1] = [list(range(args[1] * 2))] * len(f)
-            if m in [Segment,v5Segment]:
-                args[2] = make_divisible(min(args[2], max_channels) * width, 8) #number of masks
-            if m in {Detect, Segment, Pose, OBB}:
-                m.legacy = legacy
-        ...
-        ...
+    #v5自适应预选框
+    if not self.args.resume and self.args.task in ["v5segment",  "v5detect"]: #V5检测任务
+        if not self.args.noautoanchor:
+            check_anchors(dataset, model=self.model, thr=self.args.anchor_t, img_sz=self.args.imgsz)  # run AutoAnchor
 ```
 
-+ 修改DetectionModel类的初始化函数，使其对yolov5的检测头进行初始化
+4. ultralytics.data.dataset
++ 在YOloDataset类的get_labels函数中添加self.shapes和self.bboxes用于自适应预选框的计算
+```python
+def get_labels(self):
+    ...
+    ...
+    self.im_files = [lb["im_file"] for lb in labels]  # update im_files
+    self.shapes = [lb["shape"] for lb in labels]   #get shapes
+    self.bboxes = [lb["bboxes"] for lb in labels]  #get bboxes
+    ...
+    ...
+    return labels
+```
+
+
+### yolov5最大值抑制
+
+1. ultralytics.ultis.ops
++ 添加 yolov5的最大值抑制方法
 
 ```python
-def __init__(self, cfg="yolov8n.yaml", ch=3, nc=None, verbose=True):  # model, input channels, number of classes
-        ...
-        ...
-        if isinstance(m, Detect):  # includes all Detect subclasses like Segment, Pose, OBB, WorldDetect
-            ...
-            ...
-        elif isinstance(m, (v5Detect, v5Segment)):
-            s=256
-            m.inplace = self.inplace
-            m.stride = torch.tensor([s / x.shape[-2] for x in _forward(torch.zeros(1, ch, s, s))])  # forward
-            autoanchor.check_anchors_order(m)
-            m.anchors /= m.stride.view(-1, 1, 1)  # 将预选框缩放到grid_size大小
-            self.stride = m.stride
-            m.bias_init()
+def v5_non_max_suppression(
+        prediction,
+        conf_thres = 0.35,
+        iou_thres = 0.45,
+        classes=None,
+        agnostic=False,
+        multi_label=False,
+        labels=(),
+        max_det=300,
+        nc=0):
+    #prediction (bs, h*w*nl, 4+nc+nm)
+    assert 0<=conf_thres<=1, "无效的置信度阈值"
+    assert 0<=iou_thres<=1, "无效的IoU阈值"
+    if isinstance(prediction, (list, tuple)):  #YOLOv8模型在验证时的输出为（inference_out, loss_out）
+        prediction = prediction[0]  # 只选推理输出
+    bs = prediction.shape[0]  #batch size
+    nc = nc or prediction.shape[2] - 5  #种类数量
+    nm = prediction.shape[2] - nc - 5
+    xc = prediction[...,4] > conf_thres   #置信度大于阈值的索引
+
+    max_wh = 7680       #最大的图像长宽
+    max_nms = 30000   #计算nms时一张图像内最大检测目标数目
+    time_limit = 0.5 + 0.05 * bs  # seconds to quit after
+    redundant = True  # require redundant detections
+    multi_label &= nc > 1  # multiple labels per box (adds 0.5ms/img)
+    merge = False  # use merge-NMS
+
+    t = time.time()
+    mi = 5 + nc  # mask start index
+    output = [torch.zeros((0, 6+nm), device=prediction.device)] * bs
+    for img_i,x in enumerate(prediction):   #image index,  pred in a image
+        x = x[xc[img_i]]
+
+        # Cat apriori labels if autolabelling
+        if labels and len(labels[img_i]):
+            lb = labels[img_i]
+            v = torch.zeros((len(lb), nc + nm + 5), device=x.device)
+            v[:, :4] = lb[:, 1:5]  # box
+            v[:, 4] = 1.0  # conf
+            v[range(len(lb)), lb[:, 0].long() + 5] = 1.0  # cls
+            x = torch.cat((x, v), 0)  # append labels
+        
+        if not x.shape[0]:   #图像内无检测到框，下一张图像
+            continue
+
+        x[:,5:] *= x[:,4:5]  #类别概率乘以置信度
+        
+
+        box = xywh2xyxy(x[:,0:4])        #xywh  to xyxy
+        mask = x[:, mi:]   #分割掩膜
+
+        #[box conf cls]
+        if multi_label:
+            i, j = (x[:, 5:mi] > conf_thres).nonzero(as_tuple=False).T
+            x = torch.cat((box[i], x[i, 5+j, None], j[:, None].float(), mask[i]), 1)
         else:
-            self.stride = torch.Tensor([32])  # default stride for i.e. RTDETR
-        ...
-        ...
+            conf,j = x[:, 5:mi].max(1,keepdim = True)    #最大的置信度   类别索引
+            x = torch.cat((box, conf, j.float(), mask),1)[conf.view(-1) > conf_thres]      #置信度大于阈值的[box conf cls]  box - xyxy
+
+        #Filter by class
+        if classes is not None:
+            x = x[(x[:,5:6] == torch.tensor(classes, device=x.device)).any(1)]
+
+        n = x.shape[0]
+        if not n:        #无目标，下一张图像
+            continue
+        x = x[x[:, 4].argsort(descending=True)[:max_nms]]  # sort by confidence and remove excess boxes
+
+        #NMS
+        c = x[:,5:6] * (0 if agnostic else max_wh)  #类别 * 4096 放大类别差
+        boxes, scores = x[:,:4] + c, x[:,4]     #将不同类别的框加上不同的偏差，进行区分，scores为各个框的置信度分数
+        i = torchvision.ops.boxes.nms(boxes,scores,iou_thres)       #去除相同类别相近（iou > iou_thres)的框，并按置信度排序输出
+        i = i[:max_det]
+        if merge and (1 < n < 3e3):  # Merge NMS (boxes merged using weighted mean)
+            # update boxes as boxes(i,4) = weights(i,n) * boxes(n,4)
+            iou = box_iou(boxes[i], boxes) > iou_thres  # iou matrix
+            weights = iou * scores[None]  # box weights
+            x[i, :4] = torch.mm(weights, x[:, :4]).float() / weights.sum(1, keepdim=True)  # merged boxes
+            if redundant:
+                i = i[iou.sum(1) > 1]  # require redundancy
+        output[img_i] = x[i]
+        if (time.time() - t) > time_limit:
+            LOGGER.warning(f"WARNING ⚠️ NMS time limit {time_limit:.3f}s exceeded")
+            break  # time limit exceeded
+    return output # (bs, 6) xywh conf cls
 ```
 
-+ 添加v5 detection模型
 
-``` python
-class V5DetectionModel(DetectionModel):
-    def __init__(self, cfg="yolov5-anchors.yaml", ch=3, nc=None, verbose=True):
-        super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
+### yolov5训练、验证、预测模块添加 
 
-    def init_criterion(self):
-        return V5DetectLoss(self)
-```
-
-+ 添加v5 segmentation模型
-
-```python
-class V5SegmentationModel(DetectionModel):
-    def __init__(self, cfg="yolov5-seg-anchors.yaml", ch=3, nc=None, verbose=True):
-        super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
-
-    def init_criterion(self):
-        return V5SegmentLoss(self, overlap=self.args.overlap_mask)
-```
-
-### utralytics.models.yolo
-
-+ 添加v5detect文件夹, 内涵train、val、predict、__init__
+1. utralytics.models.yolo添加v5detect文件夹, 内含train、val、predict、\_\_init\_\_
 
 ```
 yolo
@@ -1394,7 +1549,7 @@ yolo
     ————predict.py
 ```
 
-+ __init__.py
++ \_\_init\_\_.py
 
 ```python
 from .predict import V5DetectionPredictor
@@ -1403,3 +1558,332 @@ from .val import V5DetectionValidator
 
 __all__ = "V5DetectionPredictor", "V5DetectionTrainer", "V5DetectionValidator"
 ```
+
++ train.py
+
+```python
+import copy
+from ultralytics.models.yolo.detect import DetectionTrainer
+from ultralytics.models.yolo.v5detect.val import V5DetectionValidator
+from ultralytics.nn.tasks import V5DetectionModel
+from ultralytics.utils import RANK
+
+class V5DetectionTrainer(DetectionTrainer):
+    """
+    A class extending the DetectionTrainer class for training based on a detection model.
+
+    Example:
+        python
+        from ultralytics.models.yolo.detect import V5DetectionTrainer
+
+        args = dict(model="yolo1v5-anchhors.pt", data="coco8.yaml", epochs=3)
+        trainer = V5DetectionTrainer(overrides=args)
+        trainer.train()
+    """
+    def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks=None):
+        """Initialize a SegmentationTrainer object with given arguments."""
+        if overrides is None:
+            overrides = {}
+        overrides["task"] = "v5detect"
+        super().__init__(cfg, overrides, _callbacks)
+
+    def get_model(self, cfg=None, weights=None, verbose=True):
+        """Return a YOLO detection model."""
+        model = V5DetectionModel(cfg, nc=self.data["nc"], verbose=verbose and RANK == -1)
+        if weights:
+            model.load(weights)
+        return model
+
+    def get_validator(self):
+        """Returns a DetectionValidator for YOLO model validation."""
+        self.loss_names = "box_loss", "cls_loss", "obj_loss"
+        return V5DetectionValidator(
+            self.test_loader, save_dir=self.save_dir, args=copy(self.args), _callbacks=self.callbacks
+        )
+```
+
++ val.py
+
+```python
+from ultralytics.models.yolo.detect import DetectionValidator
+from ultralytics.utils import ops
+
+class V5DetectionValidator(DetectionValidator):
+    """
+    A class extending the DetectionValidator class for validation based on a detection model.
+
+    Example:
+        python
+        from ultralytics.models.yolo.detect import DetectionValidator
+
+        args = dict(model="yolo11n.pt", data="coco8.yaml")
+        validator = DetectionValidator(args=args)
+        validator()
+        
+    """
+
+    def __init__(self, dataloader=None, save_dir=None, pbar=None, args=None, _callbacks=None):
+        """Initialize detection model with necessary variables and settings."""
+        super().__init__(dataloader, save_dir, pbar, args, _callbacks)
+        
+        self.args.task = "v5detect"
+        
+
+    def postprocess(self, preds):
+        """使用非最大值抑制处理预测结果"""
+        return ops.v5_non_max_suppression(preds,
+                                            self.args.conf,
+                                            self.args.iou,
+                                            labels=self.lb,
+                                            multi_label=True,
+                                            agnostic=self.args.single_cls,
+                                            max_det=self.args.max_det)
+```
+
++ predict.py
+
+```python
+from ultralytics.engine.results import Results
+from ultralytics.models.yolo.detect import DetectionPredictor
+from ultralytics.utils import ops
+
+class DetectionPredictor(DetectionPredictor):
+    """
+    A class extending the BasePredictor class for prediction based on a detection model.
+
+    Example:
+        python
+        from ultralytics.utils import ASSETS
+        from ultralytics.models.yolo.detect import DetectionPredictor
+
+        args = dict(model="yolo11n.pt", source=ASSETS)
+        predictor = DetectionPredictor(overrides=args)
+        predictor.predict_cli()
+        
+    """
+
+    def postprocess(self, preds, img, orig_imgs):
+        """Post-processes predictions and returns a list of Results objects."""
+        preds = ops.v5_non_max_suppression(
+                preds, 
+                self.args.conf, 
+                self.args.iou,
+                agnostic=self.args.agnostic_nms,
+                max_det=self.args.max_det,
+                classes=self.args.classes)
+
+        if not isinstance(orig_imgs, list):  # input images are a torch.Tensor, not a list
+            orig_imgs = ops.convert_torch2numpy_batch(orig_imgs)
+
+        results = []
+        for pred, orig_img, img_path in zip(preds, orig_imgs, self.batch[0]):
+            pred[:, :4] = ops.scale_boxes(img.shape[2:], pred[:, :4], orig_img.shape)
+            results.append(Results(orig_img, path=img_path, names=self.model.names, boxes=pred))
+        return results
+```
+
+2. utralytics.models.yolo添加v5segment文件夹, 内含train、val、predict、\_\_init\_\_
+
+```
+yolo
+————v5segment
+    ————__init__.py
+    ————train.py
+    ————val.py
+    ————predict.py
+```
+
++ __init__.py
+
+```python
+from .predict import V5SegmentationPredictor
+from .train import V5SegmentationTrainer
+from .val import V5SegmentationValidator
+
+__all__ = "V5SegmentationPredictor", "V5SegmentationTrainer", "V5SegmentationValidator"
+```
+
++ train.py
+
+```python
+from copy import copy
+
+from ultralytics.models import yolo
+from ultralytics.models.yolo.v5segment.val import V5SegmentationValidator
+from ultralytics.nn.tasks import  V5SegmentationModel
+from ultralytics.utils import DEFAULT_CFG, RANK
+
+class V5SegmentationTrainer(yolo.detect.DetectionTrainer):
+    """
+    A class extending the DetectionTrainer class for training based on a segmentation model.
+
+    Example:
+        python
+        from ultralytics.models.yolo.segment import SegmentationTrainer
+
+        args = dict(model="yolov8n-seg.pt", data="coco8-seg.yaml", epochs=3)
+        trainer = SegmentationTrainer(overrides=args)
+        trainer.train()
+        
+    """
+
+    def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks=None):
+        """Initialize a SegmentationTrainer object with given arguments."""
+        if overrides is None:
+            overrides = {}
+        overrides["task"] = "v5segment"
+        super().__init__(cfg, overrides, _callbacks)
+
+    def get_model(self, cfg=None, weights=None, verbose=True):
+        """Return SegmentationModel initialized with specified config and weights."""
+        model = V5SegmentationModel(cfg, ch=3, nc=self.data["nc"], verbose=verbose and RANK == -1)
+        if weights:
+            model.load(weights)
+
+        return model
+
+    def get_validator(self):
+        """Return an instance of SegmentationValidator for validation of YOLO model."""
+        self.loss_names = "box_loss", "seg_loss", "cls_loss", "dfl_loss"
+        return V5SegmentationValidator(
+            self.test_loader, save_dir=self.save_dir, args=copy(self.args), _callbacks=self.callbacks
+        )
+```
+
++ val.py
+
+```python
+
+from ultralytics.utils import ops
+from ultralytics_old.models.yolo.segment.val import SegmentationValidator
+
+class V5SegmentationValidator(SegmentationValidator):
+    """
+    A class extending the DetectionValidator class for validation based on a segmentation model.
+
+    Example:
+        python
+        from ultralytics.models.yolo.segment import SegmentationValidator
+
+        args = dict(model="yolov8n-seg.pt", data="coco8-seg.yaml")
+        validator = SegmentationValidator(args=args)
+        validator()
+        
+    """
+
+    def __init__(self, dataloader=None, save_dir=None, pbar=None, args=None, _callbacks=None):
+        """Initialize SegmentationValidator and set task to 'segment', metrics to SegmentMetrics."""
+        super().__init__(dataloader, save_dir, pbar, args, _callbacks)
+        self.args.task = "v5segment"
+
+
+    def postprocess(self, preds):
+        """Post-processes YOLO predictions and returns output detections with proto."""
+        p = ops.v5_non_max_suppression(
+                preds,
+                self.args.conf,
+                self.args.iou,
+                labels=self.lb,
+                multi_label=True,
+                agnostic=self.args.single_cls,
+                max_det=self.args.max_det,
+                nc=self.nc,)
+        proto = preds[1][-1] if len(preds[1]) == 3 else preds[1]  # second output is len 3 if pt, but only 1 if exported
+        return p, proto
+```
+
++ predict.py
+```python
+from ultralytics.engine.results import Results
+from ultralytics.models.yolo.detect.predict import DetectionPredictor
+from ultralytics.utils import DEFAULT_CFG, ops
+
+
+class V5SegmentationPredictor(DetectionPredictor):
+    """
+    A class extending the DetectionPredictor class for prediction based on a segmentation model.
+
+    Example:
+        python
+        from ultralytics.utils import ASSETS
+        from ultralytics.models.yolo.segment import SegmentationPredictor
+
+        args = dict(model="yolov8n-seg.pt", source=ASSETS)
+        predictor = SegmentationPredictor(overrides=args)
+        predictor.predict_cli()
+        
+    """
+
+    def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks=None):
+        """Initializes the SegmentationPredictor with the provided configuration, overrides, and callbacks."""
+        super().__init__(cfg, overrides, _callbacks)
+        self.args.task = "v5segment"
+
+    def postprocess(self, preds, img, orig_imgs):
+        """Applies non-max suppression and processes detections for each image in an input batch."""
+        p = ops.v5_non_max_suppression(
+                preds,
+                self.args.conf,
+                self.args.iou,
+                agnostic=self.args.agnostic_nms,
+                max_det=self.args.max_det,
+                nc=len(self.model.names),
+                classes=self.args.classes)
+
+        if not isinstance(orig_imgs, list):  # input images are a torch.Tensor, not a list
+            orig_imgs = ops.convert_torch2numpy_batch(orig_imgs)
+
+        results = []
+        proto = preds[1][-1] if isinstance(preds[1], tuple) else preds[1]  # tuple if PyTorch model or array if exported
+        for i, (pred, orig_img, img_path) in enumerate(zip(p, orig_imgs, self.batch[0])):
+            if not len(pred):  # save empty boxes
+                masks = None
+            elif self.args.retina_masks:
+                pred[:, :4] = ops.scale_boxes(img.shape[2:], pred[:, :4], orig_img.shape)
+                masks = ops.process_mask_native(proto[i], pred[:, 6:], pred[:, :4], orig_img.shape[:2])  # HWC
+            else:
+                masks = ops.process_mask(proto[i], pred[:, 6:], pred[:, :4], img.shape[2:], upsample=True)  # HWC
+                pred[:, :4] = ops.scale_boxes(img.shape[2:], pred[:, :4], orig_img.shape)
+            results.append(Results(orig_img, path=img_path, names=self.model.names, boxes=pred[:, :6], masks=masks))
+        return results
+```
+
+
+3. ultralytics,models.yolo.\_\_init\_\_
+
++ 引用yolov5库至__all__
+
+```python
+from ultralytics.models.yolo import classify, detect, obb, pose, segment, world, v5detect, v5segment
+
+from .model import YOLO, YOLOWorld
+
+__all__ = "classify", "segment", "detect", "pose", "obb", "world", "YOLO", "YOLOWorld", "v5detect", "v5segment"
+```
+
+4. ultralytics.models.yolo.model
+
++ 在YOLO类的task_map函数中添加yolov5对应模型
+
+```python
+@property
+def task_map(self):
+    """Map head to model, trainer, validator, and predictor classes."""
+    return {
+        ...
+        ...
+        "v5detect":{
+            "model": V5DetectionModel,
+            "trainer": yolo.v5detect.V5DetectionTrainer,
+            "validator": yolo.v5detect.V5DetectionValidator,
+            "predictor": yolo.v5detect.V5DetectionPredictor,
+        },
+        "v5segment": {
+            "model": V5SegmentationModel,
+            "trainer": yolo.v5segment.V5SegmentationTrainer,
+            "validator": yolo.v5segment.V5SegmentationValidator,
+            "predictor": yolo.v5segment.V5SegmentationPredictor,
+        },
+    }
+```
+

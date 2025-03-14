@@ -1,8 +1,11 @@
 
 import copy
+from ultralytics.data.build import build_dataloader
 from ultralytics.models.yolo.detect import DetectionTrainer
+from ultralytics.models.yolo.v5detect.val import V5DetectionValidator
 from ultralytics.nn.tasks import V5DetectionModel
-from ultralytics.utils import RANK
+from ultralytics.utils import DEFAULT_CFG, LOGGER, RANK
+from ultralytics.utils.torch_utils import torch_distributed_zero_first
 
 
 
@@ -19,6 +22,12 @@ class V5DetectionTrainer(DetectionTrainer):
         trainer.train()
         ```
     """
+    def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks=None):
+        """Initialize a SegmentationTrainer object with given arguments."""
+        if overrides is None:
+            overrides = {}
+        overrides["task"] = "v5detect"
+        super().__init__(cfg, overrides, _callbacks)
 
     def get_model(self, cfg=None, weights=None, verbose=True):
         """Return a YOLO detection model."""
@@ -33,4 +42,7 @@ class V5DetectionTrainer(DetectionTrainer):
         return V5DetectionValidator(
             self.test_loader, save_dir=self.save_dir, args=copy(self.args), _callbacks=self.callbacks
         )
+    
+    
+
 

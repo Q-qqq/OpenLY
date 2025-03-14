@@ -48,7 +48,7 @@
 - pretrained
 - source
 全局参数:
-  任务: task：训练任务，detect、segment、classify、pose$widgetType~le$type~str$default~None$enable~False
+  任务: task：训练任务，detect、v5detect、segment、v5segmet、classify、pose、obb、keypoint$widgetType~cbb$type~string$default~detect$edit~False$items~detect,v5detect,segment,v5segmet,classify,pose,obb,keypoint
 训练参数:
   模型: model：模型文件，可以是后缀pt的模型文件（预训练权重），也可以是后缀yaml的模型结构参数文件（从0开始）$widgetType~cbb$type~string$default~$edit~True
   数据集: data：数据集参数配置文件（.yaml）,包含训练集、验证集/测试集文件路径、种类数量和种类名称等参数$widgetType~le$type~string$default~

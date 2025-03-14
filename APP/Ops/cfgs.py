@@ -9,7 +9,7 @@ from ultralytics.utils import yaml_load, yaml_save, LOGGER,ROOT, DEFAULT_CFG_DIC
 from ultralytics.cfg import get_cfg, cfg2dict, CFG_FLOAT_KEYS, CFG_BOOL_KEYS, CFG_FRACTION_KEYS, CFG_INT_KEYS, CFG_OTHER_KEYS
 from APP import APP_SETTINGS, EXPERIMENT_SETTINGS, PROJ_SETTINGS,getExistDirectory, getOpenFileName, APP_ROOT
 from APP.Utils import get_widget
-from APP.Data import guess_dataset_task
+from APP.Utils import guess_dataset_task, get_models, judge_pt_task
 import glob
 
 class CfgsTreeWidget(QTreeWidget):
@@ -33,8 +33,6 @@ class CfgsTreeWidget(QTreeWidget):
         self.last_click_color =None
         self.click_widget = False
         self.roots = []
-
-
         self.eventConnect()
         self.args = DEFAULT_CFG_DICT
         tips = yaml_load(ROOT / "cfg" / "cfg_status.yaml")
@@ -48,14 +46,9 @@ class CfgsTreeWidget(QTreeWidget):
         self.showArgs(False)
         self.expandAll()
 
-
-
     def eventConnect(self):
         self.itemClicked.connect(self.clickedSlot)
 
-
-        
-        
 
     def initTrees(self):
         """对参数树进行初始化设置"""
@@ -266,9 +259,13 @@ class CfgsTreeWidget(QTreeWidget):
             if items:
                 cbb.addItems(items.split(","))
             if name == "model":
-                models = glob.glob(str(APP_ROOT / "ultralytics" /"cfg" / "models" / "**" / "**"), recursive=False)
+                models = get_models(self.args["task"])
                 cbb.clear()
-                cbb.addItems([Path(m).name for m in models if Path(m).suffix in [".yaml", ".yml"]])
+                cbb.addItems(models)
+            if name == "task":
+                tasks = guess_dataset_task(self.args["dataset"])
+                cbb.clear()
+                cbb.addItems(tasks)
             current_text = str(value)
             cbb_items = [cbb.itemText(i) for i in range(cbb.count())]
             if current_text not in cbb_items:
@@ -333,23 +330,19 @@ class CfgsTreeWidget(QTreeWidget):
         if isinstance(widget, QComboBox):
             self.args[name] = self.checkValue(name, widget.currentText())
             if name == "task":
+                task = self.args[name]
+                model = self.args["model"]
+                models = get_models(task)
+                if Path(model).suffix == ".pt" and not judge_pt_task(model, task):  #pt模型并且pt任务与现在任务不匹配
+                    QMessageBox.information(self.parent, "提示", f"模型{model}不兼容{task}, 已选择默认模型{models[0]}")
+                elif self.args["model"] not in models:
+                    QMessageBox.information(self.parent, "提示", f"模型{model}可能不兼容{task}, 已选择默认模型{models[0]}")
+                    self.setValue("model", models[0])
                 self.Task_Change_Signal.emit(self.args[name])
         elif isinstance(widget, (QDoubleSpinBox, QSpinBox)):
             self.args[name] = self.checkValue(name, widget.value())
         elif isinstance(widget, QLineEdit):
-            if name == "dataset":  #数据集参数
-                if widget.text() != "" and Path(widget.text()).exists():  #数据集存在
-                    task = guess_dataset_task(self.args[name])  #检查数据集任务类型
-                    if self.args["task"] not in task and task[0] != "null": #任务类型不匹配
-                        QMessageBox.warning(self.parent(), "警告", f"数据集类型{task}与当前任务类型{self.args['task']}不匹配")
-                        return
-                    else:   #任务类型匹配
-                        self.args[name] = self.checkValue(name, widget.text())
-                else:   #数据集不存在
-                    QMessageBox.warning(self.parent(), "警告", f"数据集{widget.text()}不存在")
-                    self.args[name] = ""
-            else:
-                self.args[name] = self.checkValue(name, widget.text())
+            self.args[name] = self.checkValue(name, widget.text())
         elif isinstance(widget, QCheckBox):
             self.args[name] = self.checkValue(name, str(widget.isChecked()))
         self.setTreeItemText(name, self.args[name])

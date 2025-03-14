@@ -13,7 +13,6 @@ import shutil
 import torch
 import numpy as np
 import pandas as pd
-import threading
 
 from ultralytics.utils import yaml_load, yaml_save, DEFAULT_CFG_DICT, DEFAULT_CFG, LOGGER
 
@@ -100,14 +99,12 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
         self.show_confusion_norm_gl.setObjectName(u"show_confusion_norm_gl")
         self.confusion_norm_label = ConfusionMatrixLabel(self.Confusion_norm_w)
         self.confusion_norm_label.setObjectName(u"confusion_norm_label")
-        #self.confusion_norm_label.setStyleSheet(u"background-color: rgb(249, 255, 253);")
         self.show_confusion_norm_gl.addWidget(self.confusion_norm_label, 0, 0, 1, 1)
 
         self.show_confusion_denorm_gl = QGridLayout(self.Confusion_denorm_w)
         self.show_confusion_denorm_gl.setObjectName(u"show_confusion_denorm_gl")
         self.confusion_denorm_label = ConfusionMatrixLabel(self.Confusion_denorm_w)
         self.confusion_denorm_label.setObjectName(u"confusion_denorm_label")
-        #self.confusion_denorm_label.setStyleSheet(u"background-color: rgb(253, 255, 244);")
         self.show_confusion_denorm_gl.addWidget(self.confusion_denorm_label, 0, 0, 1, 1)
 
 
@@ -119,7 +116,6 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
             self.img_label.deleteLater()
         self.img_label = transformerLabel(self)
         self.img_label.setObjectName(u"image_label")
-        #self.img_label.setStyleSheet(u"background-color: rgb(254, 255, 246);")
         self.img_label.Show_Status_Signal.connect(self.showStatusMessage)
         self.show_img_gl.addWidget(self.img_label, 0, 0, 1, 1)
         self.show_img_gl.setContentsMargins(0,0,0,0)
@@ -130,6 +126,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
         if self.image_scroll:
             self.img_label.Next_Image_Signal.connect(self.image_scroll.nextImage)
             self.img_label.Last_Image_Signal.connect(self.image_scroll.lastImage)
+            
 
     def setPlot(self):
         self.loss_plot = PgPlotLossWidget(self.Show_loss_f, background=QColor(255, 255, 243, 0))
@@ -152,7 +149,6 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
         self.confusion_denorm_label.Select_signal.connect(self.ConfusionImagesSlot)
 
         self.images_label.Click_Signal.connect(self.selectImageSlot)
-        #self.centralwidget.installEventFilter(CentralWidgetFilter(self.centralwidget))
 
 
 
@@ -176,6 +172,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
             DEFAULT_CFG.save_dir = getExperimentPath()
             if isinstance(self.cfgs_widget.args["pretrained"], str):
                 model.load(self.cfgs_widget.args["pretrained"])
+            self.cfgs_widget.args["exist_ok"] = False  #覆盖当前实验
             model.lyTrain(cfg=self.cfg_path, data=self.cfgs_widget.args["data"])
             self.Train_a.setText("停止")
             self.Train_a.setEnabled(False)
@@ -251,17 +248,6 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
     def showStatusMessage(self, str):
         self.statusBar().showMessage(str)
 
-
-
-    def loadImage(self):
-        file = getOpenFileName(self,"ss")
-        if file[0] != "":
-            segment = [np.array([[0, 0], [0, 30], [30, 30], [30, 0]], dtype=np.float32)]
-            box = torch.Tensor([2, 2, 4, 4])
-            keypoint = torch.Tensor([[[10,10,1], [20,3,1], [30,40,1], [0,1,1],[ 50,0,1]]])
-            label = {"instance": QInstances(bboxes=None, segments=segment, keypoints=None, bbox_format="xywh", normalized=False),
-                     "cls": [0], "names": ["a", "b"], "nkpt":5, "ndim":3}
-            self.img_label.load_image(file[0], label)
 
     def buildDataset(self, data):
         self.sift_dataset.build(data, self.cfgs_widget.args["task"], self.cfgs_widget.args)

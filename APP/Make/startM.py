@@ -19,8 +19,7 @@ class Start(QWidget, startQT_ui.Ui_Form):
         self.setupUi(self)
         self.start = False
         projects= APP_SETTINGS["projects"]
-        if projects != []:
-            self.Projs_lw.addItems(projects)
+        self.Projs_lw.addItems([p for p in projects if Path(p).exists()])
         self.eventConnect()
 
     def eventConnect(self):

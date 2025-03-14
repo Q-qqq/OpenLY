@@ -163,6 +163,91 @@ def nms_rotated(boxes, scores, threshold=0.45):
     pick = torch.nonzero(ious.max(dim=0)[0] < threshold).squeeze_(-1)
     return sorted_idx[pick]
 
+def v5_non_max_suppression(
+        prediction,
+        conf_thres = 0.35,
+        iou_thres = 0.45,
+        classes=None,
+        agnostic=False,
+        multi_label=False,
+        labels=(),
+        max_det=300,
+        nc=0):
+    #prediction (bs, h*w*nl, 4+nc+nm)
+    assert 0<=conf_thres<=1, "无效的置信度阈值"
+    assert 0<=iou_thres<=1, "无效的IoU阈值"
+    if isinstance(prediction, (list, tuple)):  #YOLOv8模型在验证时的输出为（inference_out, loss_out）
+        prediction = prediction[0]  # 只选推理输出
+    bs = prediction.shape[0]  #batch size
+    nc = nc or prediction.shape[2] - 5  #种类数量
+    nm = prediction.shape[2] - nc - 5
+    xc = prediction[...,4] > conf_thres   #置信度大于阈值的索引
+
+    max_wh = 7680       #最大的图像长宽
+    max_nms = 30000   #计算nms时一张图像内最大检测目标数目
+    time_limit = 0.5 + 0.05 * bs  # seconds to quit after
+    redundant = True  # require redundant detections
+    multi_label &= nc > 1  # multiple labels per box (adds 0.5ms/img)
+    merge = False  # use merge-NMS
+
+    t = time.time()
+    mi = 5 + nc  # mask start index
+    output = [torch.zeros((0, 6+nm), device=prediction.device)] * bs
+    for img_i,x in enumerate(prediction):   #image index,  pred in a image
+        x = x[xc[img_i]]
+
+        # Cat apriori labels if autolabelling
+        if labels and len(labels[img_i]):
+            lb = labels[img_i]
+            v = torch.zeros((len(lb), nc + nm + 5), device=x.device)
+            v[:, :4] = lb[:, 1:5]  # box
+            v[:, 4] = 1.0  # conf
+            v[range(len(lb)), lb[:, 0].long() + 5] = 1.0  # cls
+            x = torch.cat((x, v), 0)  # append labels
+        
+        if not x.shape[0]:   #图像内无检测到框，下一张图像
+            continue
+
+        x[:,5:] *= x[:,4:5]  #类别概率乘以置信度
+        
+
+        box = xywh2xyxy(x[:,0:4])        #xywh  to xyxy
+        mask = x[:, mi:]   #分割掩膜
+
+        #[box conf cls]
+        if multi_label:
+            i, j = (x[:, 5:mi] > conf_thres).nonzero(as_tuple=False).T
+            x = torch.cat((box[i], x[i, 5+j, None], j[:, None].float(), mask[i]), 1)
+        else:
+            conf,j = x[:, 5:mi].max(1,keepdim = True)    #最大的置信度   类别索引
+            x = torch.cat((box, conf, j.float(), mask),1)[conf.view(-1) > conf_thres]      #置信度大于阈值的[box conf cls]  box - xyxy
+
+        #Filter by class
+        if classes is not None:
+            x = x[(x[:,5:6] == torch.tensor(classes, device=x.device)).any(1)]
+
+        n = x.shape[0]
+        if not n:        #无目标，下一张图像
+            continue
+        x = x[x[:, 4].argsort(descending=True)[:max_nms]]  # sort by confidence and remove excess boxes
+
+        #NMS
+        c = x[:,5:6] * (0 if agnostic else max_wh)  #类别 * 4096 放大类别差
+        boxes, scores = x[:,:4] + c, x[:,4]     #将不同类别的框加上不同的偏差，进行区分，scores为各个框的置信度分数
+        i = torchvision.ops.boxes.nms(boxes,scores,iou_thres)       #去除相同类别相近（iou > iou_thres)的框，并按置信度排序输出
+        i = i[:max_det]
+        if merge and (1 < n < 3e3):  # Merge NMS (boxes merged using weighted mean)
+            # update boxes as boxes(i,4) = weights(i,n) * boxes(n,4)
+            iou = box_iou(boxes[i], boxes) > iou_thres  # iou matrix
+            weights = iou * scores[None]  # box weights
+            x[i, :4] = torch.mm(weights, x[:, :4]).float() / weights.sum(1, keepdim=True)  # merged boxes
+            if redundant:
+                i = i[iou.sum(1) > 1]  # require redundancy
+        output[img_i] = x[i]
+        if (time.time() - t) > time_limit:
+            LOGGER.warning(f"WARNING ⚠️ NMS time limit {time_limit:.3f}s exceeded")
+            break  # time limit exceeded
+    return output # (bs, 6) xywh conf cls
 
 def non_max_suppression(
     prediction,

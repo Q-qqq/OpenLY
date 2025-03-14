@@ -93,47 +93,5 @@ def check_cls_val_dataset(data, train_names):
             LOGGER.info(f"验证数据集{val_set}存在种类{len(names)},其内无图像数据")
     return val_set, names
 
-def guess_dataset_task(dataset):
-    """检查数据集任务类型"""
-    dataset = Path(dataset)
-    if dataset.is_dir():
-        return ["classify"]
-    elif dataset.suffix == ".yaml":
-        data = check_det_dataset(dataset)
-        train_path = data["train"]
-        val_path = data["val"]
-        with open(train_path) as f:
-            train_img = f.read().strip().splitlines()
-        with open(val_path) as f:
-            val_img = f.read().strip().splitlines()
-        if len(train_img) == 0 and len(val_img) == 0:
-            return "null"
-        if len(train_img) != 0:
-            for img in train_img:
-                label_path = img2label_paths([img])[0]
-                label = readLabelFile(label_path)
-                if len(label) == 0:
-                    continue
-                else:
-                    if len(label[0]) == 5:
-                        return ["detect"]
-                    elif len(label[0]) == 6:
-                        return ["obb"]
-                    else:
-                        return ["segment", "keypoint"]
-        else:
-            for img in val_img:
-                label_path = img2label_paths([img])[0]
-                label = readLabelFile(label_path)
-                if len(label) == 0:
-                    continue
-                else:
-                    if len(label[0]) == 5:
-                        return "detect"
-                    elif len(label[0]) == 6:
-                        return ["obb"]
-                    else:
-                        return ["segment", "keypoint"]
-        LOGGER.warning(f"数据集{dataset}标签全为空无法识别任务类型")
-        return ["error"]
+
                 
