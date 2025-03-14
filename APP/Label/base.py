@@ -812,6 +812,12 @@ class QTransformerLabel(QSizeLabel):
 
     def mouseMoveEvent(self, event: QMouseEvent):
         super().mouseMoveEvent(event)
+        #显示种类
+        if self.label is not None:
+            rect = QRect(self.width()- 5, 0, 5, self.height())
+            if rect.contains(event.pos()):
+                self.Show_Classes_Signal.emit()
+        #显示像素值
         if self.img is not None:
             x = event.x()
             y = event.y()
