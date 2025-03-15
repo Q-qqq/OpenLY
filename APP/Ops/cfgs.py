@@ -34,7 +34,7 @@ class CfgsTreeWidget(QTreeWidget):
         self.click_widget = False
         self.roots = []
         self.eventConnect()
-        self.args = DEFAULT_CFG_DICT
+        self.args = copy.deepcopy(DEFAULT_CFG_DICT)
         tips = yaml_load(ROOT / "cfg" / "cfg_status.yaml")
         if isinstance(tips, (str, Path)):
             tips = yaml_load(tips)
@@ -263,7 +263,7 @@ class CfgsTreeWidget(QTreeWidget):
                 cbb.clear()
                 cbb.addItems(models)
             if name == "task":
-                tasks = guess_dataset_task(self.args["dataset"])
+                tasks = guess_dataset_task(self.args["data"])
                 cbb.clear()
                 cbb.addItems(tasks)
             current_text = str(value)
@@ -334,9 +334,9 @@ class CfgsTreeWidget(QTreeWidget):
                 model = self.args["model"]
                 models = get_models(task)
                 if Path(model).suffix == ".pt" and not judge_pt_task(model, task):  #pt模型并且pt任务与现在任务不匹配
-                    QMessageBox.information(self.parent, "提示", f"模型{model}不兼容{task}, 已选择默认模型{models[0]}")
+                    QMessageBox.information(self.parent(), "提示", f"模型{model}不兼容{task}, 已选择默认模型{models[0]}")
                 elif self.args["model"] not in models:
-                    QMessageBox.information(self.parent, "提示", f"模型{model}可能不兼容{task}, 已选择默认模型{models[0]}")
+                    QMessageBox.information(self.parent(), "提示", f"模型{model}可能不兼容{task}, 已选择默认模型{models[0]}")
                     self.setValue("model", models[0])
                 self.Task_Change_Signal.emit(self.args[name])
         elif isinstance(widget, (QDoubleSpinBox, QSpinBox)):

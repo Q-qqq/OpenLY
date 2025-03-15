@@ -1317,58 +1317,74 @@ class ABlock(nn.Module):
         return x
 
 
-class A2C2f(nn.Module):  
+class A2C2f(nn.Module):
     """
-    A2C2f module with residual enhanced feature extraction using ABlock blocks with area-attention. Also known as R-ELAN
+    Area-Attention C2f module for enhanced feature extraction with area-based attention mechanisms.
 
-    This class extends the C2f module by incorporating ABlock blocks for fast attention mechanisms and feature extraction.
+    This module extends the C2f architecture by incorporating area-attention and ABlock layers for improved feature
+    processing. It supports both area-attention and standard convolution modes.
 
     Attributes:
-        c1 (int): Number of input channels;
-        c2 (int): Number of output channels;
-        n (int, optional): Number of 2xABlock modules to stack. Defaults to 1;
-        a2 (bool, optional): Whether use area-attention. Defaults to True;
-        area (int, optional): Number of areas the feature map is divided. Defaults to 1;
-        residual (bool, optional): Whether use the residual (with layer scale). Defaults to False;
-        mlp_ratio (float, optional): MLP expansion ratio (or MLP hidden dimension ratio). Defaults to 1.2;
-        e (float, optional): Expansion ratio for R-ELAN modules. Defaults to 0.5;
-        g (int, optional): Number of groups for grouped convolution. Defaults to 1;
-        shortcut (bool, optional): Whether to use shortcut connection. Defaults to True;
+        cv1 (Conv): Initial 1x1 convolution layer that reduces input channels to hidden channels.
+        cv2 (Conv): Final 1x1 convolution layer that processes concatenated features.
+        gamma (nn.Parameter | None): Learnable parameter for residual scaling when using area attention.
+        m (nn.ModuleList): List of either ABlock or C3k modules for feature processing.
 
     Methods:
-        forward: Performs a forward pass through the A2C2f module.
+        forward: Processes input through area-attention or standard convolution pathway.
 
     Examples:
-        >>> import torch
-        >>> from ultralytics.nn.modules import A2C2f
-        >>> model = A2C2f(c1=64, c2=64, n=2, a2=True, area=4, residual=True, e=0.5)
-        >>> x = torch.randn(2, 64, 128, 128)
-        >>> output = model(x)
+        >>> m = A2C2f(512, 512, n=1, a2=True, area=1)
+        >>> x = torch.randn(1, 512, 32, 32)
+        >>> output = m(x)
         >>> print(output.shape)
+        torch.Size([1, 512, 32, 32])
     """
 
     def __init__(self, c1, c2, n=1, a2=True, area=1, residual=False, mlp_ratio=2.0, e=0.5, g=1, shortcut=True):
+        """
+        Initialize Area-Attention C2f module.
+
+        Args:
+            c1 (int): Number of input channels.
+            c2 (int): Number of output channels.
+            n (int): Number of ABlock or C3k modules to stack.
+            a2 (bool): Whether to use area attention blocks. If False, uses C3k blocks instead.
+            area (int): Number of areas the feature map is divided.
+            residual (bool): Whether to use residual connections with learnable gamma parameter.
+            mlp_ratio (float): Expansion ratio for MLP hidden dimension.
+            e (float): Channel expansion ratio for hidden channels.
+            g (int): Number of groups for grouped convolutions.
+            shortcut (bool): Whether to use shortcut connections in C3k blocks.
+        """
         super().__init__()
         c_ = int(c2 * e)  # hidden channels
         assert c_ % 32 == 0, "Dimension of ABlock be a multiple of 32."
 
-        # num_heads = c_ // 64 if c_ // 64 >= 2 else c_ // 32
-        num_heads = c_ // 32
-
         self.cv1 = Conv(c1, c_, 1, 1)
-        self.cv2 = Conv((1 + n) * c_, c2, 1)  # optional act=FReLU(c2)
+        self.cv2 = Conv((1 + n) * c_, c2, 1)
 
-        init_values = 0.01  # or smaller
-        self.gamma = nn.Parameter(init_values * torch.ones((c2)), requires_grad=True) if a2 and residual else None
-
+        self.gamma = nn.Parameter(0.01 * torch.ones(c2), requires_grad=True) if a2 and residual else None
         self.m = nn.ModuleList(
-            nn.Sequential(*(ABlock(c_, num_heads, mlp_ratio, area) for _ in range(2))) if a2 else C3k(c_, c_, 2, shortcut, g) for _ in range(n)
+            nn.Sequential(*(ABlock(c_, c_ // 32, mlp_ratio, area) for _ in range(2)))
+            if a2
+            else C3k(c_, c_, 2, shortcut, g)
+            for _ in range(n)
         )
 
     def forward(self, x):
-        """Forward pass through R-ELAN layer."""
+        """
+        Forward pass through A2C2f layer.
+
+        Args:
+            x (torch.Tensor): Input tensor.
+
+        Returns:
+            (torch.Tensor): Output tensor after processing.
+        """
         y = [self.cv1(x)]
         y.extend(m(y[-1]) for m in self.m)
+        y = self.cv2(torch.cat(y, 1))
         if self.gamma is not None:
-            return x + self.gamma.view(1, -1, 1, 1) * self.cv2(torch.cat(y, 1))
-        return self.cv2(torch.cat(y, 1))
+            return x + self.gamma.view(-1, len(self.gamma), 1, 1) * y
+        return y

@@ -10,8 +10,9 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+
 from ultralytics.utils import LOGGER
-from ultralytics.utils.metrics import batch_probiou
+from ultralytics.utils.metrics import batch_probiou, box_iou
 
 
 class Profile(contextlib.ContextDecorator):
@@ -173,6 +174,8 @@ def v5_non_max_suppression(
         labels=(),
         max_det=300,
         nc=0):
+    import torchvision
+    
     #prediction (bs, h*w*nl, 4+nc+nm)
     assert 0<=conf_thres<=1, "无效的置信度阈值"
     assert 0<=iou_thres<=1, "无效的IoU阈值"

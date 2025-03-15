@@ -38,7 +38,7 @@ class V5SegmentationPredictor(DetectionPredictor):
             orig_imgs = ops.convert_torch2numpy_batch(orig_imgs)
 
         results = []
-        proto = preds[1][-1] if isinstance(preds[1], tuple) else preds[1]  # tuple if PyTorch model or array if exported
+        proto = preds[1][-1] if len(preds[1]) == 3 else preds[1]
         for i, (pred, orig_img, img_path) in enumerate(zip(p, orig_imgs, self.batch[0])):
             if not len(pred):  # save empty boxes
                 masks = None

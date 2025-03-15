@@ -1,5 +1,5 @@
 
-import copy
+from copy import copy
 from ultralytics.data.build import build_dataloader
 from ultralytics.models.yolo.detect import DetectionTrainer
 from ultralytics.models.yolo.v5detect.val import V5DetectionValidator

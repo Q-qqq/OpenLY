@@ -456,6 +456,7 @@ def checkImgs(self, ims):
 ### ultralytics.enginer.exporter
 
 + 在Exporter类的__call__函数中，添加导出进度条显示
+
 ```python
 def __call__(self, model=None) -> str:
         """Returns list of exported files/dirs after running callbacks."""
@@ -811,6 +812,7 @@ def progress_string(self):
 ## 修改十二： 增加旧版yoloV5预选框训练方式
 
 ### 解析yolov5模型
+
 1. ultralytics.cfg.models.v5
 
 + 添加yoloV5神经网络文件夹yolov5-anchors.yaml和yolov5-seg-anchors
@@ -852,7 +854,7 @@ class v5Detect(nn.Module):
                 if self.dynamic or self.grid[i].shape[2:4] != x[i].shape[2:4]:
                     self.grid[i], self.anchor_grid[i] = self._make_grid(nx, ny, i)
 
-                if isinstance(self, V5Segment):  # (boxes + masks)
+                if isinstance(self, v5Segment):  # (boxes + masks)
                     xy, wh, conf, mask = x[i].split((2, 2, self.nc + 1, self.no - self.nc - 5), 4) # x, y, w, h, conf, mask
                     xy = (xy.sigmoid() * 2 + self.grid[i]) * self.stride[i]  # xy
                     wh = (wh.sigmoid() * 2) ** 2 * self.anchor_grid[i]  # wh
@@ -952,8 +954,10 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
     ...
     ...
     nc, act, scales, anchors = (d.get(x) for x in ("nc", "activation", "scales","anchors"))   #v5 add anchors
-    na = (len(anchors[0]) // 2) if isinstance(anchors, list) else anchors  # number of anchors
-    no = na * (nc + 5)   # number of outputs = anchors * (classes + 5)
+    no=0
+    if anchors:
+        na = (len(anchors[0]) // 2) if isinstance(anchors, list) else anchors  # number of anchors
+        no = na * (nc + 5)   # number of outputs = anchors * (classes + 5)
     ...
     ...
     for i, (f, n, m, args) in enumerate(d["backbone"] + d["head"]):  # from, number, module, args
@@ -981,15 +985,114 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
         ...
 ```
 
++ 修改guess_model_task函数，使其可以猜测yolov5任务
+
+```python
+def guess_model_task(model):
+    """
+    Guess the task of a PyTorch model from its architecture or configuration.
+
+    Args:
+        model (nn.Module | dict): PyTorch model or model configuration in YAML format.
+
+    Returns:
+        (str): Task of the model ('detect', 'segment', 'classify', 'pose').
+
+    Raises:
+        SyntaxError: If the task of the model could not be determined.
+    """
+
+    def cfg2task(cfg):
+        """Guess from YAML dictionary."""
+        m = cfg["head"][-1][-2].lower()  # output module name
+        if m in {"classify", "classifier", "cls", "fc"}:
+            return "classify"
+        if "detect" in m:
+            return "detect"
+        if m == "segment":
+            return "segment"
+        if m == "pose":
+            return "pose"
+        if m == "obb":
+            return "obb"
+        if m == "v5detect":
+            return "v5detect"
+        if m == "v5segment":
+            return "v5segment"
+
+    # Guess from model cfg
+    if isinstance(model, dict):
+        with contextlib.suppress(Exception):
+            return cfg2task(model)
+    # Guess from PyTorch model
+    if isinstance(model, nn.Module):  # PyTorch model
+        for x in "model.args", "model.model.args", "model.model.model.args":
+            with contextlib.suppress(Exception):
+                return eval(x)["task"]
+        for x in "model.yaml", "model.model.yaml", "model.model.model.yaml":
+            with contextlib.suppress(Exception):
+                return cfg2task(eval(x))
+        for m in model.modules():
+            if isinstance(m, Segment):
+                return "segment"
+            elif isinstance(m, Classify):
+                return "classify"
+            elif isinstance(m, Pose):
+                return "pose"
+            elif isinstance(m, OBB):
+                return "obb"
+            elif isinstance(m, (Detect, WorldDetect, v10Detect)):
+                return "detect"
+            elif isinstance(m, v5Detect):
+                return "v5detect"
+            elif isinstance(m, v5Segment):
+                return "v5segment"
+
+    # Guess from model filename
+    if isinstance(model, (str, Path)):
+        model = Path(model)
+        if "-seg" in model.stem and "segment" in model.parts:
+            return "segment"
+        elif "-cls" in model.stem or "classify" in model.parts:
+            return "classify"
+        elif "-pose" in model.stem or "pose" in model.parts:
+            return "pose"
+        elif "-obb" in model.stem or "obb" in model.parts:
+            return "obb"
+        elif "detect" in model.parts:
+            return "detect"
+        elif "v5detect" in model.parts:
+            return "v5detect"
+        elif "v5segment" in model.parts:
+            return "v5segment"
+
+    # Unable to determine task from model
+    LOGGER.warning(
+        "WARNING ⚠️ Unable to automatically guess model task, assuming 'task=detect'. "
+        "Explicitly define task for your model, i.e. 'task=detect', 'segment', 'classify','pose' or 'obb'."
+    )
+    return "detect"  # assume detect
+```
+
 + 修改DetectionModel类的初始化函数，使其对yolov5的检测头进行初始化
 
 ```python
 def __init__(self, cfg="yolov8n.yaml", ch=3, nc=None, verbose=True):  # model, input channels, number of classes
         ...
         ...
+        def _forward(x):
+                """Performs a forward pass through the model, handling different Detect subclass types accordingly."""
+                if self.end2end:
+                    return self.forward(x)["one2many"]
+                return self.forward(x)[0] if isinstance(m, (v5Segment, Segment, Pose, OBB)) else self.forward(x)
+        # Build strides
+        m = self.model[-1]  # Detect()
         if isinstance(m, Detect):  # includes all Detect subclasses like Segment, Pose, OBB, WorldDetect
-            ...
-            ...
+            s = 256  # 2x min stride
+            m.inplace = self.inplace
+            m.stride = torch.tensor([s / x.shape[-2] for x in _forward(torch.zeros(1, ch, s, s))])  # forward
+            self.stride = m.stride
+            m.bias_init()  # only run once
         elif isinstance(m, (v5Detect, v5Segment)):
             s=256
             m.inplace = self.inplace
@@ -1027,9 +1130,11 @@ class V5SegmentationModel(DetectionModel):
 ```
 
 ### 计算yolov5损失值
+
 1. ultralytics.utils.loss
 
 + 添加v5目标检测损失函数
+
 ```python
 class V5DetectLoss:
     def __init__(self,model, autobalance=False):
@@ -1203,7 +1308,7 @@ class V5SegmentLoss:
         BCEobj = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([h.obj_pw], device=device))
 
         # Class label smoothing https://arxiv.org/pdf/1902.04103.pdf eqn 3
-        self.cp, self.cn = smooth_BCE(eps=h.label_smoothing)  # positive, negative BCE targets
+        self.cp, self.cn = self.smooth_BCE(eps=h.label_smoothing)  # positive, negative BCE targets
 
         # Focal loss
         g = h.fl_gamma  # focal loss gamma
@@ -1295,6 +1400,10 @@ class V5SegmentLoss:
 
         loss = lbox + lobj + lcls + lseg
         return loss * bs, torch.cat((lbox, lseg, lobj, lcls)).detach()
+    
+    def smooth_BCE(self, eps=0.5):
+        # 返回类别正负样本的值 0< eps < 2
+        return 1. - 0.5 * eps, 0.5 * eps
 
     def single_mask_loss(self, gt_mask, pred, proto, xyxy, area):
         """Calculates and normalizes single mask loss for YOLOv5 between predicted and ground truth masks."""
@@ -1381,7 +1490,167 @@ class V5SegmentLoss:
 
 ### 自适应预选框
 
-1. 将yolov5的autoanchor.py文件复制到utils目录下，该文件用于yolov5自适应瞄框
+1. ultralytics.utils目录下创建autoanchor.py，该文件用于yolov5自适应瞄框
+
+```python
+import random
+import numpy as np
+import torch
+import yaml
+from ultralytics.utils import TryExcept, LOGGER
+
+#region 检查预选框顺序是否与检测头大小对应,输入检测层
+def check_anchors_order(m):
+    area_anchors_detect = m.anchors.prod(-1).mean(-1).view(-1)   #每个检测头内所有anchors的平均面积
+    da = area_anchors_detect[-1] - area_anchors_detect[0]   #平均面积顺序排列，最后一个减第一个，要么小于0要么大于0
+    ds = m.stride[-1] - m.stride[0]    #输入图像/检测头输出的比值顺序排列（比值大，平均面积大），最后一个减第一个，要么小于0要么大于0
+    if da and (da.sign() != ds.sign()): #da！=0 且顺序反向
+        m.anchors[:] = m.anchors.flip(0)   #反向排序
+#endregion
+#region 检查预选框是否符合数据集聚类
+@TryExcept("AutoAnchor: ERROR")
+def check_anchors(dataset, model, thr=4.0, img_sz=640):
+    m = model.model[-1]    #检测头
+    shapes = np.array(dataset.shapes)
+    shapes = img_sz * shapes / shapes.max(1,keepdims=True)    #将原图像尺寸shape最长边改为img_sz，短边适应
+    scale = np.random.uniform(0.9, 1.1, size=(shapes.shape[0], 1))  # 随机0.9-1.1的图像尺寸比例
+
+    wh = torch.tensor(np.concatenate([l[:, 2:4] * s for s, l in zip(shapes * scale, dataset.bboxes)])).float()  # 将labels的box宽高缩放到img_sz且随机0.9-1.1缩放
+
+    def metric(k):
+        r = wh[:, None] / k[None]          #每一个wh分别除以n个anchors
+        x = torch.min(r, 1 / r).min(2)[0]  # ratio metric
+        best = x.max(1)[0]  # best_x
+        aat = (x > 1 / thr).float().sum(1).mean()  # anchors above threshold
+        bpr = (best > 1 / thr).float().mean()  # best possible recall
+        return bpr, aat
+
+    stride = m.stride.to(m.anchors.device).view(-1, 1, 1)  # model strides
+    anchors = m.anchors.clone() * stride  # current anchors  输入图像的anchors乘以各自检测头大小与输入图像的比值，获得输入图像的anchors
+    bpr, aat = metric(anchors.cpu().view(-1, 2))
+    LOGGER.info(f'{aat:.2f} anchors/target, {bpr:.3f} Best Possible Recall (BPR). \n')
+    if bpr > 0.98:
+        LOGGER.info('Current anchors are a good fit to dataset ✅\n')
+    else:
+        LOGGER.warning('Anchors are a poor fit to dataset ⚠️, attempting to improve...\n')
+        na = m.anchors.numel() // 2  # number of anchors
+        anchors = kmean_anchors(dataset, n=na, img_size=img_sz, thr=thr, gen=1000, verbose=False)
+
+        new_bpr = metric(anchors)[0]
+        if new_bpr > bpr:  # replace anchors
+            anchors = torch.tensor(anchors, device=m.anchors.device).type_as(m.anchors)
+            m.anchors[:] = anchors.clone().view_as(m.anchors)
+            check_anchors_order(m)  # must be in pixel-space (not grid-space)
+            m.anchors /= stride
+            LOGGER.info('Done ✅ (optional: update model *.yaml to use these anchors in the future)\n')
+        else:
+            LOGGER.warning('Done ⚠️ (original anchors better than new anchors, proceeding with original anchors)')
+
+def kmean_anchors(dataset="./data/coco128.yaml", n=9, img_size=640, thr=4.0, gen=1000, verbose=True):
+    """
+    Creates kmeans-evolved anchors from training dataset.
+
+    Arguments:
+        dataset: path to data.yaml, or a loaded dataset
+        n: number of anchors
+        img_size: image size used for training
+        thr: anchor-label wh ratio threshold hyperparameter hyp['anchor_t'] used for training, default=4.0
+        gen: generations to evolve anchors using genetic algorithm
+        verbose: print all results
+
+    Return:
+        k: kmeans evolved anchors
+
+    Usage:
+        from utils.autoanchor import *; _ = kmean_anchors()
+    """
+    from scipy.cluster.vq import kmeans
+
+    npr = np.random
+    thr = 1 / thr
+    PREFIX = 'AutoAnchor: '
+    def metric(k, wh):  # compute metrics
+        """Computes ratio metric, anchors above threshold, and best possible recall for YOLOv5 anchor evaluation."""
+        r = wh[:, None] / k[None]
+        x = torch.min(r, 1 / r).min(2)[0]  # ratio metric
+        # x = wh_iou(wh, torch.tensor(k))  # iou metric
+        return x, x.max(1)[0]  # x, best_x
+
+    def anchor_fitness(k):  # mutation fitness
+        """Evaluates fitness of YOLOv5 anchors by computing recall and ratio metrics for an anchor evolution process."""
+        _, best = metric(torch.tensor(k, dtype=torch.float32), wh)
+        return (best * (best > thr).float()).mean()  # fitness
+
+    def print_results(k, verbose=True):
+        """Sorts and logs kmeans-evolved anchor metrics and best possible recall values for YOLOv5 anchor evaluation."""
+        k = k[np.argsort(k.prod(1))]  # sort small to large
+        x, best = metric(k, wh0)
+        bpr, aat = (best > thr).float().mean(), (x > thr).float().mean() * n  # best possible recall, anch > thr
+        s = (
+            f"{PREFIX}thr={thr:.2f}: {bpr:.4f} best possible recall, {aat:.2f} anchors past thr\n"
+            f"{PREFIX}n={n}, img_size={img_size}, metric_all={x.mean():.3f}/{best.mean():.3f}-mean/best, "
+            f"past_thr={x[x > thr].mean():.3f}-mean: "
+        )
+        for x in k:
+            s += "%i,%i, " % (round(x[0]), round(x[1]))
+        if verbose:
+            LOGGER.info(s[:-2])
+        return k
+
+
+    # Get label wh
+    shapes = np.array(dataset.shapes)
+    shapes = img_size * shapes / shapes.max(1, keepdims=True)
+    wh0 = np.concatenate([l[:, 2:4] * s for s, l in zip(shapes, dataset.bboxes)])  # wh
+
+    # Filter
+    i = (wh0 < 3.0).any(1).sum()
+    if i:
+        LOGGER.info(f"{PREFIX}WARNING ⚠️ Extremely small objects found: {i} of {len(wh0)} labels are <3 pixels in size")
+    wh = wh0[(wh0 >= 2.0).any(1)].astype(np.float32)  # filter > 2 pixels
+    # wh = wh * (npr.rand(wh.shape[0], 1) * 0.9 + 0.1)  # multiply by random scale 0-1
+
+    # Kmeans init
+    try:
+        LOGGER.info(f"{PREFIX}Running kmeans for {n} anchors on {len(wh)} points...")
+        assert n <= len(wh)  # apply overdetermined constraint
+        s = wh.std(0)  # sigmas for whitening
+        k = kmeans(wh / s, n, iter=30)[0] * s  # points
+        assert n == len(k)  # kmeans may return fewer points than requested if wh is insufficient or too similar
+    except Exception:
+        LOGGER.warning(f"{PREFIX}WARNING ⚠️ switching strategies from kmeans to random init")
+        k = np.sort(npr.rand(n * 2)).reshape(n, 2) * img_size  # random init
+    wh, wh0 = (torch.tensor(x, dtype=torch.float32) for x in (wh, wh0))
+    k = print_results(k, verbose=False)
+
+    # Plot
+    # k, d = [None] * 20, [None] * 20
+    # for i in tqdm(range(1, 21)):
+    #     k[i-1], d[i-1] = kmeans(wh / s, i)  # points, mean distance
+    # fig, ax = plt.subplots(1, 2, figsize=(14, 7), tight_layout=True)
+    # ax = ax.ravel()
+    # ax[0].plot(np.arange(1, 21), np.array(d) ** 2, marker='.')
+    # fig, ax = plt.subplots(1, 2, figsize=(14, 7))  # plot wh
+    # ax[0].hist(wh[wh[:, 0]<100, 0],400)
+    # ax[1].hist(wh[wh[:, 1]<100, 1],400)
+    # fig.savefig('wh.png', dpi=200)
+
+    # Evolve
+    f, sh, mp, s = anchor_fitness(k), k.shape, 0.9, 0.1  # fitness, generations, mutation prob, sigma
+    for _ in range(gen):
+        v = np.ones(sh)
+        while (v == 1).all():  # mutate until a change occurs (prevent duplicates)
+            v = ((npr.random(sh) < mp) * random.random() * npr.randn(*sh) * s + 1).clip(0.3, 3.0)
+        kg = (k.copy() * v).clip(min=2.0)
+        fg = anchor_fitness(kg)
+        if fg > f:
+            f, k = fg, kg.copy()
+            LOGGER.info(f"{PREFIX}Evolving anchors with Genetic Algorithm: fitness = {f:.4f}")
+            if verbose:
+                print_results(k, verbose)
+
+    return print_results(k).astype(np.float32)
+```
 
 2. ultralytics.models.yolo.detect.train
 
@@ -1428,7 +1697,9 @@ def _setup_train(self, world_size):
 ```
 
 4. ultralytics.data.dataset
+
 + 在YOloDataset类的get_labels函数中添加self.shapes和self.bboxes用于自适应预选框的计算
+
 ```python
 def get_labels(self):
     ...
@@ -1441,10 +1712,10 @@ def get_labels(self):
     return labels
 ```
 
-
 ### yolov5最大值抑制
 
 1. ultralytics.ultis.ops
+
 + 添加 yolov5的最大值抑制方法
 
 ```python
@@ -1535,8 +1806,7 @@ def v5_non_max_suppression(
     return output # (bs, 6) xywh conf cls
 ```
 
-
-### yolov5训练、验证、预测模块添加 
+### yolov5训练、验证、预测模块添加
 
 1. utralytics.models.yolo添加v5detect文件夹, 内含train、val、predict、\_\_init\_\_
 
@@ -1562,7 +1832,7 @@ __all__ = "V5DetectionPredictor", "V5DetectionTrainer", "V5DetectionValidator"
 + train.py
 
 ```python
-import copy
+from copy import copy
 from ultralytics.models.yolo.detect import DetectionTrainer
 from ultralytics.models.yolo.v5detect.val import V5DetectionValidator
 from ultralytics.nn.tasks import V5DetectionModel
@@ -1744,7 +2014,7 @@ class V5SegmentationTrainer(yolo.detect.DetectionTrainer):
 
     def get_validator(self):
         """Return an instance of SegmentationValidator for validation of YOLO model."""
-        self.loss_names = "box_loss", "seg_loss", "cls_loss", "dfl_loss"
+        self.loss_names = "box_loss", "seg_loss", "cls_loss", "obj_loss"
         return V5SegmentationValidator(
             self.test_loader, save_dir=self.save_dir, args=copy(self.args), _callbacks=self.callbacks
         )
@@ -1793,6 +2063,7 @@ class V5SegmentationValidator(SegmentationValidator):
 ```
 
 + predict.py
+
 ```python
 from ultralytics.engine.results import Results
 from ultralytics.models.yolo.detect.predict import DetectionPredictor
@@ -1848,7 +2119,6 @@ class V5SegmentationPredictor(DetectionPredictor):
         return results
 ```
 
-
 3. ultralytics,models.yolo.\_\_init\_\_
 
 + 引用yolov5库至__all__
@@ -1885,5 +2155,34 @@ def task_map(self):
             "predictor": yolo.v5segment.V5SegmentationPredictor,
         },
     }
+```
+
+### 数据集适应yolov5
+
+1. ultralytic.data.dataset
+
++ 修改初始化函数，使其兼容yolov5任务
+
+```python
+class YOLODataset(BaseDataset):
+    """
+    Dataset class for loading object detection and/or segmentation labels in YOLO format.
+
+    Args:
+        data (dict, optional): A dataset YAML dictionary. Defaults to None.
+        task (str): An explicit arg to point current task, Defaults to 'detect'.
+
+    Returns:
+        (torch.utils.data.Dataset): A PyTorch dataset object that can be used for training an object detection model.
+    """
+
+    def __init__(self, *args, data=None, task="detect", **kwargs):
+        """Initializes the YOLODataset with optional configurations for segments and keypoints."""
+        self.use_segments = task in ["segment", "v5segment"] 
+        self.use_keypoints = task == "pose"
+        self.use_obb = task == "obb"
+        self.data = data
+        assert not (self.use_segments and self.use_keypoints), "Can not use both segments and keypoints."
+        super().__init__(*args, **kwargs)
 ```
 

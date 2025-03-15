@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from ultralytics.utils.metrics import OKS_SIGMA
 from ultralytics.utils.ops import crop_mask, xywh2xyxy, xyxy2xywh
 from ultralytics.utils.tal import RotatedTaskAlignedAssigner, TaskAlignedAssigner, dist2bbox, dist2rbox, make_anchors
-from ultralytics.utils.torch_utils import autocast
+from ultralytics.utils.torch_utils import autocast, de_parallel
 
 from .metrics import bbox_iou, probiou
 from .tal import bbox2dist
@@ -912,7 +912,7 @@ class V5SegmentLoss:
         BCEobj = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([h.obj_pw], device=device))
 
         # Class label smoothing https://arxiv.org/pdf/1902.04103.pdf eqn 3
-        self.cp, self.cn = smooth_BCE(eps=h.label_smoothing)  # positive, negative BCE targets
+        self.cp, self.cn = self.smooth_BCE(eps=h.label_smoothing)  # positive, negative BCE targets
 
         # Focal loss
         g = h.fl_gamma  # focal loss gamma
@@ -1004,6 +1004,10 @@ class V5SegmentLoss:
 
         loss = lbox + lobj + lcls + lseg
         return loss * bs, torch.cat((lbox, lseg, lobj, lcls)).detach()
+    
+    def smooth_BCE(self, eps=0.5):
+        # 返回类别正负样本的值 0< eps < 2
+        return 1. - 0.5 * eps, 0.5 * eps
 
     def single_mask_loss(self, gt_mask, pred, proto, xyxy, area):
         """Calculates and normalizes single mask loss for YOLOv5 between predicted and ground truth masks."""

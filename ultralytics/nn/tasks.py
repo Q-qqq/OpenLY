@@ -325,18 +325,16 @@ class DetectionModel(BaseModel):
         self.inplace = self.yaml.get("inplace", True)
         self.end2end = getattr(self.model[-1], "end2end", False)
 
+        def _forward(x):
+                """Performs a forward pass through the model, handling different Detect subclass types accordingly."""
+                if self.end2end:
+                    return self.forward(x)["one2many"]
+                return self.forward(x)[0] if isinstance(m, (v5Segment, Segment, Pose, OBB)) else self.forward(x)
         # Build strides
         m = self.model[-1]  # Detect()
         if isinstance(m, Detect):  # includes all Detect subclasses like Segment, Pose, OBB, WorldDetect
             s = 256  # 2x min stride
             m.inplace = self.inplace
-
-            def _forward(x):
-                """Performs a forward pass through the model, handling different Detect subclass types accordingly."""
-                if self.end2end:
-                    return self.forward(x)["one2many"]
-                return self.forward(x)[0] if isinstance(m, (v5Segment, Segment, Pose, OBB)) else self.forward(x)
-
             m.stride = torch.tensor([s / x.shape[-2] for x in _forward(torch.zeros(1, ch, s, s))])  # forward
             self.stride = m.stride
             m.bias_init()  # only run once
@@ -966,8 +964,10 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
     legacy = True  # backward compatibility for v3/v5/v8/v9 models
     max_channels = float("inf")
     nc, act, scales, anchors = (d.get(x) for x in ("nc", "activation", "scales","anchors"))   #v5 add anchors
-    na = (len(anchors[0]) // 2) if isinstance(anchors, list) else anchors  # number of anchors
-    no = na * (nc + 5)   # number of outputs = anchors * (classes + 5)
+    no=0
+    if anchors:
+        na = (len(anchors[0]) // 2) if isinstance(anchors, list) else anchors  # number of anchors
+        no = na * (nc + 5)   # number of outputs = anchors * (classes + 5)
     depth, width, kpt_shape = (d.get(x, 1.0) for x in ("depth_multiple", "width_multiple", "kpt_shape"))
     if scales:
         scale = d.get("scale")
@@ -1175,6 +1175,10 @@ def guess_model_task(model):
             return "pose"
         if m == "obb":
             return "obb"
+        if m == "v5detect":
+            return "v5detect"
+        if m == "v5segment":
+            return "v5segment"
 
     # Guess from model cfg
     if isinstance(model, dict):
@@ -1199,11 +1203,15 @@ def guess_model_task(model):
                 return "obb"
             elif isinstance(m, (Detect, WorldDetect, v10Detect)):
                 return "detect"
+            elif isinstance(m, v5Detect):
+                return "v5detect"
+            elif isinstance(m, v5Segment):
+                return "v5segment"
 
     # Guess from model filename
     if isinstance(model, (str, Path)):
         model = Path(model)
-        if "-seg" in model.stem or "segment" in model.parts:
+        if "-seg" in model.stem and "segment" in model.parts:
             return "segment"
         elif "-cls" in model.stem or "classify" in model.parts:
             return "classify"
@@ -1213,6 +1221,10 @@ def guess_model_task(model):
             return "obb"
         elif "detect" in model.parts:
             return "detect"
+        elif "v5detect" in model.parts:
+            return "v5detect"
+        elif "v5segment" in model.parts:
+            return "v5segment"
 
     # Unable to determine task from model
     LOGGER.warning(

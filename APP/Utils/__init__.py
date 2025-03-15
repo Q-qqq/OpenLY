@@ -52,12 +52,12 @@ def guess_dataset_task(dataset):
     """
     检查数据集可用任务类型
     Args:
-        dataset(str | Path): 若dataset为文件夹路径，则为分类数据集；若为yaml文件，则为detect,segment,keypoint 或 obb数据集
+        dataset(str | Path): 若dataset为文件夹路径，则为分类数据集；若为yaml文件，则为detect,segment,pose 或 obb数据集
     Returns:
-        (list): ["classify","detect", "v5detect", "segment", "v5segment", "obb", "keypoint"]
+        (list): ["classify","detect", "v5detect", "segment", "v5segment", "obb", "pose"]
     """
     if dataset == "" or not Path(dataset).exists():
-        return ["classify","detect", "v5detect", "segment", "v5segment", "obb", "keypoint"]
+        return ["classify","detect", "v5detect", "segment", "v5segment", "obb", "pose"]
     dataset = Path(dataset)
     if dataset.is_dir():
         return ["classify"]
@@ -71,9 +71,10 @@ def guess_dataset_task(dataset):
             val_img = f.read().strip().splitlines()
         #数据集为空，可自由决定任务类型
         if len(train_img) == 0 and len(val_img) == 0:
-            return [ "detect", "v5detect", "segment", "v5segment", "obb", "keypoint"]
+            return [ "detect", "v5detect", "segment", "v5segment", "obb", "pose"]
         if len(train_img) != 0:  #从训练集判断
             for img in train_img:
+                img = str(Path(data["path"]) / img if img.startswith(".") else img)
                 label_path = img2label_paths([img])[0]
                 label = readLabelFile(label_path)
                 if len(label) == 0:  #ok样本
@@ -83,8 +84,8 @@ def guess_dataset_task(dataset):
                         return ["detect", "v5detect"]
                     elif len(label[0]) == 6:  #obb目标检测数据集
                         return ["obb"]
-                    else:  #segment 或者 keypoint
-                        return ["detect", "v5detect","segment","v5segment", "keypoint"]
+                    else:  #segment 或者 pose
+                        return ["detect", "v5detect","segment","v5segment", "pose"]
         else:    #从验证集判断
             for img in val_img:
                 label_path = img2label_paths([img])[0]
@@ -97,11 +98,11 @@ def guess_dataset_task(dataset):
                     elif len(label[0]) == 6:
                         return ["obb"]
                     else:
-                        return ["detect", "v5detect","segment","v5segment", "keypoint"]
+                        return ["detect", "v5detect","segment","v5segment", "pose"]
     else:
         QMessageBox.critical(None, "提示", f"数据集{dataset}格式错误, 应为分类文件夹或者yaml数据集文件")
         return []
-    return [ "detect", "v5detect", "segment", "v5segment", "obb", "keypoint"]
+    return [ "detect", "v5detect", "segment", "v5segment", "obb", "pose"]
     
 def get_models(task):
     """根据任务类型获取可用的神经网络模型"""

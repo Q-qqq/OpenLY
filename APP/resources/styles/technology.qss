@@ -363,7 +363,7 @@ QProgressBar {
     border-radius: 8px;
     text-align: center;
     font: bold 12pt "Orbitron";         /* 星舰控制台字体 */
-    color: #b62be234;                     /* 量子荧光 */
+    color: #00ffff;                     /* 量子荧光 */
     padding: 2px;
 }
  
@@ -374,7 +374,7 @@ QProgressBar::chunk {
         x2:1, y2:0,
         stop:0 #3d7afe,
         stop:0.5 #8a2be2,
-        stop:0.8 #00f3e6,
+        stop:0.7 #00f3e6,
         stop:1 #3d7afe 
     );
     border-radius: 6px;
@@ -528,9 +528,6 @@ QTreeWidget::branch:open {
     margin-right: 8px;
 }
  
-QTreeWidget::branch:closed {
-}
-
 /* 一级节点 - 恒星核心 */
 QTreeWidget::item[level="1"] {
     background: #3d7afe08;

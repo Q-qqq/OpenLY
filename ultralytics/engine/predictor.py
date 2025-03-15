@@ -247,55 +247,51 @@ class BasePredictor:
             )
             self.run_callbacks("on_predict_start")
             PROGRESS_BAR.start("Predict", "Start predicting...", [0, len(self.dataset)], True)
-            try:
-                for data_i, self.batch in enumerate(self.dataset):
-                    self.run_callbacks("on_predict_batch_start")
-                    paths, im0s, s = self.batch
+            
+            for data_i, self.batch in enumerate(self.dataset):
+                self.run_callbacks("on_predict_batch_start")
+                paths, im0s, s = self.batch
 
-                    # Preprocess
-                    with profilers[0]:
-                        im = self.preprocess(im0s)
+                # Preprocess
+                with profilers[0]:
+                    im = self.preprocess(im0s)
 
-                    # Inference
-                    with profilers[1]:
-                        preds = self.inference(im, *args, **kwargs)
-                        if self.args.embed:
-                            yield from [preds] if isinstance(preds, torch.Tensor) else preds  # yield embedding tensors
-                            continue
+                # Inference
+                with profilers[1]:
+                    preds = self.inference(im, *args, **kwargs)
+                    if self.args.embed:
+                        yield from [preds] if isinstance(preds, torch.Tensor) else preds  # yield embedding tensors
+                        continue
 
-                    # Postprocess
-                    with profilers[2]:
-                        self.results = self.postprocess(preds, im, im0s)
-                    self.run_callbacks("on_predict_postprocess_end")
+                # Postprocess
+                with profilers[2]:
+                    self.results = self.postprocess(preds, im, im0s)
+                self.run_callbacks("on_predict_postprocess_end")
 
-                    # Visualize, save, write results
-                    n = len(im0s)
-                    for i in range(n):
-                        self.seen += 1
-                        self.results[i] = self.results[i].cpu() #Reduce memory
-                        self.results[i].speed = {
-                            "preprocess": profilers[0].dt * 1e3 / n,
-                            "inference": profilers[1].dt * 1e3 / n,
-                            "postprocess": profilers[2].dt * 1e3 / n,
-                        }
-                        if self.args.verbose or self.args.save or self.args.save_txt or self.args.show:
-                            s[i] += self.write_results(i, Path(paths[i]), im, s)
+                # Visualize, save, write results
+                n = len(im0s)
+                for i in range(n):
+                    self.seen += 1
+                    self.results[i] = self.results[i].cpu() #Reduce memory
+                    self.results[i].speed = {
+                        "preprocess": profilers[0].dt * 1e3 / n,
+                        "inference": profilers[1].dt * 1e3 / n,
+                        "postprocess": profilers[2].dt * 1e3 / n,
+                    }
+                    if self.args.verbose or self.args.save or self.args.save_txt or self.args.show:
+                        s[i] += self.write_results(i, Path(paths[i]), im, s)
 
-                    # Print batch results
-                    if self.args.verbose:
-                        LOGGER.info("\n".join(s))
+                # Print batch results
+                if self.args.verbose:
+                    LOGGER.info("\n".join(s))
 
-                    self.run_callbacks("on_predict_batch_end")
-                    yield from self.results
-                    PROGRESS_BAR.setValue(data_i+1, f"{s} {profilers[1].dt *1e3:.1f}ms")
-                    if PROGRESS_BAR.isStop():
-                        PROGRESS_BAR.close()
-                        break
-                PROGRESS_BAR.close()
-            except Exception as ex:
-                PROGRESS_BAR.stop()
-                PROGRESS_BAR.close()
-                raise ProcessLookupError(f"预测失败：{ex}")
+                self.run_callbacks("on_predict_batch_end")
+                yield from self.results
+                PROGRESS_BAR.setValue(data_i+1, f"{s} {profilers[1].dt *1e3:.1f}ms")
+                if PROGRESS_BAR.isStop():
+                    PROGRESS_BAR.close()
+                    break
+            PROGRESS_BAR.close()
                                   
         # Release assets
         for v in self.vid_writer.values():

@@ -1,41 +1,30 @@
-# Ultralytics YOLOv5 🚀, AGPL-3.0 license
-"""AutoAnchor utils."""
-
 import random
 
 import numpy as np
 import torch
 import yaml
+from ultralytics.utils import TryExcept, LOGGER
 
-from ultralytics.utils import LOGGER
+#region 检查预选框顺序是否与检测头大小对应,输入检测层
+def check_anchors_order(m):
+    area_anchors_detect = m.anchors.prod(-1).mean(-1).view(-1)   #每个检测头内所有anchors的平均面积
+    da = area_anchors_detect[-1] - area_anchors_detect[0]   #平均面积顺序排列，最后一个减第一个，要么小于0要么大于0
+    ds = m.stride[-1] - m.stride[0]    #输入图像/检测头输出的比值顺序排列（比值大，平均面积大），最后一个减第一个，要么小于0要么大于0
+    if da and (da.sign() != ds.sign()): #da！=0 且顺序反向
+        m.anchors[:] = m.anchors.flip(0)   #反向排序
+#endregion
+#region 检查预选框是否符合数据集聚类
+@TryExcept("AutoAnchor: ERROR")
+def check_anchors(dataset, model, thr=4.0, img_sz=640):
+    m = model.model[-1]    #检测头
+    shapes = np.array(dataset.shapes)
+    shapes = img_sz * shapes / shapes.max(1,keepdims=True)    #将原图像尺寸shape最长边改为img_sz，短边适应
+    scale = np.random.uniform(0.9, 1.1, size=(shapes.shape[0], 1))  # 随机0.9-1.1的图像尺寸比例
 
-from yolov5_master.utils import TryExcept
-from yolov5_master.utils.general import TQDM_BAR_FORMAT, colorstr
+    wh = torch.tensor(np.concatenate([l[:, 2:4] * s for s, l in zip(shapes * scale, dataset.bboxes)])).float()  # 将labels的box宽高缩放到img_sz且随机0.9-1.1缩放
 
-PREFIX = colorstr("AutoAnchor: ")
-
-
-def check_anchor_order(m):
-    """Checks and corrects anchor order against stride in YOLOv5 Detect() module if necessary."""
-    a = m.anchors.prod(-1).mean(-1).view(-1)  # mean anchor area per output layer
-    da = a[-1] - a[0]  # delta a
-    ds = m.stride[-1] - m.stride[0]  # delta s
-    if da and (da.sign() != ds.sign()):  # same order
-        LOGGER.info(f"{PREFIX}Reversing anchor order")
-        m.anchors[:] = m.anchors.flip(0)
-
-
-@TryExcept(f"{PREFIX}ERROR")
-def check_anchors(dataset, model, thr=4.0, imgsz=640):
-    """Evaluates anchor fit to dataset and adjusts if necessary, supporting customizable threshold and image size."""
-    m = model.module.model[-1] if hasattr(model, "module") else model.model[-1]  # Detect()
-    shapes = imgsz * dataset.shapes / dataset.shapes.max(1, keepdims=True)
-    scale = np.random.uniform(0.9, 1.1, size=(shapes.shape[0], 1))  # augment scale
-    wh = torch.tensor(np.concatenate([l[:, 3:5] * s for s, l in zip(shapes * scale, dataset.labels)])).float()  # wh
-
-    def metric(k):  # compute metric
-        """Computes ratio metric, anchors above threshold, and best possible recall for YOLOv5 anchor evaluation."""
-        r = wh[:, None] / k[None]
+    def metric(k):
+        r = wh[:, None] / k[None]          #每一个wh分别除以n个anchors
         x = torch.min(r, 1 / r).min(2)[0]  # ratio metric
         best = x.max(1)[0]  # best_x
         aat = (x > 1 / thr).float().sum(1).mean()  # anchors above threshold
@@ -43,26 +32,25 @@ def check_anchors(dataset, model, thr=4.0, imgsz=640):
         return bpr, aat
 
     stride = m.stride.to(m.anchors.device).view(-1, 1, 1)  # model strides
-    anchors = m.anchors.clone() * stride  # current anchors
+    anchors = m.anchors.clone() * stride  # current anchors  输入图像的anchors乘以各自检测头大小与输入图像的比值，获得输入图像的anchors
     bpr, aat = metric(anchors.cpu().view(-1, 2))
-    s = f"\n{PREFIX}{aat:.2f} anchors/target, {bpr:.3f} Best Possible Recall (BPR). "
-    if bpr > 0.98:  # threshold to recompute
-        LOGGER.info(f"{s}Current anchors are a good fit to dataset ✅")
+    LOGGER.info(f'{aat:.2f} anchors/target, {bpr:.3f} Best Possible Recall (BPR). \n')
+    if bpr > 0.98:
+        LOGGER.info('Current anchors are a good fit to dataset ✅\n')
     else:
-        LOGGER.info(f"{s}Anchors are a poor fit to dataset ⚠️, attempting to improve...")
+        LOGGER.warning('Anchors are a poor fit to dataset ⚠️, attempting to improve...\n')
         na = m.anchors.numel() // 2  # number of anchors
-        anchors = kmean_anchors(dataset, n=na, img_size=imgsz, thr=thr, gen=1000, verbose=False)
+        anchors = kmean_anchors(dataset, n=na, img_size=img_sz, thr=thr, gen=1000, verbose=False)
+
         new_bpr = metric(anchors)[0]
         if new_bpr > bpr:  # replace anchors
             anchors = torch.tensor(anchors, device=m.anchors.device).type_as(m.anchors)
             m.anchors[:] = anchors.clone().view_as(m.anchors)
-            check_anchor_order(m)  # must be in pixel-space (not grid-space)
+            check_anchors_order(m)  # must be in pixel-space (not grid-space)
             m.anchors /= stride
-            s = f"{PREFIX}Done ✅ (optional: update model *.yaml to use these anchors in the future)"
+            LOGGER.info('Done ✅ (optional: update model *.yaml to use these anchors in the future)\n')
         else:
-            s = f"{PREFIX}Done ⚠️ (original anchors better than new anchors, proceeding with original anchors)"
-        LOGGER.info(s)
-
+            LOGGER.warning('Done ⚠️ (original anchors better than new anchors, proceeding with original anchors)')
 
 def kmean_anchors(dataset="./data/coco128.yaml", n=9, img_size=640, thr=4.0, gen=1000, verbose=True):
     """
@@ -86,7 +74,7 @@ def kmean_anchors(dataset="./data/coco128.yaml", n=9, img_size=640, thr=4.0, gen
 
     npr = np.random
     thr = 1 / thr
-
+    PREFIX = 'AutoAnchor: '
     def metric(k, wh):  # compute metrics
         """Computes ratio metric, anchors above threshold, and best possible recall for YOLOv5 anchor evaluation."""
         r = wh[:, None] / k[None]
@@ -115,16 +103,11 @@ def kmean_anchors(dataset="./data/coco128.yaml", n=9, img_size=640, thr=4.0, gen
             LOGGER.info(s[:-2])
         return k
 
-    if isinstance(dataset, str):  # *.yaml file
-        with open(dataset, errors="ignore") as f:
-            data_dict = yaml.safe_load(f)  # model dict
-        from utils.dataloaders import LoadImagesAndLabels
-
-        dataset = LoadImagesAndLabels(data_dict["train"], augment=True, rect=True)
 
     # Get label wh
-    shapes = img_size * dataset.shapes / dataset.shapes.max(1, keepdims=True)
-    wh0 = np.concatenate([l[:, 3:5] * s for s, l in zip(shapes, dataset.labels)])  # wh
+    shapes = np.array(dataset.shapes)
+    shapes = img_size * shapes / shapes.max(1, keepdims=True)
+    wh0 = np.concatenate([l[:, 2:4] * s for s, l in zip(shapes, dataset.bboxes)])  # wh
 
     # Filter
     i = (wh0 < 3.0).any(1).sum()
@@ -168,7 +151,7 @@ def kmean_anchors(dataset="./data/coco128.yaml", n=9, img_size=640, thr=4.0, gen
         fg = anchor_fitness(kg)
         if fg > f:
             f, k = fg, kg.copy()
-            desc = f"{PREFIX}Evolving anchors with Genetic Algorithm: fitness = {f:.4f}"
+            LOGGER.info(f"{PREFIX}Evolving anchors with Genetic Algorithm: fitness = {f:.4f}")
             if verbose:
                 print_results(k, verbose)
 

@@ -142,3 +142,4 @@ obj_pw: 1.0 # (float) obj BCELoss positive_weight
 gr: 0.4 # (float) iou loss ratio (obj_loss = (1-gr)+gr*iou)
 anchor_t: 4.0 # (float) anchor-multiple threshold
 fl_gamma: 0.0 # (float) focal loss gamma (efficientDet default gamma=1.5)
+label_smoothing: 0.0 # (float) label smoothing (fraction)

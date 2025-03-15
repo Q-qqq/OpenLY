@@ -326,7 +326,7 @@ class SegmentTransformerLabel(QTransformerLabel):
                 painter.setBrush(brush)
                 points = []
                 for p in segment:
-                    points.append(QPoint(p[0], p[1]))
+                    points.append(QPoint(int(p[0]), int(p[1])))
                 if len(segment) < 3:  # 小于3个点 只绘制点
                     painter.setPen(QPen(Qt.GlobalColor.green if not pred else self.red, 1, Qt.PenStyle.SolidLine))
                     painter.drawPoints(points)
@@ -337,9 +337,9 @@ class SegmentTransformerLabel(QTransformerLabel):
                     lu, rd = get_segment_diagnol_point(segment)
                     mes = f"{self.label['names'][int(c)]}  " * self.show_cls + f"{area:3.2f}px" * self.show_area
                     if pred:
-                        self.drawText(painter, QPoint(rd[0], rd[1]), mes, 12, Qt.GlobalColor.white)
+                        self.drawText(painter, QPoint(int(rd[0]), int(rd[1])), mes, 12, Qt.GlobalColor.white)
                     else:
-                        self.drawText(painter, QPoint(lu[0], lu[1]), mes, 12, Qt.GlobalColor.green)
+                        self.drawText(painter, QPoint(int(lu[0]), int(lu[1])), mes, 12, Qt.GlobalColor.green)
 
     def getLabelSizeSegment(self, segment):
         new_segment = np.zeros_like(segment, dtype=np.float32)

@@ -661,7 +661,7 @@ class v5Detect(nn.Module):
                 if self.dynamic or self.grid[i].shape[2:4] != x[i].shape[2:4]:
                     self.grid[i], self.anchor_grid[i] = self._make_grid(nx, ny, i)
 
-                if isinstance(self, V5Segment):  # (boxes + masks)
+                if isinstance(self, v5Segment):  # (boxes + masks)
                     xy, wh, conf, mask = x[i].split((2, 2, self.nc + 1, self.no - self.nc - 5), 4) # x, y, w, h, conf, mask
                     xy = (xy.sigmoid() * 2 + self.grid[i]) * self.stride[i]  # xy
                     wh = (wh.sigmoid() * 2) ** 2 * self.anchor_grid[i]  # wh

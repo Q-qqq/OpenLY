@@ -33,6 +33,7 @@ from APP.Utils.scroll import ImageScroll
 from APP.Utils.plotting import PgPlotLossWidget
 from APP.Ops import SiftDataset, LabelOps, MenuTool, RunMes
 from APP.Utils.ultralytics_enginer import Yolo
+from APP.Utils import guess_dataset_task
 
 
 
@@ -172,7 +173,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
             DEFAULT_CFG.save_dir = getExperimentPath()
             if isinstance(self.cfgs_widget.args["pretrained"], str):
                 model.load(self.cfgs_widget.args["pretrained"])
-            self.cfgs_widget.args["exist_ok"] = False  #覆盖当前实验
+            self.cfgs_widget.args["exist_ok"] = True  #覆盖当前实验
             model.lyTrain(cfg=self.cfg_path, data=self.cfgs_widget.args["data"])
             self.Train_a.setText("停止")
             self.Train_a.setEnabled(False)
@@ -211,9 +212,9 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
 
     #SLOT 外部槽
     def changeTaskSlot(self, task):
-        if task == "detect":
+        if task in ["detect", "v5detect"]:
             transformerLabel = DetectTransformerLabel
-        elif task == "segment":
+        elif task in ["segment", "v5segment"]:
             transformerLabel = SegmentTransformerLabel
         elif task == "obb":
             transformerLabel = ObbTransformerLabel
@@ -277,9 +278,10 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
                 yaml_save(cfg_path, DEFAULT_CFG_DICT)
         else:
             cfg = yaml_load(cfg_path)
-            if cfg["task"] != PROJ_SETTINGS["task"]:
-                QMessageBox.information(self, "提示", f"实验任务{cfg['task']}与项目任务{PROJ_SETTINGS['task']}不一致，已自动更改实验任务为{cfg['task']}")
-                cfg["task"] = PROJ_SETTINGS["task"]
+            models = guess_dataset_task(cfg["data"])
+            if cfg["task"] not in models:
+                QMessageBox.information(self, "提示", f"实验任务{cfg['task']}与数据集{cfg["data"]}不兼容，已自动更改实验任务为{models[0]}")
+                cfg["task"] = models[0]
                 yaml_save(cfg_path, cfg)
 
         
