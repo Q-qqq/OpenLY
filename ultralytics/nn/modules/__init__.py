@@ -2,19 +2,19 @@
 """
 Ultralytics modules.
 
-Example:
-    Visualize a module with Netron.
-    ```python
-    from ultralytics.nn.modules import *
-    import torch
-    import os
+This module provides access to various neural network components used in Ultralytics models, including convolution blocks,
+attention mechanisms, transformer components, and detection/segmentation heads.
 
-    x = torch.ones(1, 128, 40, 40)
-    m = Conv(128, 128)
-    f = f"{m._get_name()}.onnx"
-    torch.onnx.export(m, x, f)
-    os.system(f"onnxslim {f} {f} && open {f}")  # pip install onnxslim
-    ```
+Examples:
+    Visualize a module with Netron.
+    >>> from ultralytics.nn.modules import *
+    >>> import torch
+    >>> import os
+    >>> x = torch.ones(1, 128, 40, 40)
+    >>> m = Conv(128, 128)
+    >>> f = f"{m._get_name()}.onnx"
+    >>> torch.onnx.export(m, x, f)
+    >>> os.system(f"onnxslim {f} {f} && open {f}")  # pip install onnxslim
 """
 
 from .block import (
@@ -30,6 +30,7 @@ from .block import (
     SPP,
     SPPELAN,
     SPPF,
+    A2C2f,
     AConv,
     ADown,
     Attention,
@@ -57,7 +58,6 @@ from .block import (
     ResNetLayer,
     SCDown,
     TorchVision,
-    A2C2f,
 )
 from .conv import (
     CBAM,
@@ -144,6 +144,8 @@ __all__ = (
     "OBB",
     "WorldDetect",
     "v10Detect",
+    "v5Detect",
+    "v5Segment",
     "ImagePoolingAttn",
     "ContrastiveHead",
     "BNContrastiveHead",
@@ -161,5 +163,5 @@ __all__ = (
     "PSA",
     "TorchVision",
     "Index",
-    "A2C2f"
+    "A2C2f",
 )

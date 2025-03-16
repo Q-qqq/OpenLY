@@ -34,6 +34,7 @@ class SourceTypes:
         stream (bool): Flag indicating if the input source is a video stream.
         screenshot (bool): Flag indicating if the input source is a screenshot.
         from_img (bool): Flag indicating if the input source is an image file.
+        tensor (bool): Flag indicating if the input source is a tensor.
 
     Examples:
         >>> source_types = SourceTypes(stream=True, screenshot=False, from_img=False)
@@ -107,7 +108,7 @@ class LoadStreams:
         self.caps = [None] * n  # video capture objects
         self.imgs = [[] for _ in range(n)]  # images
         self.shape = [[] for _ in range(n)]  # image shapes
-        self.sources = [ops.clean_str(x) for x in sources]  # clean source names for later
+        self.sources = [ops.clean_str(x).replace(os.sep, "_") for x in sources]  # clean source names for later
         for i, s in enumerate(sources):  # index, source
             # Start thread to read frames from video stream
             st = f"{i + 1}/{n}: {s}... "
@@ -485,7 +486,7 @@ class LoadPilAndNumpy:
         self.im0 = self.checkImgs(im0) 
         self.mode = "image"
         self.bs = len(self.im0)
-
+    
     def checkImgs(self, ims):
         imgs = []
         PROGRESS_BAR.start("预测图像集加载", "开始加载", [0, len(ims)], True)
@@ -572,6 +573,7 @@ class LoadTensor:
                     PROGRESS_BAR.close()
                     raise ProcessLookupError("Interrupt：Load img of predict interrupt success")
         return imgs
+
 
     @staticmethod
     def _single_check(im, stride=32):

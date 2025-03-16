@@ -199,7 +199,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
             source = self.cfgs_widget.args["source"]
         yolo = Yolo(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
         yolo.overrides = {**self.cfgs_widget.args, **yolo.overrides}
-        self.pred_labels = yolo.lyPredict(source=source, save_dir=getExperimentPath,conf=self.cfgs_widget.args["conf"])
+        self.pred_labels = yolo.lyPredict(source=source, save_dir=getExperimentPath(),conf=self.cfgs_widget.args["conf"])
         if self.pred_labels is None:
             self.pred_labels = {}
         if self.img_label.im_file in self.pred_labels.keys():

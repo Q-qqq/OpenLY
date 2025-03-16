@@ -101,7 +101,7 @@ def plot(self, normalize=True, save_dir="", names=(), on_plot=None):
 def saveImageFiles(self, save_dir, names):
         save_dict = {}
         names = list(names)
-        if self.task == "detect":
+        if self.task != "classify":
             names.append("null")
         for pred_c in range(len(self.im_files)):
             for gt_c in range(len(self.im_files[pred_c])):
@@ -410,21 +410,20 @@ def stream_inference(self, source=None, model=None, *args, **kwargs):
         ...
         self.run_callbacks("on_predict_start")
         PROGRESS_BAR.start("Predict", "Start predicting...", [0, len(self.dataset)], True)
-        try:
-            for data_i, self.batch in enumerate(self.dataset):
+        for data_i, self.batch in enumerate(self.dataset):
+            ...
+            for i in range(n):
+                self.seen += 1
+                self.results[i] = self.results[i].cpu() #Reduce memory
                 ...
-                ...
-                self.run_callbacks("on_predict_batch_end")
-                yield from self.results
-                PROGRESS_BAR.setValue(data_i+1, f"{s} {profilers[1].dt *1e3:.1f}ms")
-                if PROGRESS_BAR.isStop():
-                    PROGRESS_BAR.close()
-                    break
-            PROGRESS_BAR.close()
-        except Exception as ex:
-            PROGRESS_BAR.stop()
-            PROGRESS_BAR.close()
-            raise ProcessLookupError(f"预测失败：{ex}")
+            ...
+            self.run_callbacks("on_predict_batch_end")
+            yield from self.results
+            PROGRESS_BAR.setValue(data_i+1, f"{s} {profilers[1].dt *1e3:.1f}ms")
+            if PROGRESS_BAR.isStop():
+                PROGRESS_BAR.close()
+                break
+        PROGRESS_BAR.close()
 ```
 
 ### ultralytics.data.loaders
@@ -527,10 +526,25 @@ def __call__(self, trainer=None, model=None):
 
 ### ultralytics.cfg.__init__.py
 
-+ 往全部变量中添加CFG_OTHERS_KEYS, 使KEYS全局变量包含全部参数
++ 往全部变量中添加CFG_OTHERS_KEYS, 使KEYS全局变量包含全部参数, 将batch从float类型移动到int类型
 
 ```python
-CFG_OTHER_KEYS = (
+CFG_INT_KEYS = frozenset(
+    {  # integer-only arguments
+        ...
+        "batch",
+    }
+)
+CFG_BOOL_KEYS = frozenset(
+    {  # boolean-only arguments
+        ...
+        ...
+        "amp",
+    }
+)
+
+CFG_OTHER_KEYS = frozenset(
+    {
     "task",  #(str)detect, YOLO task, i.e. detect, segmetn, classify, pose
     "mode",  #(str)train, YOLO mode, i.e. train, val, predict, export, track,benchmask
     "model",  #(str)modeln.pt, path to model file i.e. yolov8n.pt, yalov8n.yaml
@@ -554,6 +568,7 @@ CFG_OTHER_KEYS = (
     "tracker",   #(str)bootsort.yaml, tracker type, choices=[botsrt.yaml, bytetrack.yaml]
     "resume",    # (bool|str)False, resume training from last checkpoint
     "imgsz",     #(int | list)640, image size  width,height
+    }
 )
 ```
 
@@ -663,9 +678,6 @@ def _do_train(self, world_size=1):
         ...
         total_instance = 0 # all instances
         for i, batch in pbar:
-            if LOGGER.stop:
-                LOGGER.trainInterrupt()
-                raise ProcessLookupError(f"Interrupt：训练中断成功,已训练{epoch}epoch")
             self.run_callbacks("on_train_batch_start")
             ...
             ...
@@ -688,6 +700,9 @@ def _do_train(self, world_size=1):
                     self.plot_training_samples(batch, ni)
 
             self.run_callbacks("on_train_batch_end")
+            if LOGGER.stop:
+                LOGGER.trainInterrupt()
+                raise ProcessLookupError(f"Interrupt：训练中断成功,已训练{epoch}epoch")
 
         ...
         if RANK in {-1, 0}:
@@ -734,6 +749,17 @@ def verify_image(args):
     return (im_file, cls), nf, nc, msg, shape
 ```
 
++ 在dataset文件中的classifyDataset类中同步修改verify_image的输出获取
+
+```python
+# Run scan if *.cache retrieval failed
+nf, nc, msgs, samples, x = 0, 0, [], [], {}
+PROGRESS_BAR.start("Classify dataset Load", "Start", [0,len(self.samples)], False)
+with ThreadPool(NUM_THREADS) as pool:
+    results = pool.imap(func=verify_image, iterable=zip(self.samples, repeat(self.prefix)))
+    pbar = TQDM(enumerate(results), desc=desc, total=len(self.samples))
+    for i, sample, nf_f, nc_f, msg,_ in pbar:  #<---
+```
 ## 修改十： 检测det数据集默认父路径修改
 
 ### ultralytics.data.utils
@@ -794,7 +820,7 @@ def _do_train(self, world_size=1):
 
 ### ultralytics.models.yolo.detect.train
 
-+ 在DetectionTrainer类的progress_string函数中添加batch输出
++ 在DetectionTrainer类的progress_string函数中添加batch输出,适应训练时添加batch数据输出
 
 ```python
 def progress_string(self):
@@ -929,7 +955,7 @@ __all__ = "Detect", "Segment", "Pose", "Classify", "OBB", "RTDETRDecoder", "v10D
 from .head import OBB, Classify, Detect, Pose, RTDETRDecoder, Segment, WorldDetect, v10Detect, v5Detect, v5Segment
 ```
 
-4. ultralytics.nn.task
+4. ultralytics.nn.tasks
 
 + 添加引用 v5Detect和v5Segment
 
@@ -963,18 +989,16 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
     for i, (f, n, m, args) in enumerate(d["backbone"] + d["head"]):  # from, number, module, args
         ...
         ...
-        if m in {
-            ...
-            ...
-        }:
+        if m in base_modules:
             c1, c2 = ch[f], args[0]
             if c2 != nc and c2 != no:  # if c2 not equal to number of classes (i.e. for Classify() output) and c2 no equal to no for yolov5 output to detect head
                 c2 = make_divisible(min(c2, max_channels) * width, 8)
-
             ...
             ...
-        elif m in {Detect, WorldDetect, Segment, Pose, OBB, ImagePoolingAttn, v10Detect, v5Detect, v5Segment}:
-            args.append([ch[x] for x in f])  #n个检测头对应输入的channels
+        ...
+        ...
+        elif m in frozenset({Detect, WorldDetect, Segment, Pose, OBB, ImagePoolingAttn, v10Detect, v5Detect, v5Segment}):
+            args.append([ch[x] for x in f])
             if isinstance(args[1], int) and m in (v5Segment, v5Detect):  # number of anchors
                 args[1] = [list(range(args[1] * 2))] * len(f)
             if m in [Segment,v5Segment]:
@@ -988,6 +1012,22 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
 + 修改guess_model_task函数，使其可以猜测yolov5任务
 
 ```python
+def guess_model_scale(model_path):
+    """
+    Extract the size character n, s, m, l, or x of the model's scale from the model path.
+
+    Args:
+        model_path (str | Path): The path to the YOLO model's YAML file.
+
+    Returns:
+        (str): The size character of the model's scale (n, s, m, l, or x).
+    """
+    try:
+        return re.search(r"yolo[v]?\d+([nslmx])", Path(model_path).stem).group(1)  # returns n, s, m, l, or x
+    except AttributeError:
+        return ""
+
+
 def guess_model_task(model):
     """
     Guess the task of a PyTorch model from its architecture or configuration.
@@ -1025,7 +1065,7 @@ def guess_model_task(model):
         with contextlib.suppress(Exception):
             return cfg2task(model)
     # Guess from PyTorch model
-    if isinstance(model, nn.Module):  # PyTorch model
+    if isinstance(model, torch.nn.Module):  # PyTorch model
         for x in "model.args", "model.model.args", "model.model.model.args":
             with contextlib.suppress(Exception):
                 return eval(x)["task"]
@@ -1078,33 +1118,33 @@ def guess_model_task(model):
 
 ```python
 def __init__(self, cfg="yolov8n.yaml", ch=3, nc=None, verbose=True):  # model, input channels, number of classes
-        ...
-        ...
-        def _forward(x):
-                """Performs a forward pass through the model, handling different Detect subclass types accordingly."""
-                if self.end2end:
-                    return self.forward(x)["one2many"]
-                return self.forward(x)[0] if isinstance(m, (v5Segment, Segment, Pose, OBB)) else self.forward(x)
-        # Build strides
-        m = self.model[-1]  # Detect()
-        if isinstance(m, Detect):  # includes all Detect subclasses like Segment, Pose, OBB, WorldDetect
-            s = 256  # 2x min stride
-            m.inplace = self.inplace
-            m.stride = torch.tensor([s / x.shape[-2] for x in _forward(torch.zeros(1, ch, s, s))])  # forward
-            self.stride = m.stride
-            m.bias_init()  # only run once
-        elif isinstance(m, (v5Detect, v5Segment)):
-            s=256
-            m.inplace = self.inplace
-            m.stride = torch.tensor([s / x.shape[-2] for x in _forward(torch.zeros(1, ch, s, s))])  # forward
-            autoanchor.check_anchors_order(m)
-            m.anchors /= m.stride.view(-1, 1, 1)  # 将预选框缩放到grid_size大小
-            self.stride = m.stride
-            m.bias_init()
-        else:
-            self.stride = torch.Tensor([32])  # default stride for i.e. RTDETR
-        ...
-        ...
+    ...
+    ...
+    def _forward(x):
+            """Performs a forward pass through the model, handling different Detect subclass types accordingly."""
+            if self.end2end:
+                return self.forward(x)["one2many"]
+            return self.forward(x)[0] if isinstance(m, (v5Segment, Segment, Pose, OBB)) else self.forward(x)
+    # Build strides
+    m = self.model[-1]  # Detect()
+    if isinstance(m, Detect):  # includes all Detect subclasses like Segment, Pose, OBB, WorldDetect
+        s = 256  # 2x min stride
+        m.inplace = self.inplace
+        m.stride = torch.tensor([s / x.shape[-2] for x in _forward(torch.zeros(1, ch, s, s))])  # forward
+        self.stride = m.stride
+        m.bias_init()  # only run once
+    elif isinstance(m, (v5Detect, v5Segment)):
+        s=256
+        m.inplace = self.inplace
+        m.stride = torch.tensor([s / x.shape[-2] for x in _forward(torch.zeros(1, ch, s, s))])  # forward
+        autoanchor.check_anchors_order(m)
+        m.anchors /= m.stride.view(-1, 1, 1)  # 将预选框缩放到grid_size大小
+        self.stride = m.stride
+        m.bias_init()
+    else:
+        self.stride = torch.Tensor([32])  # default stride for i.e. RTDETR
+    ...
+    ...
 ```
 
 + 添加v5 detection模型
