@@ -16,7 +16,8 @@ import pandas as pd
 from scipy.ndimage import gaussian_filter1d
 
 from ultralytics.utils import plt_settings,threaded, TryExcept
-from APP import PROJ_SETTINGS, getExperimentPath
+from APP import PROJ_SETTINGS
+from APP.Utils import getExperimentPath
 
 
 class QFigure(FigureCanvas):

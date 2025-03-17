@@ -1,4 +1,5 @@
 import copy
+import glob
 import os
 import time
 
@@ -17,7 +18,7 @@ import pandas as pd
 from ultralytics.utils import yaml_load, yaml_save, DEFAULT_CFG_DICT, DEFAULT_CFG, LOGGER
 
 
-from APP  import  PROJ_SETTINGS, getOpenFileName, EXPERIMENT_SETTINGS, APP_ROOT, getExperimentPath
+from APP  import  PROJ_SETTINGS, EXPERIMENT_SETTINGS, APP_ROOT
 from APP.Make.startM import Start
 from APP.Label.base import QInstances, QTransformerLabel
 from APP.Label.labels import (DetectTransformerLabel,
@@ -33,7 +34,7 @@ from APP.Utils.scroll import ImageScroll
 from APP.Utils.plotting import PgPlotLossWidget
 from APP.Ops import SiftDataset, LabelOps, MenuTool, RunMes
 from APP.Utils.ultralytics_enginer import Yolo
-from APP.Utils import guess_dataset_task
+from APP.Utils import check_pt_model, guess_dataset_task, getExperimentPath, getOpenFileName
 
 
 
@@ -172,7 +173,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
 
             DEFAULT_CFG.save_dir = getExperimentPath()
             if isinstance(self.cfgs_widget.args["pretrained"], str):
-                model.load(self.cfgs_widget.args["pretrained"])
+                model.load(self.cfgs_widget.args["pretrained"])   #加载预训练模型
             self.cfgs_widget.args["exist_ok"] = True  #覆盖当前实验
             model.lyTrain(cfg=self.cfg_path, data=self.cfgs_widget.args["data"])
             self.Train_a.setText("停止")
@@ -186,29 +187,38 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
     def startVal(self):
         self.Progress_dw.raise_()
         self.cfgs_widget.save()
-        yolo = Yolo(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
-        args = copy.deepcopy(self.cfgs_widget.args)
-        args["save_dir"] = getExperimentPath()
-        yolo.lyVal(**args)
+        model = check_pt_model(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
+        if model:
+            yolo = Yolo(model, self.cfgs_widget.args["task"])
+            args = copy.deepcopy(self.cfgs_widget.args)
+            args["save_dir"] = getExperimentPath()
+            yolo.lyVal(**args)
 
     def startPredict(self):
         self.cfgs_widget.save()
-        if self.cfgs_widget.args["source"] == "选中图像":
-            source = self.images_label.getSelectedImgs()
-        else:
-            source = self.cfgs_widget.args["source"]
-        yolo = Yolo(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
-        yolo.overrides = {**self.cfgs_widget.args, **yolo.overrides}
-        self.pred_labels = yolo.lyPredict(source=source, save_dir=getExperimentPath(),conf=self.cfgs_widget.args["conf"])
-        if self.pred_labels is None:
-            self.pred_labels = {}
-        if self.img_label.im_file in self.pred_labels.keys():
-            self.img_label.loadPredLabel(self.pred_labels[self.img_label.im_file])
+        model = check_pt_model(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
+        if model:
+            if self.cfgs_widget.args["source"] == "选中图像":
+                source = self.images_label.getSelectedImgs()
+            else:
+                source = self.cfgs_widget.args["source"]
+            yolo = Yolo(model, self.cfgs_widget.args["task"])
+            yolo.overrides = {**self.cfgs_widget.args, **yolo.overrides}
+            self.pred_labels = yolo.lyPredict(source=source, save_dir=getExperimentPath(),conf=self.cfgs_widget.args["conf"])
+            if self.pred_labels is None:
+                self.pred_labels = {}
+            if self.img_label.im_file in self.pred_labels.keys():
+                self.img_label.loadPredLabel(self.pred_labels[self.img_label.im_file])
 
     def startExport(self):
-        yolo = Yolo(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
-        yolo.overrides = {**self.cfgs_widget.args, **yolo.overrides}
-        yolo.lyExport()
+        self.cfgs_widget.save()
+        model = check_pt_model(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
+        if model:
+            yolo = Yolo(model, self.cfgs_widget.args["task"])
+            yolo.overrides = {**self.cfgs_widget.args, **yolo.overrides}
+            yolo.lyExport()
+
+    
 
     #SLOT 外部槽
     def changeTaskSlot(self, task):

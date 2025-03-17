@@ -9,7 +9,8 @@ import glob
 
 from ultralytics.utils.files import increment_path
 
-from APP  import getExistDirectory, checkProject, APP_SETTINGS, PROJ_SETTINGS, EXPERIMENT_SETTINGS, getExperimentPath
+from APP  import  APP_SETTINGS, PROJ_SETTINGS, EXPERIMENT_SETTINGS
+from APP.Utils import getExistDirectory, checkProject
 
 
 class Start(QWidget, startQT_ui.Ui_Form):
@@ -69,14 +70,11 @@ class Start(QWidget, startQT_ui.Ui_Form):
         self.openProject(project)
 
     def addOldProject(self, project):
-        if not checkProject(project):
-            QMessageBox.warning(self,"警告", f"{project}不是一个完整的项目，无法添加")
-            return
         self.openProject(project)
 
     def createProject(self, project):
         project_path = Path(project)
-        task, ok = QInputDialog.getItem(self, "选择任务", "选择项目任务", ["detect", "obb","segment", "classify", "keypoint"], 0, False)
+        task, ok = QInputDialog.getItem(self, "选择任务", "选择项目任务", ["detect","v5detect", "obb","segment", "v5segment", "classify", "keypoint"], 0, False)
         if not ok:
             return
         
@@ -87,6 +85,8 @@ class Start(QWidget, startQT_ui.Ui_Form):
         PROJ_SETTINGS.save()
 
     def openProject(self, project):
+        if not checkProject(project):
+            return
         project = str(Path(project))
         APP_SETTINGS.updateProject(project)
         PROJ_SETTINGS.load(project)

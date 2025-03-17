@@ -1,4 +1,6 @@
+from functools import wraps
 import glob
+import math
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
@@ -7,9 +9,11 @@ import numpy as np
 import torch
 from pathlib import Path
 
+from APP import APP_ROOT, APP_SETTINGS, EXPERIMENT_SETTINGS, PROJ_SETTINGS, __version__
 from APP.Data import readLabelFile
 from ultralytics.data.utils import check_det_dataset, img2label_paths
-from ultralytics.utils import ROOT
+from ultralytics.utils import ROOT, yaml_load, getExperimentPath
+from ultralytics.utils.checks import check_version
 
 def get_widget(parent:QFrame, name):
     """获取父控件中指定objectname的子控件"""
@@ -116,3 +120,163 @@ def judge_pt_task(pt_model, task):
     if args["task"] != task:
         return False
     return True
+
+def check_pt_model(self, model, task):
+    if Path(model).exists() and Path(model).suffix == ".pt":
+        if judge_pt_task(model, task):
+            return  model
+        else:
+            QMessageBox.information(self, "提示", f"模型{model}执行任务{task}与现在任务{task}不符")
+    else:
+        QMessageBox.information(self, "提示", f"模型{model}不可用，请选择一个可用的pt模型")
+    items = glob.glob(str(Path(getExperimentPath()) / "**" / "*.pt"), recursize=True)
+    if len(items):
+        model, ok = QInputDialog.getItem(self, "pt模型", "model:", items, 0, True)
+        if ok and model != "":
+            if Path(model).exists() and Path(model).suffix == ".pt" and judge_pt_task(model, task):
+                return model
+            else:
+                QMessageBox.information(self, "提示", f"模型错误{model}， 请确定模型路径存在或是否pt模型或模型任务是否正确")
+    return ""
+
+
+def getExperimentPath(name = ""):
+    """获取实验路径""" 
+    project = PROJ_SETTINGS["name"]
+    experiment = name if name != "" else EXPERIMENT_SETTINGS["name"]
+    return str(Path(project) / "experiments" / experiment)
+
+def getExistDirectory(*args, **kwargs):
+    """获取系统存在的一个文件夹并保存历史路径
+    Args:
+        parent(QWidget|None): 父窗口
+        caption(str): 标题
+        dir(str): 初始打开文件路径，默认为APP_SETTINGS["default_dir"]"""
+    if len(args) < 3 and not kwargs.get("dir"):
+        kwargs["dir"] = APP_SETTINGS["default_dir"]
+    dir = QFileDialog.getExistingDirectory(*args, **kwargs)
+    APP_SETTINGS.update({"default_dir": dir }) if dir != "" else None
+    return dir
+
+def getOpenFileName(*args, **kwargs):
+    """
+    获取单个文件
+    Args：
+        parent(QWidget|None): 父窗口
+        caption(str): 标题
+        dir(str): 初始打开文件路径，默认为APP_SETTINGS["default_file"]
+        filter(str): 文件过滤 'file (*.jpg *.png *.gif)'"""
+    if len(args) < 3 and  not kwargs.get("dir"):
+        kwargs["dir"] = APP_SETTINGS["default_file"]
+    file, file_type = QFileDialog.getOpenFileName(*args, **kwargs)
+    APP_SETTINGS.update({"default_file": str(Path(file).parent)}) if file != "" else None
+    return file, file_type
+
+def getOpenFileNames(*args, **kwargs):
+    """
+    获取多个文件
+    Args：
+        parent(QWidget|None): 父窗口
+        caption(str): 标题
+        dir(str): 初始打开文件路径,默认APP_SETTINGS["default_file"]
+        filter(str): 文件过滤 'file (*.jpg *.png *.gif)'"""
+    if len(args) < 3 and  not kwargs.get("dir"):
+        kwargs["dir"] = APP_SETTINGS["default_file"]
+    files, files_type = QFileDialog.getOpenFileNames(*args, **kwargs)
+    APP_SETTINGS.update({"default_file": str(Path(files[0]).parent)}) if len(files) else None
+    return files, files_type
+
+
+def checkProject(project_path):
+    """核查项目路径是否一个可用的项目"""
+    project_path = Path(project_path)
+    pro_set_p = project_path / "SETTINGS.yaml"
+
+    #检测存在
+    if not project_path.exists() or not pro_set_p.exists():
+        QMessageBox.show(None, "提示", "项目不存在")
+        return False
+
+    #检测是否项目路径
+    proj_set = yaml_load(pro_set_p)
+    if not proj_set.get("current_experiment", None): #不存在关键参数
+        QMessageBox.show(None, "提示", "项目参数缺失，该项目可能不是OpenLY项目")
+        return False
+    
+    #检测版本
+    version = proj_set.get("version", None)
+    if not version or version.split(":")[0] != __version__.split[":"][0]:
+        QMessageBox.show(None, "提示", "软件版本错误")
+        return False
+
+    return True
+    
+
+
+def loadQssStyleSheet(app,train_ui):
+    """加载QSS样式表"""
+    #train_ui.setAttribute(Qt.WA_TranslucentBackground) 
+    if APP_SETTINGS["style"] == "cute":
+        styleSheetPath = APP_ROOT / "APP" / "resources" / "styles" / "cute.qss"
+        train_ui.centralWidget().setGraphicsEffect(None) 
+    elif APP_SETTINGS["style"] == "technology":
+        styleSheetPath = APP_ROOT / "APP" / "resources" / "styles" / "technology.qss"
+        color = QColor(255,  255, 255, 200)
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(25) 
+        shadow.setColor(color)
+        shadow.setOffset(3,  3)
+        train_ui.centralWidget().setGraphicsEffect(shadow) 
+        init_progress_effect(train_ui.Train_progressbar)
+    elif APP_SETTINGS["style"] == "light":
+        styleSheetPath = APP_ROOT / "APP" / "resources" / "styles" / "light.qss"
+    
+    
+    with open(styleSheetPath, "r", encoding="utf-8") as f:
+        qss = f.read()
+    app.setStyleSheet(qss)
+
+# 量子隧穿动画引擎 
+def init_progress_effect(progress_bar):
+    # 创建多维度光晕 
+    holo_glow  = QGraphicsDropShadowEffect()
+    holo_glow.setBlurRadius(30) 
+    holo_glow.setColor(QColor(61,122,254,80)) 
+    
+    # 配置时空涟漪动画 
+    ripple_anim  = QVariantAnimation()
+    ripple_anim.setDuration(1500) 
+    ripple_anim.setStartValue(0) 
+    ripple_anim.setEndValue(360) 
+    ripple_anim.valueChanged.connect( 
+        lambda val: holo_glow.setOffset( 
+            val/36, 
+            math.sin(math.radians(val))*5  
+        )
+    )
+   
+    
+    # 启动平行宇宙渲染 
+    progress_bar.setGraphicsEffect(holo_glow)
+    ripple_anim.setLoopCount(-1)
+    ripple_anim.start() 
+
+
+
+def debounce(delay_ms: int):
+    """防抖装饰器"""
+    def decorator(func):
+        timer = QTimer()
+        timer.setSingleShot(True)
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            timer.start(delay_ms)
+            # 保存最新参数
+            wrapper._args = args
+            wrapper._kwargs = kwargs
+
+        # 连接定时器到实际函数
+        timer.timeout.connect(lambda: func(*wrapper._args, **wrapper._kwargs))
+        return wrapper
+    return decorator

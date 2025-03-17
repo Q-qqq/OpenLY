@@ -7,8 +7,8 @@ from PySide6.QtWidgets import *
 from pathlib import Path
 from ultralytics.utils import yaml_load, yaml_save, LOGGER,ROOT, DEFAULT_CFG_DICT
 from ultralytics.cfg import get_cfg, cfg2dict, CFG_FLOAT_KEYS, CFG_BOOL_KEYS, CFG_FRACTION_KEYS, CFG_INT_KEYS, CFG_OTHER_KEYS
-from APP import APP_SETTINGS, EXPERIMENT_SETTINGS, PROJ_SETTINGS,getExistDirectory, getOpenFileName, APP_ROOT
-from APP.Utils import get_widget
+from APP import APP_SETTINGS, EXPERIMENT_SETTINGS, PROJ_SETTINGS, APP_ROOT
+from APP.Utils import get_widget, getExistDirectory, getOpenFileName
 from APP.Utils import guess_dataset_task, get_models, judge_pt_task
 import glob
 

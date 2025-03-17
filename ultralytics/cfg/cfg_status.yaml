@@ -64,7 +64,7 @@
   加载线程数: workers：数据加载线程数，如果是多GPU训练，则表示每个RANK的数据加载线程数，越大的workers需求内存越多$widgetType~sb$type~int$default~0$min~0$max~10000
   项目名称: project：项目名称$widgetType~le$type~str,optional$default~
   实验名称: name：实验名称，训练结果保存于目录‘project/name’$widgetType~le$type~str,optional$default~
-  预训练: pretrained：是否进行预训练（bool），或者给定一个预训练模型进行训练（str）$widgetType~cbb$type~bool$default~True$edit~True$items~True,False
+  预训练: pretrained：是否进行预训练（bool），或者给定一个预训练模型进行训练（str）$widgetType~cbb$type~bool$default~True$edit~True$items~False
   优化器: optimizer：优化器$widgetType~cbb$type~bool,str$default~True$edit~False$items~SGD,Adam,Adamax,AdamW,NAdam,RAdam,RMSProp,auto
   详细输出: verbose：是否输出显示详细的训练过程$widgetType~cb$type~bool$default~True
   随机种子: seed：使用相同的随机种子，确保可再现性，随机种子固定随机器的初始状态，可获取相同的随机序列$widgetType~sb$type~int$default~0$min~0$max~10000

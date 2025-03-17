@@ -7,7 +7,8 @@ from PySide6.QtWidgets import *
 
 from APP.Design import coco2yoloQT_ui, voc2yoloQT_ui, png2yoloQT_ui
 
-from APP  import getExistDirectory, PROJ_SETTINGS
+from APP  import  PROJ_SETTINGS
+from APP.Utils import getExistDirectory
 from APP.Data.convert import COCO2YOLO, VOC2YOLO, PNG2YOLO
 
 

@@ -18,10 +18,10 @@ from ultralytics.utils import PROGRESS_BAR, ThreadingLocked, TryExcept, threaded
 
 
 
-from APP  import PROJ_SETTINGS, getExperimentPath,EXPERIMENT_SETTINGS, debounce
+from APP  import PROJ_SETTINGS,EXPERIMENT_SETTINGS
 from APP.Data.build import check_cls_dataset, check_detect_dataset
 from APP.Data import getNoLabelPath, readLabelFile
-from APP.Utils import get_widget
+from APP.Utils import get_widget, debounce, getExperimentPath
 from APP.Utils.filters import CbbFilter
 
 

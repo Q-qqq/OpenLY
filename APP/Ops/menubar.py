@@ -10,7 +10,8 @@ from PySide6.QtWidgets import *
 from pathlib import Path
 
 
-from APP  import PROJ_SETTINGS, getExistDirectory, getOpenFileName, APP_SETTINGS, getOpenFileNames, loadQssStyleSheet, getExperimentPath, EXPERIMENT_SETTINGS
+from APP  import PROJ_SETTINGS, APP_SETTINGS, EXPERIMENT_SETTINGS
+from APP.Utils import getExistDirectory, getOpenFileName, getOpenFileNames, loadQssStyleSheet, getExperimentPath
 from APP.Utils.filters import MenuFilter
 from APP.Make import VocToYolo, CocoToYolo, PngToYolo
 from ultralytics.data.utils import IMG_FORMATS
@@ -55,10 +56,11 @@ class MenuTool(QObject):
 
     def file_newProject(self):
         """新建项目"""
-        proj = getExistDirectory(self.parent(), "项目文件")
+        proj = getExistDirectory(self.parent(), "项目文件夹")
         if proj != "":
-            if (Path(proj) / "SETTINGS.yamml").exists():
-                QMessageBox.warning(self.parent(), "提示","项目已存在，请重新选择一个空白文件夹")
+            sub_files = glob.glob(str(Path(proj) / "**"), recursive=True)
+            if len(sub_files):
+                QMessageBox.warning(self.parent(), "提示","文件夹内已存在文件，请重新选择一个空白文件夹")
                 return
             self.parent().start_w.addNewProject(proj)
 
