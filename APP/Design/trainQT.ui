@@ -98,6 +98,9 @@
            <pointsize>12</pointsize>
           </font>
          </property>
+         <property name="toolTip">
+          <string>允许标注</string>
+         </property>
          <property name="styleSheet">
           <string notr="true"/>
          </property>
@@ -136,6 +139,9 @@
            <pointsize>12</pointsize>
           </font>
          </property>
+         <property name="toolTip">
+          <string>涂抹绘制（分割）</string>
+         </property>
          <property name="styleSheet">
           <string notr="true"/>
          </property>
@@ -163,6 +169,9 @@
            <family>Segoe UI</family>
            <pointsize>12</pointsize>
           </font>
+         </property>
+         <property name="toolTip">
+          <string>点线绘制</string>
          </property>
          <property name="styleSheet">
           <string notr="true"/>
@@ -202,6 +211,9 @@
            <pointsize>12</pointsize>
           </font>
          </property>
+         <property name="toolTip">
+          <string>快速标注算法</string>
+         </property>
          <property name="styleSheet">
           <string notr="true"/>
          </property>
@@ -229,6 +241,9 @@
            <family>Segoe UI</family>
            <pointsize>12</pointsize>
           </font>
+         </property>
+         <property name="toolTip">
+          <string>色阶增强图像</string>
          </property>
          <property name="styleSheet">
           <string notr="true"/>
@@ -271,6 +286,9 @@
            <pointsize>12</pointsize>
           </font>
          </property>
+         <property name="toolTip">
+          <string>显示预测标签</string>
+         </property>
          <property name="styleSheet">
           <string notr="true"/>
          </property>
@@ -299,11 +317,45 @@
            <pointsize>12</pointsize>
           </font>
          </property>
+         <property name="toolTip">
+          <string>显示真实标签</string>
+         </property>
          <property name="styleSheet">
           <string notr="true"/>
          </property>
          <property name="text">
           <string>T</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="Tool_pred_to_true_pb">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Segoe UI</family>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="toolTip">
+          <string>预测标签转真实标签</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="text">
+          <string>P-&gt;T</string>
          </property>
         </widget>
        </item>
@@ -501,7 +553,6 @@
       </property>
       <addaction name="Style_cute_a"/>
       <addaction name="Style_technology_a"/>
-      <addaction name="Style_light_a"/>
      </widget>
      <addaction name="Styles_menu"/>
     </widget>
@@ -623,6 +674,9 @@
         <property name="styleSheet">
          <string notr="true"/>
         </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
        </widget>
        <widget class="QFrame" name="frame_3">
         <property name="styleSheet">
@@ -661,6 +715,9 @@
            <property name="styleSheet">
             <string notr="true"/>
            </property>
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
          <item>
@@ -673,6 +730,9 @@
            </property>
            <property name="styleSheet">
             <string notr="true"/>
+           </property>
+           <property name="readOnly">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -1076,6 +1136,9 @@
                    <family>Segoe UI</family>
                    <pointsize>12</pointsize>
                   </font>
+                 </property>
+                 <property name="readOnly">
+                  <bool>true</bool>
                  </property>
                 </widget>
                </item>
@@ -1481,14 +1544,6 @@
    </property>
    <property name="text">
     <string>technology</string>
-   </property>
-  </action>
-  <action name="Style_light_a">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>light</string>
    </property>
   </action>
  </widget>

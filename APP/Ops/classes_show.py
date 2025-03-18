@@ -45,24 +45,24 @@ class ClassesView(QObject):
             # 设置选中并滚动到可视区域 
             self.classes_lv.setCurrentIndex(index) 
             self.classes_lv.scrollTo(index,  QListView.PositionAtCenter)
-        if self.img_label.maximumWidth() == 100:
+        if self.classes_lv.maximumWidth() == 150:
             self.close_()
-        elif 0 < self.img_label.maximumWidth() < 80:
+        elif 0 < self.classes_lv.maximumWidth() < 120:
             return
         else:
             animal = QPropertyAnimation(self.classes_lv, b"maximumWidth", self.classes_lv.parent())
-            animal.setStartValue(0)
-            animal.setEndValue(100)
-            animal.setDuration(300)   # 动画时长300ms
-            animal.setEasingCurve(QEasingCurve.Type.InCubic)
+            animal.setStartValue(self.classes_lv.maximumWidth())
+            animal.setEndValue(150)
+            animal.setDuration(500)   # 动画时长300ms
+            animal.setEasingCurve(QEasingCurve.Type.OutCirc)
             animal.start()
         
     
     def close_(self):
         animal = QPropertyAnimation(self.classes_lv, b"maximumWidth", self.classes_lv.parent())
-        animal.setStartValue(100)
-        animal.setEndValue(0)
-        animal.setDuration(300)   # 动画时长300ms
+        animal.setStartValue(150)
+        animal.setEndValue(self.classes_lv.maximumWidth())
+        animal.setDuration(200)   # 动画时长300ms
         animal.start()
         
 
@@ -70,7 +70,7 @@ class ClassesView(QObject):
         self.img_label.cls = index.row()
 
     def eventFilter(self, obj, event):
-        if obj == self.classes_lv  and event.type()  == QEvent.Leave:
+        if obj == self.classes_lv  and event.type()  == QEvent.Leave and self.classes_lv.maximumWidth() > 120:
             self.close_()
         return super().eventFilter(obj, event)
     

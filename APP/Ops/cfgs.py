@@ -9,7 +9,7 @@ from ultralytics.utils import yaml_load, yaml_save, LOGGER,ROOT, DEFAULT_CFG_DIC
 from ultralytics.cfg import get_cfg, cfg2dict, CFG_FLOAT_KEYS, CFG_BOOL_KEYS, CFG_FRACTION_KEYS, CFG_INT_KEYS, CFG_OTHER_KEYS
 from APP import APP_SETTINGS, EXPERIMENT_SETTINGS, PROJ_SETTINGS, APP_ROOT
 from APP.Utils import get_widget, getExistDirectory, getOpenFileName
-from APP.Utils import guess_dataset_task, get_models, judge_pt_task
+from APP.Utils import guess_dataset_task, get_models, check_pt_task
 import glob
 
 class CfgsTreeWidget(QTreeWidget):
@@ -333,7 +333,7 @@ class CfgsTreeWidget(QTreeWidget):
                 task = self.args[name]
                 model = self.args["model"]
                 models = get_models(task)
-                if Path(model).suffix == ".pt" and not judge_pt_task(model, task):  #pt模型并且pt任务与现在任务不匹配
+                if Path(model).suffix == ".pt" and not check_pt_task(model, task):  #pt模型并且pt任务与现在任务不匹配
                     QMessageBox.information(self.parent(), "提示", f"模型{model}不兼容{task}, 已选择默认模型{models[0]}")
                 elif self.args["model"] not in models:
                     QMessageBox.information(self.parent(), "提示", f"模型{model}可能不兼容{task}, 已选择默认模型{models[0]}")

@@ -34,7 +34,7 @@ from APP.Utils.scroll import ImageScroll
 from APP.Utils.plotting import PgPlotLossWidget
 from APP.Ops import SiftDataset, LabelOps, MenuTool, RunMes
 from APP.Utils.ultralytics_enginer import Yolo
-from APP.Utils import check_pt_model, guess_dataset_task, getExperimentPath, getOpenFileName
+from APP.Utils import check_pt_task, guess_dataset_task, getExperimentPath, getOpenFileName, check_yaml_task, get_models
 
 
 
@@ -159,9 +159,21 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
         if self.Train_a.text() == "训练":
             LOGGER.stop = False
             self.cfgs_widget.save()
-            model = Yolo(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
+            model = self.cfgs_widget.args["model"]
+            task = self.cfgs_widget.args["task"]
+            models = get_models(task)
+            if model not in models:   #模型必须与任务匹配
+                if Path(model).suffix in (".yaml", "yml"):
+                    if not check_yaml_task(model, task):
+                        return
+                elif Path(model).suffix == ".pt":
+                    if not check_pt_task(model, task):
+                        return
+                else:
+                    QMessageBox.information(self, "提示", f"模型{model}必须为pt模型或yaml网络模型")
+            model = Yolo(model, task)
             results = Path(getExperimentPath()) / "results.csv"
-            if results.exists():
+            if results.exists():   #覆盖实验将删除前实验结果数据
                 data = pd.read_csv(results)
                 x = data.values[:, 0]
                 if not model.ckpt or ( model.ckpt and model.ckpt["epoch"] != int(x[-1])-1):  #ckpt为空 或 不为空切epoch。。。
@@ -187,22 +199,24 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
     def startVal(self):
         self.Progress_dw.raise_()
         self.cfgs_widget.save()
-        model = check_pt_model(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
-        if model:
-            yolo = Yolo(model, self.cfgs_widget.args["task"])
+        model = self.cfgs_widget.args["model"]
+        task = self.cfgs_widget.args["task"]
+        if check_pt_task(model, task):
+            yolo = Yolo(model, task)
             args = copy.deepcopy(self.cfgs_widget.args)
             args["save_dir"] = getExperimentPath()
             yolo.lyVal(**args)
 
     def startPredict(self):
         self.cfgs_widget.save()
-        model = check_pt_model(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
-        if model:
+        model = self.cfgs_widget.args["model"]
+        task = self.cfgs_widget.args["task"]
+        if check_pt_task(model, task):
             if self.cfgs_widget.args["source"] == "选中图像":
                 source = self.images_label.getSelectedImgs()
             else:
                 source = self.cfgs_widget.args["source"]
-            yolo = Yolo(model, self.cfgs_widget.args["task"])
+            yolo = Yolo(model, task)
             yolo.overrides = {**self.cfgs_widget.args, **yolo.overrides}
             self.pred_labels = yolo.lyPredict(source=source, save_dir=getExperimentPath(),conf=self.cfgs_widget.args["conf"])
             if self.pred_labels is None:
@@ -212,9 +226,10 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
 
     def startExport(self):
         self.cfgs_widget.save()
-        model = check_pt_model(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
-        if model:
-            yolo = Yolo(model, self.cfgs_widget.args["task"])
+        model = self.cfgs_widget.args["model"]
+        task = self.cfgs_widget.args["task"]
+        if check_pt_task(model, task):
+            yolo = Yolo(model, task)
             yolo.overrides = {**self.cfgs_widget.args, **yolo.overrides}
             yolo.lyExport()
 

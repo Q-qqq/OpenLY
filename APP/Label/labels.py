@@ -305,7 +305,7 @@ class SegmentTransformerLabel(QTransformerLabel):
             if segments is None and self.fast_segment is None:
                 return
             areas = self.label["instances"].segments_area(self.pix.width(), self.pix.height())
-            cls = self.label["cls"] if not pred else self.pred_label["cls"]
+            cls = copy.copy(self.label["cls"]) if not pred else copy.copy(self.pred_label["cls"])
 
             if not pred and self.fast_segment is not None and (self.fast_cre_sel or self.fast_method == "floodfill"): #添加快速选择实例
                 segment = self.getLabelSizeSegment(self.fast_segment)
@@ -319,7 +319,7 @@ class SegmentTransformerLabel(QTransformerLabel):
 
 
             brush = QBrush(Qt.BrushStyle.SolidPattern)
-            for segment, area, c in zip(segments, areas, cls):
+            for i, (segment, area, c) in enumerate(zip(segments, areas, cls)):
                 color = QColor(self.colors[c][0], self.colors[c][1], self.colors[c][2])
                 color.setAlpha(100)
                 brush.setColor(color if not pred else self.red)
@@ -339,7 +339,7 @@ class SegmentTransformerLabel(QTransformerLabel):
                     if pred:
                         self.drawText(painter, QPoint(int(rd[0]), int(rd[1])), mes, 12, Qt.GlobalColor.white)
                     else:
-                        self.drawText(painter, QPoint(int(lu[0]), int(lu[1])), mes, 12, Qt.GlobalColor.green)
+                        self.drawText(painter, QPoint(int(lu[0]), int(lu[1])),f"{self.pred_label['conf'][i]:3.2f}  " +  mes, 12, Qt.GlobalColor.green)
 
     def getLabelSizeSegment(self, segment):
         new_segment = np.zeros_like(segment, dtype=np.float32)

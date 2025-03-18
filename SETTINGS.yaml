@@ -1,18 +1,6 @@
-version: '洛业LY:2.0.0:'
-projects:
-- D:\Code\Project\python\p8\experiments\v11
-- D:\Code\Project\python\p8
-- D:\Code\Project\python\p6
-current_project: D:\Code\Project\python\p6
-default_dir: D:/Code/Project/python/p6
-default_file: D:\Code\Project\python\p6\experiments\v5\weights
-style: technology
-name: .
-time: '2025-01-21 16:48:40'
-save_time: '2025-02-26 09:02:53'
-experiments:
-- G:\project\p8\experiments\expcache\untitled
-- G:\project\p8\experiments\p1
-- experiments\expcache\untitled
-current_experiment: experiments\expcache\untitled
-data: ''
+version: 洛业LY:2.2.0
+projects: []
+current_project: ''
+default_dir: C://
+default_file: C://
+style: cute

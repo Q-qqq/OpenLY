@@ -10,10 +10,12 @@ import torch
 from pathlib import Path
 
 from APP import APP_ROOT, APP_SETTINGS, EXPERIMENT_SETTINGS, PROJ_SETTINGS, __version__
+from APP.Utils import getExperimentPath
 from APP.Data import readLabelFile
 from ultralytics.data.utils import check_det_dataset, img2label_paths
-from ultralytics.utils import ROOT, yaml_load, getExperimentPath
+from ultralytics.utils import ROOT, yaml_load
 from ultralytics.utils.checks import check_version
+from ultralytics.nn.tasks import guess_model_task
 
 def get_widget(parent:QFrame, name):
     """获取父控件中指定objectname的子控件"""
@@ -113,31 +115,53 @@ def get_models(task):
     models = glob.glob(str(ROOT /"cfg" / "models" / task / "**"), recursive=False)
     return [Path(m).name for m in models]
 
-def judge_pt_task(pt_model, task):
-    """判断pt模型是否兼容task"""
-    ckpt = torch.load(pt_model, map_location="cpu")
-    args = ckpt["train_args"]
-    if args["task"] != task:
-        return False
-    return True
 
-def check_pt_model(self, model, task):
+
+def check_pt_task(model, task):
+    """判断pt模型是否与任务匹配
+    Args:
+        model(str): pt模型路径
+        task(str): 学习任务：detect、segment、v5detect、v5segment、obb、pose、classify
+    """
+    def judge_pt_task(pt_model, task):
+        ckpt = torch.load(pt_model, map_location="cpu")
+        args = ckpt["train_args"]
+        if args["task"] != task:
+            return False
+        return True
     if Path(model).exists() and Path(model).suffix == ".pt":
         if judge_pt_task(model, task):
-            return  model
+            return  True
         else:
-            QMessageBox.information(self, "提示", f"模型{model}执行任务{task}与现在任务{task}不符")
+            QMessageBox.information(None, "提示", f"模型{model}执行任务{task}与现在任务{task}不符")
     else:
-        QMessageBox.information(self, "提示", f"模型{model}不可用，请选择一个可用的pt模型")
+        QMessageBox.information(None, "提示", f"模型{model}不可用，请选择一个可用的pt模型")
     items = glob.glob(str(Path(getExperimentPath()) / "**" / "*.pt"), recursize=True)
     if len(items):
-        model, ok = QInputDialog.getItem(self, "pt模型", "model:", items, 0, True)
+        model, ok = QInputDialog.getItem(None, "pt模型", "model:", items, 0, True)
         if ok and model != "":
             if Path(model).exists() and Path(model).suffix == ".pt" and judge_pt_task(model, task):
-                return model
+                return True
             else:
-                QMessageBox.information(self, "提示", f"模型错误{model}， 请确定模型路径存在或是否pt模型或模型任务是否正确")
-    return ""
+                QMessageBox.information(None, "提示", f"模型错误{model}， 请确定模型路径存在或是否pt模型或模型任务是否正确")
+    return False
+
+def check_yaml_task(model, task):
+    """检查yaml模型是否与学习任务匹配
+    Args:
+        model(str): yaml模型路径
+        task(str): 学习任务：detect、segment、v5detect、v5segment、obb、pose、classify
+    """
+    if Path(model).exists() and Path(model).suffix in (".yaml", "yml"):
+        net = yaml_load(model)
+        net_task = guess_model_task(net) 
+        if net_task == task:
+            return True
+        else:
+            QMessageBox.information(None, "提示", f"模型任务{net_task}与目标任务{task}不符")
+    else:
+        QMessageBox.information(None, "提示", "请确定模型路径是否存在或模型是否未yaml网络模型")
+    return False
 
 
 def getExperimentPath(name = ""):
