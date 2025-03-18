@@ -17,10 +17,10 @@ from ultralytics.data.augment import classify_transforms
 
 
 
-from APP  import PROJ_SETTINGS, debounce
+from APP  import PROJ_SETTINGS
 from APP.Data import readLabelFile, format_im_files, getNoLabelPath
 from APP.Label.base import QInstances
-from APP.Utils import get_widget
+from APP.Utils import get_widget, debounce
 from APP.Make.levelsaugmentM import LevelsAugment
 from APP.Make.fastselectM import FastSelect
 from APP.Make.pencilsetM import PencilSet

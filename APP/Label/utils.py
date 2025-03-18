@@ -116,7 +116,7 @@ def points2qpolygon(points):
     """将输入的点集（n,2）转换为多边形类"""
     poly = QPolygon()
     for point in points:
-        poly.append(QPoint(point[0], point[1]))
+        poly.append(QPoint(int(point[0]), int(point[1])))
     return poly
 
 def segment2obb(segment, format):

@@ -5,7 +5,8 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
-from APP import APP_ROOT, loadQssStyleSheet, init_progress_effect
+from APP import APP_ROOT
+from APP.Utils import loadQssStyleSheet, init_progress_effect
 from APP.Make import Start, Train, ProgressBar
 
 def handle_exception(exc_type, exc_value, exc_traceback):

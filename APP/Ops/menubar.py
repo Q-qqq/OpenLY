@@ -24,8 +24,6 @@ class MenuTool(QObject):
         self.eventConnect()
         if APP_SETTINGS["style"] == "cute":
             self.parent().Style_cute_a.setChecked(True)
-            self.parent().Style_technology_a.setChecked(False)
-            self.parent().Style_light_a.setChecked(False)
 
 
     def eventConnect(self):
@@ -47,7 +45,6 @@ class MenuTool(QObject):
         self.parent().Png_to_yolo_a.triggered.connect(self.tool_pngToTolo)
         self.parent().Style_cute_a.triggered.connect(self.file_loadCuteStyle)
         self.parent().Style_technology_a.triggered.connect(self.file_loadTechnologyStyle)
-        self.parent().Style_light_a.triggered.connect(self.file_loadLightStyle)
         self.parent().Add_no_labels_a.triggered.connect(self.edit_addNolabels)
 
     def file_showStart(self):
@@ -133,7 +130,6 @@ class MenuTool(QObject):
             APP_SETTINGS.update({"style": "cute"})
             loadQssStyleSheet(self.parent().app, self.parent())
             self.parent().Style_technology_a.setChecked(False)
-            self.parent().Style_light_a.setChecked(False)
             self.parent().cfgs_widget.showArgs(self.parent().Show_allargs_a.isChecked())
             
     
@@ -143,17 +139,8 @@ class MenuTool(QObject):
             APP_SETTINGS.update({"style": "technology"})
             loadQssStyleSheet(self.parent().app, self.parent())
             self.parent().Style_cute_a.setChecked(False)
-            self.parent().Style_light_a.setChecked(False)
             self.parent().cfgs_widget.showArgs(self.parent().Show_allargs_a.isChecked())
     
-    def file_loadLightStyle(self):
-        """加载light主题"""
-        if self.parent().Style_light_a.isChecked():
-            APP_SETTINGS.update({"style": "light"})
-            loadQssStyleSheet(self.parent().app, self.parent())
-            self.parent().Style_cute_a.setChecked(False)
-            self.parent().Style_technology_a.setChecked(False)
-            self.parent().cfgs_widget.showArgs(self.parent().Show_allargs_a.isChecked())
             
 
     def edit_loadDataset(self):

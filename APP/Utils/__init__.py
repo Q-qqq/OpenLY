@@ -10,7 +10,6 @@ import torch
 from pathlib import Path
 
 from APP import APP_ROOT, APP_SETTINGS, EXPERIMENT_SETTINGS, PROJ_SETTINGS, __version__
-from APP.Utils import getExperimentPath
 from APP.Data import readLabelFile
 from ultralytics.data.utils import check_det_dataset, img2label_paths
 from ultralytics.utils import ROOT, yaml_load
@@ -229,7 +228,7 @@ def checkProject(project_path):
     
     #检测版本
     version = proj_set.get("version", None)
-    if not version or version.split(":")[0] != __version__.split[":"][0]:
+    if not version or version.split(":")[0] != __version__.split(":")[0]:
         QMessageBox.show(None, "提示", "软件版本错误")
         return False
 

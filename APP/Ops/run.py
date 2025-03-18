@@ -9,8 +9,8 @@ from PySide6.QtWidgets import *
 
 from ultralytics.utils import LOGGER
 
-from APP.Utils import append_formatted_text, get_widget
-from APP  import PROJ_SETTINGS,getExperimentPath
+from APP.Utils import append_formatted_text, get_widget,getExperimentPath
+from APP  import PROJ_SETTINGS
 
 
 class RunMes(QObject):

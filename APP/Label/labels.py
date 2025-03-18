@@ -281,7 +281,7 @@ class SegmentTransformerLabel(QTransformerLabel):
             painter.setPen(QPen(Qt.GlobalColor.yellow, 2, Qt.PenStyle.DashLine))
             p1 = self.getLabelSizePoint(self.fast_rect[0], self.fast_rect[1])
             p2 = self.getLabelSizePoint(self.fast_rect[2], self.fast_rect[3])
-            painter.drawRect(QRect(p1[0], p1[1], p2[0]-p1[0], p2[1]-p1[1]))
+            painter.drawRect(QRect(int(p1[0]), int(p1[1]), int(p2[0]-p1[0]), int(p2[1]-p1[1])))
         if self.fast_seed_searching:
             painter.setPen(QPen(Qt.GlobalColor.green, 8, Qt.PenStyle.SolidLine))
             painter.drawPoint(self.mouse_point)

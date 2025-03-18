@@ -50,7 +50,8 @@ class FastSelect(QWidget, fast_selectQT_ui.Ui_Form):
         self.FF_lo_diff_hs.valueChanged.connect(self.ffValueChangedSlot)
         self.FF_up_diff_hs.valueChanged.connect(self.ffValueChangedSlot)
         self.FF_sel_seed_pb.clicked.connect(self.findSeedClicked)
-        self.Fast_sel_methods_cbb.currentIndexChanged.connect(self.methodSelectedSlot)
+
+        self.Fast_sel_methods_tw.currentChanged.connect(self.methodSelectedSlot)
         self.Finish_pb.clicked.connect(self.finish)
         self.Cancel_pb.clicked.connect(self.cancel)
 
@@ -63,14 +64,10 @@ class FastSelect(QWidget, fast_selectQT_ui.Ui_Form):
     def methodSelectedSlot(self):
         self.Finish_pb.setVisible(False)
         self.Cancel_pb.setVisible(False)
-        if self.Fast_sel_methods_cbb.currentText() == "threshold":
-            self.FF_color_ch_cbb.setVisible(False)
-        elif self.Fast_sel_methods_cbb.currentText() == "grabcut":
-            self.FF_color_ch_cbb.setVisible(False)
-        elif self.Fast_sel_methods_cbb.currentText() == "floodfill":
+        if self.Fast_sel_methods_tw.tabText(self.Fast_sel_methods_tw.currentIndex()) == "floodfill":
             self.FF_color_ch_cbb.setVisible(True)
             self.ffValueChangedSlot()
-        self.img_label.fast_method = self.Fast_sel_methods_cbb.currentText()
+        self.img_label.fast_method = self.Fast_sel_methods_tw.tabText(self.Fast_sel_methods_tw.currentIndex())
 
 
 
@@ -93,7 +90,6 @@ class FastSelect(QWidget, fast_selectQT_ui.Ui_Form):
         """开始创建选区"""
         self.img_label.fast_cre_sel = True
         self.img_label.fast_seed_searching = False
-        self.Fast_sel_methods_cbb.setEnabled(False)
         self.Finish_pb.setVisible(True)
         self.Cancel_pb.setVisible(True)
 
@@ -119,7 +115,6 @@ class FastSelect(QWidget, fast_selectQT_ui.Ui_Form):
                 self.img_label.addSegment(self.img_label.fast_segment, self.img_label.cls)
             self.img_label.Change_Label_Signal.emit()
         self.img_label.fast_segment = None
-        self.Fast_sel_methods_cbb.setEnabled(True)
         self.img_label.update()
 
     def cancel(self):
@@ -129,12 +124,11 @@ class FastSelect(QWidget, fast_selectQT_ui.Ui_Form):
         self.img_label.fast_rect = None
         self.img_label.fast_seed_searching = False
         self.img_label.fast_segment = None
-        self.Fast_sel_methods_cbb.setEnabled(True)
         self.img_label.update()
 
 
     def bgraTomask(self, mask_bgra):
-        if self.Fast_sel_methods_cbb.currentText() != "grabcut":
+        if self.Fast_sel_methods_tw.tabText(self.Fast_sel_methods_tw.currentIndex()) != "grabcut":
             mask = mask_bgra[:,:,2]
             mask = mask / 255
             mask = mask.astype(np.uint8)
@@ -287,9 +281,9 @@ class FastSelect(QWidget, fast_selectQT_ui.Ui_Form):
 
 
     def compute(self,point=[0,0]):
-        if self.Fast_sel_methods_cbb.currentText() == "threshold":
+        if self.Fast_sel_methods_tw.tabText(self.Fast_sel_methods_tw.currentIndex()) == "threshold":
             obj = self.thresholdGetObject()
-        elif self.Fast_sel_methods_cbb.currentText() == "grabcut":
+        elif self.Fast_sel_methods_tw.tabText(self.Fast_sel_methods_tw.currentIndex()) == "grabcut":
             obj = self.grabcutGetObject()
         else:
             obj = self.floodfillGetObject(point)

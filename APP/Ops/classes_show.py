@@ -60,8 +60,8 @@ class ClassesView(QObject):
     
     def close_(self):
         animal = QPropertyAnimation(self.classes_lv, b"maximumWidth", self.classes_lv.parent())
-        animal.setStartValue(150)
-        animal.setEndValue(self.classes_lv.maximumWidth())
+        animal.setStartValue(self.classes_lv.maximumWidth())
+        animal.setEndValue(0)
         animal.setDuration(200)   # 动画时长300ms
         animal.start()
         
