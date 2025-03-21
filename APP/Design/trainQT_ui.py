@@ -210,6 +210,15 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_4.addWidget(self.Tool_pred_to_true_pb)
 
+        self.line_3 = QFrame(self.Painter_tool_f)
+        self.line_3.setObjectName(u"line_3")
+        self.line_3.setLineWidth(1)
+        self.line_3.setMidLineWidth(20)
+        self.line_3.setFrameShape(QFrame.Shape.VLine)
+        self.line_3.setFrameShadow(QFrame.Shadow.Sunken)
+
+        self.horizontalLayout_4.addWidget(self.line_3)
+
         self.horizontalSpacer_3 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout_4.addItem(self.horizontalSpacer_3)
@@ -221,15 +230,6 @@ class Ui_MainWindow(object):
         self.horizontalLayout_3.setSpacing(1)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.horizontalLayout_3.setContentsMargins(1, 1, 1, 1)
-        self.line_3 = QFrame(self.widget_4)
-        self.line_3.setObjectName(u"line_3")
-        self.line_3.setLineWidth(1)
-        self.line_3.setMidLineWidth(20)
-        self.line_3.setFrameShape(QFrame.Shape.VLine)
-        self.line_3.setFrameShadow(QFrame.Shadow.Sunken)
-
-        self.horizontalLayout_3.addWidget(self.line_3)
-
         self.Tool_train_rb = QRadioButton(self.widget_4)
         self.Tool_train_rb.setObjectName(u"Tool_train_rb")
         self.Tool_train_rb.setEnabled(False)

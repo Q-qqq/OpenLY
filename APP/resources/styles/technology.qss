@@ -344,9 +344,132 @@ QTextEdit::cursor {
 
 
 /* 特殊状态处理 */
-QCheckBox::indicator:checked, QRadioButton::indicator:checked {
-    background-color: #00ff9d;
-    border: 2px solid #00ffff;
+QCheckBox {
+    background: #0a0e17ee;              /* 暗物质凝聚态（密度1.8×10²⁷ kg/m³） */
+    color: #00f3e6;                    /* 切伦科夫辐射光谱 */
+    font: 11pt "Quantum Sans";         /* 超弦谐振字体 */
+    spacing: 4px;                     /* 量子涨落间隔 */
+    padding: 3px 5px;
+    border-radius: 2px;
+    border: 2px solid qconicalgradient( /* 事件视界环 */
+        cx:0.5, cy:0.5,
+        angle: 0,
+        stop:0 #3d7afe33,
+        stop:0.3 #00f3e6aa,
+        stop:0.7 #8a2be233 
+    );
+}
+
+QCheckBox::indicator {
+    width: 10px;
+    height: 10px;
+    background: qradialgradient(        /* 量子概率云 */
+        cx:0.5, cy:0.5,
+        radius: 0.7,
+        stop:0 #c0b5e09c,
+        stop:1 #a6b5d8 
+    );
+    border: 1.5px solid #00f3e655;
+    border-radius: 4px;
+}
+
+QCheckBox::indicator:checked {
+    background: qlineargradient(       /* 黑洞吸积盘 */
+        x1:0, y1:0,
+        x2:1, y2:1,
+        stop:0 #3d7afe,
+        stop:1 #8a2be2 
+    );
+}
+
+QCheckBox:hover {
+    color: #00ffff;                   /* 同步辐射增强 */
+    border-color: qlineargradient(
+        x1:0, y1:0.5,
+        x2:1, y2:0.5,
+        stop:0 #3d7afe,
+        stop:1 #8a2be2 
+    );
+}
+ 
+QCheckBox:disabled {
+    color: #00f3e633;                 /* 量子退相干态 */
+    border: 2px dashed #3d7afe33;
+}
+ 
+@keyframes singularity-spin {
+    0% { transform: rotate(0deg) scale(0.8); }
+    50% { transform: rotate(180deg) scale(1.2); }
+    100% { transform: rotate(360deg) scale(1); }
+}
+
+QRadioButton {
+    background: #0a0e17dd;              /* 暗能量凝聚态（密度2.3×10⁻²⁷ kg/m³） */
+    color: #00f3e6;                    /* 中微子振荡荧光 */
+    font: 11pt "Quantum Sans";         /* 超对称粒子字体 */
+    spacing: 4px;                     /* 普朗克尺度间隔 */
+    padding: 3px 6px;
+    border-radius: 2px;
+    border: 2px solid qradialgradient( /* 引力波干涉环 */
+        cx:0.5, cy:0.5,
+        radius: 0.8,
+        stop:0 #3d7afe33,
+        stop:1 #00f3e600 
+    );
+}
+
+QRadioButton::indicator {
+    width: 10px;
+    height: 10px;
+    border: 2px solid #00f3e6aa;       /* 弱力场边界 */
+    border-radius: 5px;
+    background: qradialgradient(       /* 量子自旋云 */
+        cx:0.5, cy:0.5,
+        radius: 0.6,
+        stop:0 #3d7afe22,
+        stop:1 #0a0e17 
+    );
+}
+
+QRadioButton::indicator:checked {
+    border-color: #8a2be2;            /* 胶子色场强 */
+    background: qradialgradient(
+        cx:0.5, cy:0.5,
+        radius: 0.5,
+        stop:0 #8a2be2,
+        stop:0.6 #3d7afe,
+        stop:1 transparent 
+    );
+}
+ 
+@keyframes quantum-spin {
+    0% { transform: scale(0.8) rotate(0deg); }
+    50% { transform: scale(1.2) rotate(180deg); }
+    100% { transform: scale(1) rotate(360deg); }
+}
+
+QRadioButton:hover {
+    color: #00ffff;                   /* 切伦科夫辐射增强 */
+    border-color: qconicalgradient(
+        cx:0.5, cy:0.5,
+        angle: 0,
+        stop:0 #3d7afe,
+        stop:0.5 #8a2be2,
+        stop:1 #00f3e6 
+    );
+}
+ 
+QRadioButton:disabled {
+    color: #c5d3d1b8;                 /* 量子冻结态 */
+}
+
+QRadioButton::indicator:disabled {
+    background: qconicalgradient(     /* 玻色-爱因斯坦凝聚态 */
+        cx:0.5, cy:0.5,
+        angle: 90,
+        stop:0 #177cfe11,
+        stop:1 #abe2e7e1 
+    );
 }
 
 /* 进度条 */
@@ -758,7 +881,7 @@ QComboBox QScrollBar::handle:vertical {
     );
     border-radius: 6px;
     color: #ffffff;                    /* 量子涨落荧光 */
-    font: 14pt "Tachyon Interface";    /* 超光速粒子字体 */
+    font: 11pt "Tachyon Interface";    /* 超光速粒子字体 */
     padding: 5px;
     outline: none;
 }
@@ -773,7 +896,7 @@ QComboBox QScrollBar::handle:vertical {
     );
     border-radius: 6px;
     color: #00f3e6;                    /* 量子涨落荧光 */
-    font: 14pt "Tachyon Interface";    /* 超光速粒子字体 */
+    font: 13pt "Tachyon Interface";    /* 超光速粒子字体 */
     padding: 5px;
     outline: none;
 }

@@ -9,7 +9,7 @@ import numpy as np
 import cv2
 from PIL import Image
 
-from ultralytics.utils.ops import xywhr2xyxyxyxy
+from ultralytics.utils.ops import segments2boxes, xywh2xyxy, xywhr2xyxyxyxy
 
 def distPointToLine(point1, point2, point):
     """点到直线的距离"""
@@ -264,7 +264,11 @@ def segmentArea(segment):
             A2 += segment[i + 1][0] * segment[i][1]  # x_i+1 * y_i
     return abs((A1 - A2) / 2)
 
-
+def segment2Box(segment, format):
+    box = segments2boxes([segment])
+    if format == "xyxy":
+        box = xywh2xyxy(box)
+    return box
 
 
 

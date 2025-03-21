@@ -1,6 +1,7 @@
 from functools import wraps
 import glob
 import math
+from random import sample
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
@@ -77,37 +78,37 @@ def guess_dataset_task(dataset):
         #数据集为空，可自由决定任务类型
         if len(train_img) == 0 and len(val_img) == 0:
             return [ "detect", "v5detect", "segment", "v5segment", "obb", "pose"]
+        label_len = []
         if len(train_img) != 0:  #从训练集判断
-            for img in train_img:
+            for img in sample(train_img, 10 if len(train_img)>10 else len(train_img)):
                 img = str(Path(data["path"]) / img if img.startswith(".") else img)
                 label_path = img2label_paths([img])[0]
                 label = readLabelFile(label_path)
                 if len(label) == 0:  #ok样本
                     continue
                 else:
-                    if len(label[0]) == 5:  #目标检测数据集
-                        return ["detect", "v5detect"]
-                    elif len(label[0]) == 6:  #obb目标检测数据集
-                        return ["obb"]
-                    else:  #segment 或者 pose
-                        return ["detect", "v5detect","segment","v5segment", "pose"]
+                    label_len.append([len(l) for l in label])
         else:    #从验证集判断
-            for img in val_img:
+            for img in sample(val_img, 10 if len(val_img)>10 else len(val_img)):
                 label_path = img2label_paths([img])[0]
                 label = readLabelFile(label_path)
                 if len(label) == 0:
                     continue
                 else:
-                    if len(label[0]) == 5:
-                        return ["detect", "v5detect"]
-                    elif len(label[0]) == 6:
-                        return ["obb"]
-                    else:
-                        return ["detect", "v5detect","segment","v5segment", "pose"]
+                    label_len.append([len(l) for l in label])
+        if len(label_len) == 0:
+            return [ "detect", "v5detect", "segment", "v5segment", "obb", "pose"]
+        elif label_len == [5]*len(label_len):
+            return ["detect", "v5detect"]
+        elif label_len == [9]*len(label_len):
+            return ["obb"]
+        elif min(label_len) == max(label_len):
+            return ["pose"]
+        else:
+            return ["detect", "v5detect","segment","v5segment"]
     else:
         QMessageBox.critical(None, "提示", f"数据集{dataset}格式错误, 应为分类文件夹或者yaml数据集文件")
         return []
-    return [ "detect", "v5detect", "segment", "v5segment", "obb", "pose"]
     
 def get_models(task):
     """根据任务类型获取可用的神经网络模型"""

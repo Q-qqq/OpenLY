@@ -349,6 +349,7 @@ class LabelOps(QObject):
     def showNone(self):
         """将img_label的显示置为空白"""
         self.img_label.init()
+        
 
 
 class PainterTool(QObject):
@@ -359,6 +360,7 @@ class PainterTool(QObject):
         self.label_ops = self.parent()
         self.show_pred_pb = get_widget(self.parent().parent(), "Tool_show_pred_pb")
         self.show_ture_pb = get_widget(self.parent().parent(), "Tool_show_true_pb")
+        self.pred_to_true_pb = get_widget(self.parent().parent, "Tool_pred_to_true_pb")
         self.levels_augment_pb = get_widget(self.parent().parent(), "Tool_levels_augment_pb")
         self.train_rb = get_widget(self.parent().parent(), "Tool_train_rb")
         self.val_rb = get_widget(self.parent().parent(), "Tool_val_rb")
@@ -384,11 +386,13 @@ class PainterTool(QObject):
     def eventConnect(self):
         self.show_pred_pb.clicked.connect(self.showPredClicked)
         self.show_ture_pb.clicked.connect(self.showTrueClicked)
+        self.pred_to_true_pb.clicked.connect(self.predToTrueClicked)
         self.levels_augment_pb.clicked.connect(self.levelsAugmentClicked)
         self.fast_select_pb.clicked.connect(self.fastSelectClicked)
         self.pen_pb.clicked.connect(self.penClicked)
         self.pencil_pb.clicked.connect(self.pencilClicked)
         self.paint_pb.clicked.connect(self.paintClicked)
+
 
     def paintClicked(self):
         if not self.label_ops.img_label:
@@ -420,6 +424,15 @@ class PainterTool(QObject):
                 self.label_ops.img_label.show_true = True
             self.show_ture_pb.setStyleSheet(self.blue_color if self.label_ops.img_label.show_true else self.white_color)
             self.label_ops.img_label.update()
+    
+    def predToTrueClicked(self):
+        pred = self.label_ops.img_label.pred_label
+        if pred:
+            self.label_ops.img_label.label = copy.deepcopy(pred)
+            self.label_ops.img_label.pred_label = None
+            self.label_ops.img_label.update()
+            self.label_ops.img_label.Change_Label_Signal.emit()
+            self.parent().parent().pred_labels.pop(self.label_ops.img_label.im_file)
 
     def levelsAugmentClicked(self):
         if self.label_ops.img_label.im_file:
@@ -428,10 +441,14 @@ class PainterTool(QObject):
 
     def fastSelectClicked(self):
         if not self.label_ops.img_label:    #没有打开图像
+            QMessageBox.show("不存在图像")
             return
-        if self.label_ops.img_label.task != "segment":
+        if self.label_ops.img_label.task not in ("segment", "detect", "v5detect", "v5segment"):
+            QMessageBox.show(f"{self.label_ops.img_label.task}不支持快速选择")
             return
         if self.label_ops.img_label.im_file:
+            if self.label_ops.img_label.painting:
+                self.label_ops.img_label.cancelPaint()
             self.fast_select.img_label = self.label_ops.img_label
             self.fast_select.show()
 

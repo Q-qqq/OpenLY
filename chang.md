@@ -398,7 +398,7 @@ def __call__(self, trainer=None, model=None):
 
 ### ultralytics.engine.predictor
 
-+ BasePredictor类中stram_inference进行流推理，对其进行进度条显示, 并且将预测结果self.results转移至cpu，减少显存的占用
++ BasePredictor类中stram_inference进行流推理，对其进行进度条显示（取消）, 并且将预测结果self.results转移至cpu，减少显存的占用
 
 ```python
 @smart_inference_mode()
@@ -409,7 +409,7 @@ def stream_inference(self, source=None, model=None, *args, **kwargs):
         ...
         ...
         self.run_callbacks("on_predict_start")
-        PROGRESS_BAR.start("Predict", "Start predicting...", [0, len(self.dataset)], True)
+        #PROGRESS_BAR.start("Predict", "Start predicting...", [0, len(self.dataset)], True)
         for data_i, self.batch in enumerate(self.dataset):
             ...
             for i in range(n):
@@ -419,11 +419,11 @@ def stream_inference(self, source=None, model=None, *args, **kwargs):
             ...
             self.run_callbacks("on_predict_batch_end")
             yield from self.results
-            PROGRESS_BAR.setValue(data_i+1, f"{s} {profilers[1].dt *1e3:.1f}ms")
-            if PROGRESS_BAR.isStop():
-                PROGRESS_BAR.close()
-                break
-        PROGRESS_BAR.close()
+            #PROGRESS_BAR.setValue(data_i+1, f"{s} {profilers[1].dt *1e3:.1f}ms")
+            #if PROGRESS_BAR.isStop():
+                #PROGRESS_BAR.close()
+                #break
+        #PROGRESS_BAR.close()
 ```
 
 ### ultralytics.data.loaders
@@ -449,6 +449,7 @@ def checkImgs(self, ims):
             if PROGRESS_BAR.isStop():
                 PROGRESS_BAR.close()
                 raise ProcessLookupError("Interrupt：Load img of predict interrupt success")
+    PROGRESS_BAR.close()
     return imgs
 ```
 

@@ -19,13 +19,13 @@ from ultralytics.utils import threaded, yaml_load,NUM_THREADS, PROGRESS_BAR, LOG
 from ultralytics.data.utils import verify_image
 
 from APP  import  FILL_RULE
-from APP.Utils import getcat
-from APP.Label.base import QBboxes, QInstances, QTransformerLabel, QSizeLabel
+from APP.Utils import debounce, getcat
+from APP.Label.base import QBboxes, QInstances, QTransformerLabel, QSizeLabel, QFastSelectLabel
 from APP.Label.utils import *
 from APP.Data import format_im_files
 
 
-class DetectTransformerLabel(QTransformerLabel):
+class DetectTransformerLabel(QFastSelectLabel):
     """目标检测标注label"""
     def __init__(self, parent):
         super().__init__(parent)
@@ -34,14 +34,17 @@ class DetectTransformerLabel(QTransformerLabel):
         self.ori_y = -1
         self.task = "detect"
 
-    def drawLabel(self, painter, instance, pred=False):
-        if self.painting and self.label["instances"]._bboxes is not None and len(self.label["instances"]._bboxes) == self.index:
+    def drawLabel(self, painter, label, pred=False):
+        super().drawLabel(painter, label, pred)
+        if self.painting and label["instances"]._bboxes is not None and len(label["instances"]._bboxes) == self.index:
             painter.setPen(QPen(Qt.GlobalColor.green, 10, Qt.PenStyle.SolidLine))
             painter.drawPoint(self.mouse_point)
 
 
     def mousePressEvent(self, event: QMouseEvent):
         super().mousePressEvent(event)
+        if self.pix == None or self.fastCreate or self.resizing(event):
+            return
         if self.painting and event.button() == Qt.MouseButton.LeftButton:
             if len(self.label["instances"]._bboxes) - 1 == self.index:
                 self.painting = False
@@ -85,15 +88,13 @@ class DetectTransformerLabel(QTransformerLabel):
 
     def mouseMoveEvent(self, event: QMouseEvent):
         super().mouseMoveEvent(event)
-        if self.pix == None:
+        if self.pix == None or self.fastCreate or self.resizing(event):
             return
-        
         if self.painting and event.buttons() == Qt.LeftButton and len(self.label["instances"]._bboxes) == self.index: #未添加框
             p = self.getPixSizePoint(event.x(), event.y())
             self.addBox([p[0], p[1], 0, 0], self.cls)   #添加框
             self.ori_x = p[0]
             self.ori_y = p[1]
-
         if self.painting and len(self.label["instances"]._bboxes)-1 == self.index:  #绘制中且已添加新框
             p = self.getPixSizePoint(event.x(), event.y())
             p1 = [p[0].item(), p[1].item()]
@@ -139,6 +140,7 @@ class DetectTransformerLabel(QTransformerLabel):
         else:
             self.label["instances"]._bboxes = QBboxes(box,format="xywh")
         self.label["cls"].append(cls)
+        self.Change_Label_Signal.emit()
 
     def removeBox(self, index):
         cat = getcat(self.label["instances"].bboxes)
@@ -209,6 +211,8 @@ class DetectTransformerLabel(QTransformerLabel):
 
     def keyPressEvent(self, ev:QKeyEvent) -> None:
         super().keyPressEvent(ev)
+        if self.pix == None or self.fastCreate or self.resizing(ev):
+            return
         if ev.text() == "\r" and self.paint and not self.painting:  #绘制下一个标签
             self.index = len(self.label["instances"]._bboxes)   #下一个标签索引，未添加
             self.painting = True
@@ -219,10 +223,14 @@ class DetectTransformerLabel(QTransformerLabel):
         if self.painting and len(self.label["instances"]._bboxes) - 1 == self.index and self.label["instances"]._bboxes.areas()[-1] > 10 and ev.button() == Qt.MouseButton.LeftButton:
             self.painting = False
 
+    def cancelPaint(self):
+        self.painting = False
+        self.Change_Label_Signal.emit()
+        self.update()
+
     def contextMenuEvent(self, ev:QContextMenuEvent) -> None:
         if self.painting:
-            self.painting = False
-            self.Change_Label_Signal.emit()
+            self.cancelPaint()
             return
         if self.cursor().shape() == Qt.CursorShape.CrossCursor:
             super().contextMenuEvent(ev)
@@ -235,7 +243,7 @@ class DetectTransformerLabel(QTransformerLabel):
                 self.removeBox(self.index)
                 self.Change_Label_Signal.emit()
 
-class SegmentTransformerLabel(QTransformerLabel):
+class SegmentTransformerLabel(QFastSelectLabel):
     """分割标注label"""
     Fast_Sel_Cop_Signal = Signal(list)
 
@@ -247,12 +255,6 @@ class SegmentTransformerLabel(QTransformerLabel):
 
         self.mask = None  # 掩膜
         self.mask_pixmap = None
-        # 快速选择
-        self.fast_cre_sel = False  # 创建选区
-        self.fast_rect = None   #快速选择的选区
-        self.fast_segment = None #存储快速选择的分割实例
-        self.fast_method = "threshold"  #快速选择方法
-        self.fast_seed_searching = False
 
         # 画笔工具
         self.use_pen = True
@@ -269,7 +271,7 @@ class SegmentTransformerLabel(QTransformerLabel):
             self.mask, self.mask_pixmap = self.setOpencvMask(self.mask)
 
 
-    def drawLabel(self, painter, instance, pred=False):
+    def drawLabel(self, painter, label, pred=False):
         """
             绘制分割多边形
         Args:
@@ -277,49 +279,34 @@ class SegmentTransformerLabel(QTransformerLabel):
             instance(QInstances): 标签实例
             pred(bool): 是否为预测标签
         """
-        if self.fast_cre_sel and self.fast_rect:
-            painter.setPen(QPen(Qt.GlobalColor.yellow, 2, Qt.PenStyle.DashLine))
-            p1 = self.getLabelSizePoint(self.fast_rect[0], self.fast_rect[1])
-            p2 = self.getLabelSizePoint(self.fast_rect[2], self.fast_rect[3])
-            painter.drawRect(QRect(int(p1[0]), int(p1[1]), int(p2[0]-p1[0]), int(p2[1]-p1[1])))
-        if self.fast_seed_searching:
-            painter.setPen(QPen(Qt.GlobalColor.green, 8, Qt.PenStyle.SolidLine))
-            painter.drawPoint(self.mouse_point)
-
+        super().drawLabel(painter, label, pred)
+        instance = label["instance"]
+        classes = label["cls"]
+        areas = instance.segments_area(self.pix.width(), self.pix.height())
         if self.use_pencil:
-            if self.fast_cre_sel and self.fast_segment is not None:
-                color = self.getPencilColor()
-                mask = self.mask.copy()
-                cv2.fillPoly(mask,[self.fast_segment.astype(np.int32)], color)
-                _, self.mask_pixmap = self.setOpencvMask(mask)
-            painter.drawPixmap(self.image_rect,self.mask_pixmap)
+            mask = self.mask.copy()
+            if self.fast_segment is not None and len(self.fast_segment):
+                color = self.getPencilColor(self.cls)
+                fast_segment = copy.deepcopy(self.fast_segment)
+                cv2.fillPoly(mask,[fast_segment.astype(np.int32)], color)
+            _, mask_pixmap = self.setOpencvMask(mask)
+            painter.drawPixmap(self.image_rect,mask_pixmap)
             if not self.fast_rect:
                 painter.setPen(QPen(Qt.GlobalColor.yellow, 2, Qt.PenStyle.SolidLine))
                 color = QColor(self.colors[self.cls][0], self.colors[self.cls][1], self.colors[self.cls][2])
                 color.setAlpha(100)
-                painter.setBrush(QBrush(color,Qt.PenStyle.SolidPattern))
-                painter.drawEllipse(self.mouse_point, self.line_width, self.line_width)
+                painter.setBrush(QBrush(color,Qt.BrushStyle.SolidPattern))
+                h, w = self.img.shape[:2]
+                scale = self.image_rect.width() / w
+                painter.drawEllipse(self.mouse_point, self.line_width*scale/2, self.line_width*scale/2)
 
         if pred or self.use_pen:
-            segments = instance.segments  # list(n, [mi, 2])   xyxyxyxyxy....
-            if segments is None and self.fast_segment is None:
+            segments = instance.segments  #label size  shape： list(n, [mi, 2])   xyxyxyxyxy....
+            if not segments:
                 return
-            areas = self.label["instances"].segments_area(self.pix.width(), self.pix.height())
-            cls = copy.copy(self.label["cls"]) if not pred else copy.copy(self.pred_label["cls"])
-
-            if not pred and self.fast_segment is not None and (self.fast_cre_sel or self.fast_method == "floodfill"): #添加快速选择实例
-                segment = self.getLabelSizeSegment(self.fast_segment)
-                if segments is None:
-                    segments = []
-                segments.append(segment)
-                cls.append(self.cls)
-                areas.append(segmentArea(segment))
-            elif segments is None:
-                return
-
 
             brush = QBrush(Qt.BrushStyle.SolidPattern)
-            for i, (segment, area, c) in enumerate(zip(segments, areas, cls)):
+            for i, (segment, area, c) in enumerate(zip(segments, areas, classes)):
                 color = QColor(self.colors[c][0], self.colors[c][1], self.colors[c][2])
                 color.setAlpha(100)
                 brush.setColor(color if not pred else self.red)
@@ -337,22 +324,10 @@ class SegmentTransformerLabel(QTransformerLabel):
                     lu, rd = get_segment_diagnol_point(segment)
                     mes = f"{self.label['names'][int(c)]}  " * self.show_cls + f"{area:3.2f}px" * self.show_area
                     if pred:
-                        self.drawText(painter, QPoint(int(rd[0]), int(rd[1])), mes, 12, Qt.GlobalColor.white)
+                        self.drawText(painter, QPoint(int(rd[0]), int(rd[1])),  mes + f" {self.pred_label['conf'][i]:3.2f}", 12, Qt.GlobalColor.white)
                     else:
-                        self.drawText(painter, QPoint(int(lu[0]), int(lu[1])),f"{self.pred_label['conf'][i]:3.2f}  " +  mes, 12, Qt.GlobalColor.green)
+                        self.drawText(painter, QPoint(int(lu[0]), int(lu[1])),mes, 12, Qt.GlobalColor.green)
 
-    def getLabelSizeSegment(self, segment):
-        new_segment = np.zeros_like(segment, dtype=np.float32)
-        pad_x = self.image_rect.x()
-        pad_y = self.image_rect.y()
-        scale_x = self.image_rect.width() / self.pix.width()
-        scale_y = self.image_rect.height() / self.pix.height()
-        new_segment[:,0] = segment[:, 0] * scale_x
-        new_segment[:,1] = segment[:, 1] * scale_y
-        new_segment[:,0] = new_segment[:,0] + pad_x
-        new_segment[:,1] = new_segment[:,1] + pad_y
-
-        return new_segment
 
 
     def setOpencvMask(self, cv_mask: np.ndarray):
@@ -371,7 +346,6 @@ class SegmentTransformerLabel(QTransformerLabel):
             cv_mask.strides[0],
             QImage.Format_ARGB32
         )
-
         return cv_mask[:,:,0:3].copy(), QPixmap.fromImage(qimage)
 
 
@@ -410,15 +384,16 @@ class SegmentTransformerLabel(QTransformerLabel):
             color = copy.copy(color)
             color.reverse()
             cls_mask = cv2.inRange(self.mask[:,:,0:3],np.array(color), np.array(color))
-            #优化
-            kernel = np.ones((3,3), np.uint8)
-            cls_mask = cv2.morphologyEx(cls_mask, cv2.MORPH_CLOSE, kernel, iterations=2)  #闭运算
             c = cv2.findContours(cls_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
             c = [mc.squeeze(1).astype(np.float32) for mc in c if len(mc) > 2]
             if len(c):
                 segments = segments + c
             classes = classes + [cls]*len(c)
         return classes, segments
+
+    def saveMask(self):
+        self.label["cls"], self.label["instances"].segments = self.maskToPolygons(self.mask)
+        self.Change_Label_Signal.emit()
 
     def getPencilColor(self):
         if self.pencil_mode == "add":
@@ -445,7 +420,7 @@ class SegmentTransformerLabel(QTransformerLabel):
         """打开钢笔绘制"""
         self.use_pen = True
         self.use_pencil = False
-        self.label["cls"], self.label["instances"].segments = self.maskToPolygons(self.mask)
+        self.saveMask()
         self.update()
 
     def pencilPaint(self, pos):
@@ -455,10 +430,8 @@ class SegmentTransformerLabel(QTransformerLabel):
         cv2.line(self.mask, self.line_sp.astype(np.int32), self.line_ep.astype(np.int32), color, self.line_width)
         self.mask, self.mask_pixmap = self.setOpencvMask(self.mask)
         self.line_sp = self.line_ep.astype(np.int32).copy()
-        self.Change_Label_Signal.emit()
+        self.saveMask()
         self.update()
-
-
 
 
     def removePoint(self, seg_i, point_i):
@@ -505,14 +478,18 @@ class SegmentTransformerLabel(QTransformerLabel):
 
     def addSegment(self,segment, cls):
         if self.use_pencil:
-            cv2.fillPoly(self.mask, [segment.astype(np.int32)], self.colors[cls])
+            color = self.getPencilColor(cls)
+            cv2.fillPoly(self.mask, [segment.astype(np.int32)], color)
             self.mask, self.mask_pixmap = self.setOpencvMask(self.mask)
+            self.saveMask()
         else:
             if self.label["instances"].segments is None:
                 self.label["instances"].segments = []
             self.label["instances"].segments.append(segment)
             if len(self.label["cls"]) != len(self.label["instances"].segments):
                 self.label["cls"].append(cls)
+            if len(segment) > 2:
+                self.Change_Label_Signal.emit()
 
 
 
@@ -521,10 +498,12 @@ class SegmentTransformerLabel(QTransformerLabel):
         if self.use_pencil:
             cv2.fillPoly(self.mask, [seg.astype(np.int32)], [0,0,0])
             self.mask, self.mask_pixmap = self.setOpencvMask(self.mask)
+            self.saveMask()
         else:
             self.label["instances"].segments.pop(seg)
             self.label["cls"].pop(seg)
             self.label["instances"].getBoundingRect()
+            self.Change_Label_Signal.emit()
             self.update()
 
     def clearLabel(self):
@@ -534,17 +513,19 @@ class SegmentTransformerLabel(QTransformerLabel):
         self.index = -1
         self.point_ind1 = -1
         self.point_ind2 = -1
+        self.Change_Label_Signal.emit()
 
 
     def mousePressEvent(self, event:QMouseEvent):
         super().mousePressEvent(event)
-        if event.button() == Qt.LeftButton and self.paint:
+        if self.pix == None or self.fastCreate or self.resizing(event):
+            return
+        if event.button() == Qt.MouseButton.LeftButton and self.paint:
             point  = self.getPixSizePoint(event.x(), event.y())
-            if self.fast_seed_searching:
-                self.Fast_Sel_Cop_Signal.emit(point.tolist())
-            elif self.use_pencil:    #铅笔绘制
+            if self.use_pencil:    #铅笔绘制
                 self.line_sp = point
                 self.line_ep = point
+                self.pencilPaint(event.pos())
             elif self.painting:  #下一个点
                 self.setPoint(self.index, -1, point)
                 self.addPoint(self.index, point)
@@ -583,14 +564,10 @@ class SegmentTransformerLabel(QTransformerLabel):
 
     def mouseMoveEvent(self, event: QMouseEvent):
         super().mouseMoveEvent(event)
-        if self.pix == None:
+        if self.pix == None or self.fastCreate or self.resizing(event):
             return
-        if self.paint and not self.fast_seed_searching:
-            if self.fast_cre_sel and event.buttons() == Qt.MouseButton.LeftButton:  # 快速选择创建选区
-                p1 = self.getPixSizePoint(self.start.x(), self.start.y())
-                p2 = self.getPixSizePoint(event.x(), event.y())
-                self.fast_rect = twoPoints2box(p1, p2, "xyxy")[0].tolist()
-            elif self.use_pencil and event.buttons() == Qt.MouseButton.LeftButton:  # 铅笔绘制
+        if self.paint:
+            if self.use_pencil and event.buttons() == Qt.MouseButton.LeftButton:  # 铅笔绘制
                 self.pencilPaint(event.pos())
 
             elif self.painting:  # 钢笔绘制中
@@ -620,11 +597,11 @@ class SegmentTransformerLabel(QTransformerLabel):
 
     def mouseReleaseEvent(self, ev:QMouseEvent):
         super().mouseReleaseEvent(ev)
-        if ev.button() == Qt.MouseButton.LeftButton and self.fast_cre_sel and self.fast_rect is not None and self.fast_method != "floodfill":
-            self.Fast_Sel_Cop_Signal.emit([])
 
     def keyPressEvent(self, ev:QKeyEvent):
         super().keyPressEvent(ev)
+        if self.pix == None or self.fastCreate or self.resizing(ev):
+            return
         if ev.text() == "\r" and self.paint  and self.use_pen and not self.painting:  #绘制下一个标签
             self.addSegment(np.array([[0,0]], dtype=np.float32), self.cls)
             self.index = len(self.label["instances"].segments) - 1
@@ -632,19 +609,23 @@ class SegmentTransformerLabel(QTransformerLabel):
         if ev.text() == "\x1b" and self.use_pen and self.painting and self.paint:
             self.painting = False
             self.removeSegment(-1)
+        self.update()
+
+    def cancelPaint(self):
+        self.painting = False
+        self.removePoint(self.index, len(self.label["instances"].segments[self.index]) - 1)
+        self.label["instances"].remove_same_point_segments()
+        if len(self.label["instances"].segments[self.index]) < 3: #小于3个点
+            self.removeSegment(-1)
+            self.update()
+            return
+        self.label["instances"].getBoundingRect()
+        self.Change_Label_Signal.emit()
+        self.update()
 
     def contextMenuEvent(self, ev: QContextMenuEvent) -> None:
         if self.painting:   #右键结束标签绘制
-            self.painting = False
-            self.removePoint(self.index, len(self.label["instances"].segments[self.index]) - 1)
-            self.label["instances"].remove_same_point_segments()
-            if len(self.label["instances"].segments[self.index]) < 3: #小于3个点
-                self.label["instances"].segments.pop(-1)
-                self.update()
-                return
-            self.label["instances"].getBoundingRect()
-            self.Change_Label_Signal.emit()
-            self.update()
+            self.cancelPaint()
             return
         if self.cursor().shape() == Qt.CursorShape.SizeAllCursor:
             main_menu = QMenu(self)
@@ -669,16 +650,17 @@ class KeypointsTransformerLabel(QTransformerLabel):
         self.task = "keypoint"
 
     """关键点标注label"""
-    def drawLabel(self, painter, instance, pred=False):
+    def drawLabel(self, painter, label, pred=False):
         """
             绘制关键点
         Args:
             painter（QPainter）:画板上的画笔类
             instance(QInstances): 标签实例
         """
+        instance = label["instances"]
         if instance.keypoints is None: return
         keypoints = instance.keypoints  #(n,m,d) xyv xyv xyv...
-        cls = self.label["cls"]
+        cls = label["cls"]
         s = [1] * (max(cls)+ 1)   #色调权重
         for i, (keypoint, c) in enumerate(zip(keypoints, cls)):
             points = []
@@ -750,6 +732,8 @@ class KeypointsTransformerLabel(QTransformerLabel):
 
     def mousePressEvent(self, event: QMouseEvent):
         super().mousePressEvent(event)
+        if self.pix == None or self.resizing(event):
+            return
         if self.painting:
             if event.button() == Qt.MouseButton.LeftButton:
                 self.point_ind1 += 1
@@ -764,7 +748,7 @@ class KeypointsTransformerLabel(QTransformerLabel):
     def mouseMoveEvent(self, event: QMouseEvent):
         """鼠标移动事件"""
         super().mouseMoveEvent(event)
-        if self.pix == None:
+        if self.pix == None or self.resizing(event):
             return
         if self.painting:
             self.setKeypoint(self.index, self.point_ind1, self.mouse_point)
@@ -780,6 +764,8 @@ class KeypointsTransformerLabel(QTransformerLabel):
 
     def keyPressEvent(self, ev:QKeyEvent):
         super().keyPressEvent(ev)
+        if self.pix == None or self.resizing(ev):
+            return
         if ev.text() == "\r" and self.paint and not self.painting:  # 绘制下一个标签
             keypoints = torch.zeros((1, self.label["nkpt"], self.label["ndim"]), dtype=torch.float32)
             self.addKeypoints(keypoints, self.cls)
@@ -822,7 +808,7 @@ class ObbTransformerLabel(QTransformerLabel):
         self.task = "obb"
 
 
-    def drawLabel(self, painter, instance, pred=False):
+    def drawLabel(self, painter, label, pred=False):
         """
         绘制矩形定向框
         Args:
@@ -830,6 +816,7 @@ class ObbTransformerLabel(QTransformerLabel):
             instance(QInstances): 标签实例
             cls(list | torch.Tensor): 目标对应的种类，一一对应，len(n)
         """
+        instance = label["instances"]
         obbs = instance.segments   #(n,m,8) xyxyxyxy
         cls = self.label["cls"]
 
@@ -1069,7 +1056,7 @@ class ClassifyTransformerLabel(QTransformerLabel):
         self.task = "classify"
 
     """分类标注label"""
-    def drawLabel(self, painter, instance=None, pred=False):
+    def drawLabel(self, painter, label=None, pred=False):
         """
             绘制矩形定向框
             Args:
@@ -1077,7 +1064,7 @@ class ClassifyTransformerLabel(QTransformerLabel):
                 nstance(QInstances): None
                 cls(int): 图像对应的种类
         """
-        cls = self.label["cls"]
+        cls = label["cls"]
         if cls == -1: return
         name = self.label["names"][cls]
         painter.setPen(QPen(Qt.GlobalColor.green if not pred else self.red, 5, Qt.PenStyle.SolidLine))
@@ -1087,6 +1074,8 @@ class ClassifyTransformerLabel(QTransformerLabel):
 
     def keyPressEvent(self, ev:QKeyEvent):
         super().keyPressEvent(ev)
+        if self.pix == None or self.resizing(ev):
+            return
         if self.paint:
             if ev.text() == "\r":
                 self.label["cls"] = self.cls

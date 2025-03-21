@@ -94,7 +94,7 @@
       <item row="1" column="0" colspan="3">
        <widget class="QTabWidget" name="Fast_sel_methods_tw">
         <property name="currentIndex">
-         <number>1</number>
+         <number>2</number>
         </property>
         <widget class="QWidget" name="threshold_tab">
          <attribute name="title">

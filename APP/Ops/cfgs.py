@@ -373,7 +373,7 @@ class CfgsTreeWidget(QTreeWidget):
                         item.setText(1, str(self.getWidgetValue(w)))
                         self.removeItemWidget(item, 1)
                         w.deleteLater()
-            return
+                return
         if self.last_click_item:  #去除上次点击的widget选中状态
             self.last_click_item.setBackground(0, self.last_click_color)
             self.last_click_item.setBackground(1, self.last_click_color)

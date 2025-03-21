@@ -498,6 +498,7 @@ class LoadPilAndNumpy:
                 if PROGRESS_BAR.isStop():
                     PROGRESS_BAR.close()
                     raise ProcessLookupError("Interrupt：Load img of predict interrupt success")
+        PROGRESS_BAR.close()
         return imgs
 
     @staticmethod

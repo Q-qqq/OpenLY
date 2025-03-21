@@ -11,23 +11,25 @@ from APP.Label.base import QInstances
 class Yolo(YOLO):
     @threaded
     @TryExcept(msg="Train error", verbose=True)
-    def lyTrain(self, trainer=None, threaded=True, **kwargs):
+    def lyTrain(self, trainer=None,  **kwargs):
         self.train(trainer, **kwargs)
 
     @threaded
     @TryExcept(msg="Val error", verbose=True)
-    def lyVal(self, validator=None, threaded=True, **kwargs):
+    def lyVal(self, validator=None, **kwargs):
         LOGGER.info("开始验证")
         self.val(validator, **kwargs)
 
     @TryExcept(msg="Predict Error", verbose=True)
-    def lyPredict(self, source=None, stream=False, predictor=None,threaded=True, **kwargs):
+    def lyPredict(self, source=None, stream=True, predictor=None, **kwargs):
         #results = None
         try:
-            PROGRESS_BAR.start("Wait infrence", "Wait...", [0, 100], False)
+            PROGRESS_BAR.start("Wait infrence", "Wait...", [0, 0], False)
             results = self.predict(source, stream, predictor, **kwargs)
             labels = {}
-            for result in results:
+            for i, result in enumerate(results):
+                if i==0:
+                    PROGRESS_BAR.start("Infrence", "Start...", [0, len(source) if isinstance(source, (list,tuple)) else 0], True)
                 boxes = result.boxes.xywhn if result.boxes is not None else None
                 segments = result.masks.xyn if result.masks is not None else None
                 keypoints = result.keypoints.xyn if result.keypoints is not None else None
@@ -63,7 +65,11 @@ class Yolo(YOLO):
                          "ndim": ndim,
                          "instances": instances}
                 labels[str(Path(result.path))] = label
-                PROGRESS_BAR.close()
+                PROGRESS_BAR.setValue(i+1, f"{result.path}: {result.speed['inference']:.1f}ms")
+                if PROGRESS_BAR.isStop():
+                    PROGRESS_BAR.close()
+                    return labels
+            PROGRESS_BAR.close()
         except Exception as e:
             LOGGER.error("Predict error:" + str(e))
             PROGRESS_BAR.stop()
