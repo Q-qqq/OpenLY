@@ -280,7 +280,7 @@ class SegmentTransformerLabel(QFastSelectLabel):
             pred(bool): 是否为预测标签
         """
         super().drawLabel(painter, label, pred)
-        instance = label["instance"]
+        instance = label["instances"]
         classes = label["cls"]
         areas = instance.segments_area(self.pix.width(), self.pix.height())
         if self.use_pencil:

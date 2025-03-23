@@ -387,7 +387,7 @@ class QSizeLabel(QLabel):
         self.image_rect = None
         self.mouse_point = QPoint(0,0)
         self.zoom_zone = []
-        self.zoom_finish = False
+        self.zoom_finish = QRhiTextureSubresourceUploadDescription
 
 
     # region 焦点事件
@@ -485,27 +485,29 @@ class QSizeLabel(QLabel):
 
     def mousePressEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
-            self.start = event.pos()
+            self.start = event.position()
             if event.modifiers() == Qt.KeyboardModifier.AltModifier:
-                self.zoom_zone = [event.x(), event.y(), event.x(), event.y()]
+                self.zoom_zone = [self.start.x(), self.start.y(), self.start.x(), self.start.y()]
                 self.zoom_finish = False
 
     def mouseMoveEvent(self, event: QMouseEvent):
+        x = event.position().x()
+        y = event.position().y()
         if event.modifiers() == Qt.KeyboardModifier.AltModifier and event.buttons() == Qt.MouseButton.LeftButton and not self.zoom_finish:
-            self.zoom_zone[2] = event.x()
-            self.zoom_zone[3] = event.y()
+            self.zoom_zone[2] = x
+            self.zoom_zone[3] = y
             self.update()
         elif event.modifiers() != Qt.KeyboardModifier.AltModifier and event.buttons() == Qt.MouseButton.LeftButton and not self.zoom_finish:
             self.finishZoom()
         elif event.buttons() == Qt.MouseButton.LeftButton and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
-            self.translate_x = event.x() - self.start.x()
-            self.translate_y = event.y() - self.start.y()
-            self.start = QPoint(event.x(), event.y())
+            self.translate_x = x - self.start.x()
+            self.translate_y = y - self.start.y()
+            self.start = QPoint(x, y)
             self.update()
         else:
             self.translate_x = 0
             self.translate_y = 0
-        self.mouse_point = QPoint(event.x(), event.y())
+        self.mouse_point = QPoint(x, y)
 
     def mouseReleaseEvent(self, ev:QMouseEvent) -> None:
         if ev.button() == Qt.MouseButton.LeftButton and ev.modifiers() == Qt.KeyboardModifier.AltModifier:
@@ -533,8 +535,8 @@ class QSizeLabel(QLabel):
             return
 
         if (self.pix_half_height > 24 and self.pix_half_width > 24) or event.angleDelta().y() > 0:  # 120/5=24，不能使得pix_half_width和pix_halg_height为负数
-            half_w = self.pix_half_width + int(event.angleDelta().y() / 5 * self.pix_scale_x)  #放大后的一半宽
-            half_h = self.pix_half_height + int(event.angleDelta().y() / 5 * self.pix_scale_y)  #放大后的一半高
+            half_w = self.pix_half_width + int((event.angleDelta().y() / 5) * self.pix_scale_x)  #放大后的一半宽
+            half_h = self.pix_half_height + int((event.angleDelta().y() / 5) * self.pix_scale_y)  #放大后的一半高
             x = event.position().x() if event.angleDelta().y() > 0  else self.width()/2  #放大以鼠标位置为缩放中心，缩小以label中心为缩放中心
             y = event.position().y() if event.angleDelta().y() > 0  else self.height()/2
             self.scalePix(half_w, half_h, x, y)
@@ -971,7 +973,7 @@ class QFastSelectLabel(QTransformerLabel):
             painter.setPen(QPen(Qt.yellow, 2, Qt.DashLine))
             p1 = self.getLabelSizePoint(self.fast_rect[0], self.fast_rect[1])
             p2 = self.getLabelSizePoint(self.fast_rect[2], self.fast_rect[3])
-            painter.drawRect(QRect(p1[0], p1[1], p2[0]-p1[0], p2[1]-p1[1]))
+            painter.drawRect(QRect(int(p1[0]), int(p1[1]), int(p2[0]-p1[0]), int(p2[1]-p1[1])))
         if self.fast_seed_searching:
             painter.setPen(QPen(Qt.green, 8, Qt.SolidLine))
             painter.drawPoint(self.mouse_point)

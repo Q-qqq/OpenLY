@@ -360,7 +360,7 @@ class PainterTool(QObject):
         self.label_ops = self.parent()
         self.show_pred_pb = get_widget(self.parent().parent(), "Tool_show_pred_pb")
         self.show_ture_pb = get_widget(self.parent().parent(), "Tool_show_true_pb")
-        self.pred_to_true_pb = get_widget(self.parent().parent, "Tool_pred_to_true_pb")
+        self.pred_to_true_pb = get_widget(self.parent().parent(), "Tool_pred_to_true_pb")
         self.levels_augment_pb = get_widget(self.parent().parent(), "Tool_levels_augment_pb")
         self.train_rb = get_widget(self.parent().parent(), "Tool_train_rb")
         self.val_rb = get_widget(self.parent().parent(), "Tool_val_rb")

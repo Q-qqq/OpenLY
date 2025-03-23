@@ -1,5 +1,6 @@
 version: 洛业LY:2.2.0
-projects: []
+projects:
+- D:\Code\Project\python\p8
 current_project: D:\Code\Project\python\p8
 default_dir: D:/Code/Project/python/p8
 default_file: C://
