@@ -8,8 +8,8 @@ from PySide2.QtWidgets import *
 
 from ultralytics.utils import LOGGER
 
-from APP.Utils import get_widget
-from APP import PROJ_SETTINGS
+from APP.Utils import get_widget, append_formatted_text
+from APP import PROJ_SETTINGS, getExperimentPath
 
 
 class RunMes(QObject):
@@ -38,12 +38,25 @@ class RunMes(QObject):
         LOGGER.Start_Val_Signal.connect(self.startValSlot)
         LOGGER.Val_Finish_Signal.connect(self.valFinishSlot)
         LOGGER.Show_Mes_Signal.connect(self.showMesSlot)
-        LOGGER.Train_Interrupt_Signal.connect(self.trainInterruptSlot)
         LOGGER.Error_Signal.connect(self.errorShowSlot)
+        LOGGER.Interrupted_Error_Signal.connect(self.interruptSlot)
 
-    def showMesSlot(self, mes):
-        self.tip_te.append(mes)
-        self.tip_te.moveCursor(QTextCursor.End)
+    def infoAppend(self,msg):
+        append_formatted_text(self.tip_te, msg, 11)
+    
+    def warningAppend(self, msg):
+        append_formatted_text(self.tip_te, msg, 13, QColor(255, 165, 0))
+    
+    def errorAppend(self, msg):
+        append_formatted_text(self.tip_te, msg, 15, QColor(Qt.GlobalColor.red), True)
+
+    def showMesSlot(self, level, msg):
+        if level == "info":
+            self.infoAppend(msg)
+        elif level == "warning":
+            self.warningAppend(msg)
+        else:
+            self.errorAppend(msg)
 
     def startTrainSlot(self, mes_epochs):
         self.train_a.setEnabled(True)
@@ -51,7 +64,7 @@ class RunMes(QObject):
         self.start_epoch = mes_epochs[1]
         self.end_epoch = mes_epochs[2]
         self.run_mes_te.clear()
-        self.run_mes_te.append(mes)
+        append_formatted_text(self.run_mes_te, mes, 12)
         self.train_progressbar.setRange(self.start_epoch, self.end_epoch)
         self.epoch_start_time = time.time()
 
@@ -62,8 +75,7 @@ class RunMes(QObject):
         mes = mes_epoch[0]
         self.current_epoch = mes_epoch[1]
         self.batch_mes_le.clear()
-        self.run_mes_te.append(mes)
-        self.run_mes_te.moveCursor(QTextCursor.End)
+        append_formatted_text(self.run_mes_te, mes, 12)
         self.updateLoss()
         t = time.time()
         self.epoch_time = t - self.epoch_start_time
@@ -79,8 +91,7 @@ class RunMes(QObject):
 
 
     def startValSlot(self, mes):
-        self.tip_te.append(mes)
-        self.tip_te.moveCursor(QTextCursor.End)
+        self.infoAppend(mes)
 
     def valFinishSlot(self, mes):
         self.updateConfusion()
@@ -92,14 +103,21 @@ class RunMes(QObject):
         self.run_mes_te.append(mes)
         self.run_mes_te.moveCursor(QTextCursor.End)
 
-    def trainInterruptSlot(self):
-        self.train_a.setEnabled(True)
+    def interruptSlot(self, msg):
+        """训练、验证、预测、加载等中断信息显示"""
+        QMessageBox.information(self.parent(), "Interrupt", msg)
+        if msg.startswith("训练中断"):
+            self.train_a.setEnabled(True)
+            LOGGER.stop = True
+            self.train_a.setText("训练")
+            self.train_a.setEnabled(True)
+
 
     def updateConfusion(self):
         title_norm = "Confusion Matrix" + " Normalized"
         title_denorm = "Confusion Matrix"
-        p_norm = Path(PROJ_SETTINGS["current_experiment"]) / f"{title_norm.lower().replace(' ', '_')}.png"
-        p_denorm = Path(PROJ_SETTINGS["current_experiment"]) / f"{title_denorm.lower().replace(' ', '_')}.png"
+        p_norm = Path(getExperimentPath()) / f"{title_norm.lower().replace(' ', '_')}.png"
+        p_denorm = Path(getExperimentPath()) / f"{title_denorm.lower().replace(' ', '_')}.png"
         self.confusion_norm_label.load_image(p_norm)
         self.confusion_denorm_label.load_image(p_denorm)
 
@@ -107,10 +125,4 @@ class RunMes(QObject):
         self.parent().loss_plot.lossPlot()
 
     def errorShowSlot(self, msg):
-        if msg.startswith("中断"):
-            QMessageBox.information(self.parent(), "Interrupt", msg)
-        if msg.startswith("Train error") and self.train_a.text() == "停止":
-            LOGGER.stop = True
-            self.train_a.setText("训练")
-            self.train_a.setEnabled(True)
         QMessageBox.critical(self.parent(), "运行错误", msg)

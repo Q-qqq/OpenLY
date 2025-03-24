@@ -349,7 +349,7 @@ class BaseTrainer:
             total_instance = 0  #实例数量
             for i, batch in enumerate(self.train_loader):
                 if LOGGER.stop:
-                    LOGGER.trainInterrupt()
+                    torch.cuda.empty_cache()
                     raise ProcessLookupError(f"中断：训练中断成功,已训练{epoch}epoch")
                 #预热训练
                 ni = i + nb * epoch  #第几batch

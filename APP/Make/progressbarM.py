@@ -19,7 +19,7 @@ class ProgressBar(QWidget, progressbarUI.Ui_Progress):
 
     def eventConnect(self):
         PROGRESS_BAR.Start_Signal.connect(self.start)
-        PROGRESS_BAR.Set_Value_Signal.connect(self.setValue)
+        PROGRESS_BAR.Set_Value_Signal.connect(self.setValue)#, Qt.ConnectionType.DirectConnection)
         PROGRESS_BAR.Reset_Signal.connect(self.reset)
         PROGRESS_BAR.Show_Signal.connect(self.showProgress)
         PROGRESS_BAR.Close_Signal.connect(self.close)

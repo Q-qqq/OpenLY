@@ -19,7 +19,7 @@ class SegmentationTrainer(yolo.detect.DetectionTrainer):
         return model
 
     def get_validator(self):
-        self.loss_nams = "box_loss", "seg_loss", "cls_loss", "dfl_loss"
+        self.loss_names = "box_loss", "seg_loss", "cls_loss", "dfl_loss"
         return yolo.segment.SegmentationValidator(
             self.test_loader, save_dir=self.save_dir, args=copy(self.args)
         )

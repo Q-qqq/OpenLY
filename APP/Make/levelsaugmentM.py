@@ -70,7 +70,6 @@ class LevelsAugment(QWidget, levels_augmentUI.Ui_Form):
         return levels
 
     def setHSLevels(self, levels):
-
         self.In_shadow_hs.setValue(levels[0])
         self.In_gray_hs.setValue(levels[1]*100)
         self.In_light_hs.setValue(levels[2])

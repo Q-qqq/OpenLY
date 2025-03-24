@@ -18,8 +18,7 @@ class Start(QWidget, startUI.Ui_Form):
         self.setupUi(self)
         self.start = False
         projects= APP_SETTINGS["projects"]
-        if projects != []:
-            self.Projs_lw.addItems(projects)
+        self.Projs_lw.addItems([p for p in projects if Path(p).exists()])
         self.eventConnect()
 
     def eventConnect(self):
@@ -61,13 +60,8 @@ class Start(QWidget, startUI.Ui_Form):
 
 
     def addNewProject(self, project):
-        self.createProject(project)
-        self.addItem(project)
-        self.openProject(project)
-
-    def addOldProject(self, project):
-        if not checkProject(project):
-            QMessageBox.warning(self,"警告", f"{project}不是一个完整的项目，无法添加")
+        if Path(project).exists():
+            QMessageBox.warning(self, "警告", f"{project}已存在，请重新命名")
             return
         self.createProject(project)
         self.addItem(project)
@@ -75,26 +69,40 @@ class Start(QWidget, startUI.Ui_Form):
 
     def createProject(self, project):
         project_path = Path(project)
-        if not project_path.exists():
-            project_path.mkdir()
+        task, ok = QInputDialog.getItem(self, "选择任务", "选择项目任务", ["detect", "obb","segment", "classify", "keypoint"], 0, False)
+        if not ok:
+            return
+        
+        project_path.mkdir(parents=True, exist_ok=True)
         APP_SETTINGS.updateProject(str(project_path))  # 添加新项目至系统列表
         PROJ_SETTINGS.load(str(project_path))
+        PROJ_SETTINGS["task"] = task
+        PROJ_SETTINGS.save()
+
+    def addOldProject(self, project):
+        if not checkProject(project):
+            QMessageBox.warning(self,"警告", f"{project}不是一个完整的项目，无法添加")
+            return
+        self.openProject(project)
+
 
     def openProject(self, project):
         project = str(Path(project))
         APP_SETTINGS.updateProject(project)
         PROJ_SETTINGS.load(project)
-        experiment = PROJ_SETTINGS["current_experiment"]
+        experiment = PROJ_SETTINGS["current_experiment"]   #实验名称
         exp_cache_p = f"{project}\\experiments\\expcache"
-        experiments = [str(Path(f)) for f in glob.glob(f"{project}\\experiments\\**", recursive=False)]
-        cache_experiments = [str(Path(f)) for f in glob.glob(f"{project}\\experiments\\expcache\\**")]
-        if str(Path(experiment)) not in experiments and str(experiment) not in cache_experiments:  # current实验不存在， 新建默认实验
-            experiment = increment_path(f"{exp_cache_p}\\untitled", mkdir=True)
+        experiments = [Path(f).name for f in glob.glob(f"{project}\\experiments\\**", recursive=False)]
+        cache_experiments= [Path(f).name for f in glob.glob(f"{project}\\experiments\\expcache\\**")]
+        if experiment not in experiments and experiment not in cache_experiments:  # current实验不存在， 新建默认实验
+            experiment_path = increment_path(f"{exp_cache_p}\\untitled", mkdir=True)
+            experiment = ".\\expcache\\" +  Path(experiment_path).name
+            EXPERIMENT_SETTINGS.load(experiment)
         no_label_path = Path(project) / "data" / "no_label"
         if not no_label_path.exists():
             no_label_path.mkdir(parents=True, exist_ok=True)
         self.start = True
-        self.Start_Signal.emit(str(experiment))  # 打开项目
+        self.Start_Signal.emit(experiment)  # 打开项目
         self.close()
 
     def delectProject(self, item):
@@ -105,6 +113,7 @@ class Start(QWidget, startUI.Ui_Form):
 
     def showEvent(self, event:QShowEvent) -> None:
         self.start = False
+        super().showEvent(event)
 
     def closeEvent(self, event:QCloseEvent) -> None:
         if not self.start:

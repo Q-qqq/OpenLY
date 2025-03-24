@@ -339,8 +339,9 @@ class LoadPilAndNumpy:
                 imgs.append(im)
                 PROGRESS_BAR.setValue(i+1, self.paths[i])
                 if PROGRESS_BAR.isStop():
-                    raise ProcessLookupError("中断：预测图像集加载中断成功")
                     PROGRESS_BAR.close()
+                    raise ProcessLookupError("中断：预测图像集加载中断成功")
+        PROGRESS_BAR.close()
         return imgs
 
 

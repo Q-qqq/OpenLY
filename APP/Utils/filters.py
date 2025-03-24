@@ -32,7 +32,6 @@ class CbbFilter(QObject):
     def eventFilter(self, watched, event):
         select_dataset_cbb = get_widget(self.parent().parent(), "Select_dataset_cbb")
         select_class_cbb = get_widget(self.parent().parent(), "Select_class_cbb")
-        select_ops_cbb = get_widget(self.parent().parent(), "Select_ops_cbb")
         sift_dataset = self.parent()
         if event.type() == QEvent.MouseButtonPress:
             if watched == select_dataset_cbb:
@@ -54,20 +53,6 @@ class CbbFilter(QObject):
                 for item in items:
                     if item not in class_items:
                         select_class_cbb.removeItem(items.index(item))
-            elif watched == select_ops_cbb:
-                dataset = select_dataset_cbb.currentText()
-                if dataset == "总样本集":
-                    items = ["删除", "转验证集", "转训练集", "转未标注集"]
-                elif dataset == "训练集":
-                    items = ["删除", "转验证集", "转未标注集"]
-                elif dataset == "验证集":
-                    items = ["删除", "转训练集", "转未标注集"]
-                elif dataset in ("未标注集", "结果集"):
-                    items = ["删除", "转验证集", "转训练集"]
-                else:
-                    items = []
-                select_ops_cbb.clear()
-                select_ops_cbb.addItems(items)
         return super().eventFilter(watched, event)
 
 class MenuFilter(QObject):

@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.ndimage import gaussian_filter1d
 
-from ultralytics.utils import plt_settings,threaded
-from APP import PROJ_SETTINGS
+from ultralytics.utils import plt_settings,threaded, TryExcept
+from APP import PROJ_SETTINGS, getExperimentPath
 
 
 class QFigure(FigureCanvas):
@@ -29,7 +29,7 @@ class LossFigure(QFigure):
     @threaded
     @plt_settings( backend="QtAgg")
     def plot(self, metrics_csv=f"results.csv"):
-        metrics_csv = Path(PROJ_SETTINGS["current_experiment"]) / metrics_csv
+        metrics_csv = Path(getExperimentPath()) / metrics_csv
         if not metrics_csv.exists():
             return
         data = pd.read_csv(metrics_csv)
@@ -104,8 +104,9 @@ class PgPlotLossWidget(pg.PlotWidget):
         self.addLegend()
 
 
+    @TryExcept(msg="损失值出现错误，绘制损失曲线失败")
     def lossPlot(self, metrics_csv=f"results.csv"):
-        metrics_csv = Path(PROJ_SETTINGS["current_experiment"]) / metrics_csv
+        metrics_csv = Path(getExperimentPath()) / metrics_csv
         if not metrics_csv.exists():
             return
         data = pd.read_csv(metrics_csv)

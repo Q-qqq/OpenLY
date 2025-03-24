@@ -186,7 +186,7 @@ class V5DetectLoss:
 
         lbox *= self.hyp.v5_box
         lcls *= self.hyp.v5_cls
-        lobj *= self.hyp.dfl
+        lobj *= self.hyp.obj
 
         bs = tobj.shape[0]
         loss = lbox + lcls + lobj
@@ -226,7 +226,7 @@ class V5DetectLoss:
             offsets = 0
             if nt:  # 有物体
                 radio = t[..., 4:6] / anchors[:, None]  # 将每一个真实框的wh分别除以检测头内的每一个anchors的wh，得到wh的比值[na,nt,2]
-                index_t_head_anch = torch.max(radio, 1. / radio).max(2)[0] < self.hyp.iou_t  # 获取合适比值的索引即属于该检测头的真实框各对应预选框的索引[na,nt]：torch.max(r,1./r)过滤小的比值，将小比值变大，相当于将比值限定在1/anchors_t  ~~  anchors_t
+                index_t_head_anch = torch.max(radio, 1. / radio).max(2)[0] < self.hyp.anchor_t  # 获取合适比值的索引即属于该检测头的真实框各对应预选框的索引[na,nt]：torch.max(r,1./r)过滤小的比值，将小比值变大，相当于将比值限定在1/anchors_t  ~~  anchors_t
                 a = at[index_t_head_anch]  # 真实框对应的预选框[0,0,1,2,2]  0表示第一个预选框，1表示第二个，以此类推
                 t = t[index_t_head_anch]  # 根据索引获取属于这一层检测头的真实框[[box0],[box0],[box1],[box2],[box2]]
 

@@ -28,27 +28,7 @@ QMainWindow {
     border-radius: 12px;
 }
 
-/* 菜单栏 */
-QMenuBar {
-    background-color: #FFFFFF;
-    border-bottom: 2px solid #CD7F32;
-    padding: 4px 0;
-}
 
-QMenuBar::item {
-    padding: 6px 15px;
-    border-radius: 5px;
-    color: #4A4453;
-}
-
-QMenuBar::item:selected {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                              stop:0 #E6E0FF, stop:1 #D8BFD8);
-}
-
-QMenuBar::item:pressed {
-    background-color: #B19CD9;
-}
 
 /* 工具栏 */
 QToolBar {
@@ -111,9 +91,9 @@ QMenuBar {
 
 /* 菜单项基础样式 */
 QMenuBar::item {
-    padding: 8px 20px;
+    padding: 4px 10px;
     border: 1px solid transparent;
-    border-radius: 6px;
+    border-radius: 5px;
     color: #4A4453;
     background: transparent;
 }
@@ -153,6 +133,19 @@ QMenu::item {
     /* 用渐变背景实现选中效果 */
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                               stop:0 transparent, stop:1 transparent);
+}
+QMenu#right_menu::item {
+    padding: 4px 15px 4px 12px;
+    color: #4A4453;
+    /* 用渐变背景实现选中效果 */
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                              stop:0 transparent, stop:1 transparent);
+}
+
+QMenu#right_menu::item:selected {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                              stop:0 #F8F4FF, stop:1 #E6E0FF);
+    border-left: 3px solid #CD7F32;
 }
 
 QMenu::item:selected {
@@ -283,30 +276,105 @@ QTextEdit {
     border: 2px solid #CD7F32;
     border-radius: 10px;
     padding: 5px;
-    border-right: 2px solid rgba(205,127,50,0.3);
-    border-bottom: 2px solid rgba(205,127,50,0.3);
+
 }
 
 QTextEdit#Run_mes_te {
     border: 2px solid #CD7F32;
     border-radius: 10px;
-    border-bottom: trasparent;
+    border-bottom: transparent;
     padding: 5px;
-    border-right: 2px solid rgba(205,127,50,0.3);
-    border-bottom: 2px solid rgba(205,127,50,0.3);
+}
+/* ===== 基础进度条样式 ===== */
+QProgressBar {
+    background-color: #EDE7F6;
+    border: 2px solid #CD7F32;
+    border-radius: 8px;
+    text-align: center;
+    color: #4A4453;
+    font: bold 10pt "Segoe UI";
 }
 
-QProgressBar#Train_progressbar::chunk {
-	background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                              stop:1 #D8BFD8, stop:0 #B19CD9);
-    width: 20px;
+/* ===== 水平进度条 ===== */
+QProgressBar::horizontal {
+    height: 24px;
 }
-QProgressBar#Train_progressbar {
-	border: 2px solid #CD7F32;
-    border-radius: 10px;
-    padding: 0px;
-    selection-background-color: #E6E0FF;
-    text-align: center;
+
+/* ===== 垂直进度条 ===== */
+QProgressBar::vertical {
+    width: 24px;
+}
+
+/* ===== 进度填充部分 ===== */
+QProgressBar::chunk {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                    stop:0 #C8A2C8, stop:1 #B19CD9);
+    border-radius: 6px;
+    margin: 2px;
+    width: 20px
+}
+
+/* ===== 不同状态样式 ===== */
+/* 正常状态 */
+QProgressBar:!disabled {
+    border: 2px solid #CD7F32;
+}
+
+/* 完成状态 */
+QProgressBar[state="complete"]::chunk {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                    stop:0 #8FBC8F, stop:1 #6B8E23);
+}
+
+/* 错误状态 */
+QProgressBar[state="error"]::chunk {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                    stop:0 #FFB6C1, stop:1 #CD5555);
+}
+
+/* 禁用状态 */
+QProgressBar:disabled {
+    background-color: #F0F0F0;
+    color: #C8A2C8;
+    border-color: #9B72C5;
+}
+
+QProgressBar:disabled::chunk {
+    background-color: #D8BFD8;
+    opacity: 0.6;
+}
+
+/* ===== 无文本模式 ===== */
+QProgressBar[textHidden="true"] {
+    color: transparent;
+}
+
+/* ===== 迷你尺寸 ===== */
+QProgressBar[minimal="true"]::horizontal {
+    height: 12px;
+    border-radius: 6px;
+}
+
+QProgressBar[minimal="true"]::chunk {
+    margin: 1px;
+    border-radius: 4px;
+}
+
+/* ===== 动态条纹效果 ===== */
+QProgressBar[animated="true"]::chunk {
+    background: repeating-linear-gradient(
+        45deg,
+        #B19CD9,
+        #B19CD9 10px,
+        #C8A2C8 10px,
+        #C8A2C8 20px
+    );
+    /*animation: stripe 1s linear infinite;*/
+}
+
+@keyframes stripe {
+    from { background-position: 0 0; }
+    to { background-position: 40px 0; }
 }
 
 QLineEdit#Batch_mes_le {
@@ -316,8 +384,6 @@ QLineEdit#Batch_mes_le {
 	border-top: trasparent;
     border-radius: 10px;
     padding: 0px;
-    border-right: 2px solid rgba(205,127,50,0.3);
-    border-bottom: 2px solid rgba(205,127,50,0.3);
 }
 QLineEdit {
 	background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
@@ -325,7 +391,7 @@ QLineEdit {
     border: 2px solid #CD7F32;
     border-radius: 10px;
     padding: 0px;
-    selection-background-color: #E6E0FF;
+    selection-background-color: #4A4453;
 }
 
 QDockWidget::title {
@@ -340,7 +406,7 @@ QPushButton {
     border: 2px solid #CD7F32;
     border-radius: 8px;
     padding: 3px;
-    min-width: 40px;
+    min-width: 20px;
     border-bottom: 4px solid rgba(205,127,50,0.3);
 }
 
@@ -438,26 +504,10 @@ QTreeWidget::item:selected {
     border-radius: 4px;
 }
 
-/* ===== 展开/折叠图标 ===== */
-QTreeWidget::branch {
-    image: url(:/icons/arrow-right.svg); /* 折叠状态 */
-}
 
-QTreeWidget::branch:open {
-    image: url(:/icons/arrow-down.svg); /* 展开状态 */
-}
 
 QTreeWidget::branch:has-children:!open {
     border-image: none; /* 移除默认箭头 */
-}
-
-/* ===== 连接线样式 ===== */
-QTreeWidget::branch:closed:has-children {
-    background-image: url(:/icons/tree-line-vertical.svg);
-}
-
-QTreeWidget::branch:open:has-children {
-    background-image: url(:/icons/tree-line-horizontal.svg);
 }
 
 /* ===== 表头样式 ===== */

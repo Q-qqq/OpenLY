@@ -1,3 +1,4 @@
+from functools import wraps
 import torch
 from PySide2.QtCore import *
 from PySide2.QtGui import *
@@ -17,7 +18,7 @@ import math
 import numpy as np
 import glob
 
-__version__ = "洛业LY:2.0.0:"
+__version__ = "洛业LY:2.0.0"
 
 FILE = Path(__file__).resolve()
 APP_ROOT = FILE.parents[1]  # APP根目录
@@ -51,8 +52,9 @@ class Setting(dict):
         correct_keys = self.keys() == self.defaults.keys()
         correct_type = all(type(a) is type(b) for a, b in zip(self.values(), self.defaults.values()))
         if self.get("version"):
-            correct_verssion = check_version(self["version"], self.defaults["version"])
-        if not (correct_keys, correct_type, correct_verssion):
+
+            correct_verssion = self["version"].split(":")[0]== self.defaults["version"].split(":")[0]
+        if not (correct_keys and correct_type and correct_verssion):
             LOGGER.warning(f"项目配置与软件不匹配，配置将恢复默认状态，更新至{self.file}")
             self.reset()
 
@@ -116,8 +118,8 @@ class ProjectSetting(Setting):
             "version": __version__,
             "time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
             "save_time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-            "experiments":[],
             "current_experiment":"",
+            "task":"detect",
         }
         super().__init__(copy.deepcopy(self.defaults))
 
@@ -132,14 +134,7 @@ class ProjectSetting(Setting):
         super().load(Path(project_path) / "SETTINGS.yaml")
         self["name"] = str(Path(project_path))
 
-    def updateExperiment(self, experiment):
-        experiment = str(Path(experiment))
-        """更新项目列表"""
-        if experiment in self["experiments"]:
-            self["experiments"].remove(experiment)
-        self["experiments"].append(experiment)
-        self["current_experiment"] = experiment
-        self.save()
+
 
     def updateMode(self, mode):
         self["mode"] = mode
@@ -151,7 +146,6 @@ class ExperimentSetting(Setting):
             "version": __version__,
             "time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
             "save_time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-            "mode": "v8",
         }
         super().__init__(copy.deepcopy(self.defaults))
 
@@ -161,18 +155,23 @@ class ExperimentSetting(Setting):
             self["save_time"] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
             yaml_save(self.file, dict(self))
 
-    def load(self, experiment_path):
-        """加载新的项目或者切换项目"""
-        super().load(Path(experiment_path) / "SETTINGS.yaml")
-        self["name"] = str(Path(experiment_path))
-
-    def updateMode(self, mode):
-        self["mode"] = mode
+    def load(self, experiment):
+        """加载新的实验或者切换实验"""
+        super().load(Path(PROJ_SETTINGS["name"]) / "experiments" /  experiment / "SETTINGS.yaml")
+        self["name"] = experiment
         self.save()
+        PROJ_SETTINGS.update({"current_experiment": experiment})    #更新当前实验
+
 
 APP_SETTINGS = APPSetting()
 PROJ_SETTINGS = ProjectSetting()
 EXPERIMENT_SETTINGS = ExperimentSetting()
+
+def getExperimentPath(name = ""):
+    """获取实验路径""" 
+    project = PROJ_SETTINGS["name"]
+    experiment = name if name != "" else EXPERIMENT_SETTINGS["name"]
+    return str(Path(project) / "experiments" / experiment)
 
 def getExistDirectory(*args, **kwargs):
     """获取系统存在的一个文件夹并保存历史路径"""
@@ -183,11 +182,32 @@ def getExistDirectory(*args, **kwargs):
     return dir
 
 def getOpenFileName(*args, **kwargs):
+    """
+    获取单个文件
+    Args：
+        parent(QWidget|None): 父窗口
+        caption(str): 标题
+        dir(str): 初始打开文件路径
+        filter(str): 文件过滤 'file (*.jpg *.png *.gif)'"""
     if len(args) < 3 and  not kwargs.get("dir"):
         kwargs["dir"] = APP_SETTINGS["default_file"]
-    file = QFileDialog.getOpenFileName(*args, **kwargs)
-    APP_SETTINGS.update({"default_file": str(Path(file[0]).parent)}) if file[0] != "" else None
-    return file
+    file, file_type = QFileDialog.getOpenFileName(*args, **kwargs)
+    APP_SETTINGS.update({"default_file": str(Path(file).parent)}) if file != "" else None
+    return file, file_type
+
+def getOpenFileNames(*args, **kwargs):
+    """
+    获取多个文件
+    Args：
+        parent(QWidget|None): 父窗口
+        caption(str): 标题
+        dir(str): 初始打开文件路径
+        filter(str): 文件过滤 'file (*.jpg *.png *.gif)'"""
+    if len(args) < 3 and  not kwargs.get("dir"):
+        kwargs["dir"] = APP_SETTINGS["default_file"]
+    files, files_type = QFileDialog.getOpenFileNames(*args, **kwargs)
+    APP_SETTINGS.update({"default_file": str(Path(files[0]).parent)}) if len(files) else None
+    return files, files_type
 
 
 def checkProject(project_path):
@@ -253,7 +273,23 @@ def init_progress_effect(progress_bar):
     ripple_anim.start() 
 
 
+def debounce(delay_ms: int):
+    """防抖装饰器"""
+    def decorator(func):
+        timer = QTimer()
+        timer.setSingleShot(True)
 
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            timer.start(delay_ms)
+            # 保存最新参数
+            wrapper._args = args
+            wrapper._kwargs = kwargs
+
+        # 连接定时器到实际函数
+        timer.timeout.connect(lambda: func(*wrapper._args, **wrapper._kwargs))
+        return wrapper
+    return decorator
 
 
 

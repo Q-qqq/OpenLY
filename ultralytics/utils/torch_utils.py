@@ -431,3 +431,7 @@ def smart_inference_mode():
         else:
             return (torch.inference_mode if TORCH_1_9 else torch.no_grad)()(fn)
     return decorate
+
+def get_latest_opset():
+    """Return second-most (for maturity) recently supported ONNX opset by this version of torch."""
+    return max(int(k[14:]) for k in vars(torch.onnx) if "symbolic_opset" in k) - 1  # opset

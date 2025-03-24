@@ -3,15 +3,26 @@
 ################################################################################
 ## Form generated from reading UI file 'trainQT.ui'
 ##
-## Created by: Qt User Interface Compiler version 5.15.2
+## Created by: Qt User Interface Compiler version 6.8.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
-
+from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
+    QMetaObject, QObject, QPoint, QRect,
+    QSize, QTime, QUrl, Qt)
+from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
+    QCursor, QFont, QFontDatabase, QGradient,
+    QIcon, QImage, QKeySequence, QLinearGradient,
+    QPainter, QPalette, QPixmap, QRadialGradient,
+    QTransform)
+from PySide6.QtWidgets import (QApplication, QComboBox, QDockWidget, QFrame,
+    QGridLayout, QGroupBox, QHBoxLayout, QLabel,
+    QLayout, QLineEdit, QListView, QMainWindow,
+    QMenu, QMenuBar, QProgressBar, QPushButton,
+    QRadioButton, QSizePolicy, QSpacerItem, QSplitter,
+    QStatusBar, QTabWidget, QTextEdit, QToolBar,
+    QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -106,7 +117,7 @@ class Ui_MainWindow(object):
         self.Tool_paint_pb.setMinimumSize(QSize(0, 0))
         self.Tool_paint_pb.setMaximumSize(QSize(50, 16777215))
         font = QFont()
-        font.setFamily(u"Segoe UI")
+        font.setFamilies([u"Segoe UI"])
         font.setPointSize(12)
         self.Tool_paint_pb.setFont(font)
         self.Tool_paint_pb.setStyleSheet(u"")
@@ -116,8 +127,8 @@ class Ui_MainWindow(object):
         self.line_4 = QFrame(self.Painter_tool_f)
         self.line_4.setObjectName(u"line_4")
         self.line_4.setMidLineWidth(10)
-        self.line_4.setFrameShape(QFrame.VLine)
-        self.line_4.setFrameShadow(QFrame.Sunken)
+        self.line_4.setFrameShape(QFrame.Shape.VLine)
+        self.line_4.setFrameShadow(QFrame.Shadow.Sunken)
 
         self.horizontalLayout_4.addWidget(self.line_4)
 
@@ -142,8 +153,8 @@ class Ui_MainWindow(object):
         self.line = QFrame(self.Painter_tool_f)
         self.line.setObjectName(u"line")
         self.line.setMidLineWidth(10)
-        self.line.setFrameShape(QFrame.VLine)
-        self.line.setFrameShadow(QFrame.Sunken)
+        self.line.setFrameShape(QFrame.Shape.VLine)
+        self.line.setFrameShadow(QFrame.Shadow.Sunken)
 
         self.horizontalLayout_4.addWidget(self.line)
 
@@ -169,8 +180,8 @@ class Ui_MainWindow(object):
         self.line_2.setObjectName(u"line_2")
         self.line_2.setLineWidth(1)
         self.line_2.setMidLineWidth(20)
-        self.line_2.setFrameShape(QFrame.VLine)
-        self.line_2.setFrameShadow(QFrame.Sunken)
+        self.line_2.setFrameShape(QFrame.Shape.VLine)
+        self.line_2.setFrameShadow(QFrame.Shadow.Sunken)
 
         self.horizontalLayout_4.addWidget(self.line_2)
 
@@ -205,12 +216,12 @@ class Ui_MainWindow(object):
         self.line_3.setObjectName(u"line_3")
         self.line_3.setLineWidth(1)
         self.line_3.setMidLineWidth(20)
-        self.line_3.setFrameShape(QFrame.VLine)
-        self.line_3.setFrameShadow(QFrame.Sunken)
+        self.line_3.setFrameShape(QFrame.Shape.VLine)
+        self.line_3.setFrameShadow(QFrame.Shadow.Sunken)
 
         self.horizontalLayout_4.addWidget(self.line_3)
 
-        self.horizontalSpacer_3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalSpacer_3 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout_4.addItem(self.horizontalSpacer_3)
 
@@ -273,7 +284,7 @@ class Ui_MainWindow(object):
         self.Classes_lv.setMaximumSize(QSize(0, 16777215))
         self.Classes_lv.setFrameShape(QFrame.NoFrame)
         self.Classes_lv.setFrameShadow(QFrame.Plain)
-        self.Classes_lv.setProperty("isWrapping", False)
+        self.Classes_lv.setProperty(u"isWrapping", False)
 
         self.gridLayout.addWidget(self.Classes_lv, 1, 1, 1, 1)
 
@@ -314,7 +325,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
         self.toolBar = QToolBar(MainWindow)
         self.toolBar.setObjectName(u"toolBar")
-        MainWindow.addToolBar(Qt.TopToolBarArea, self.toolBar)
+        MainWindow.addToolBar(Qt.ToolBarArea.TopToolBarArea, self.toolBar)
         self.Progress_dw = QDockWidget(MainWindow)
         self.Progress_dw.setObjectName(u"Progress_dw")
         self.Progress_dw.setStyleSheet(u"")
@@ -369,7 +380,7 @@ class Ui_MainWindow(object):
         self.gridLayout_4.addWidget(self.Train_progressbar, 1, 0, 1, 1)
 
         self.Progress_dw.setWidget(self.dockWidgetContents_3)
-        MainWindow.addDockWidget(Qt.BottomDockWidgetArea, self.Progress_dw)
+        MainWindow.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.Progress_dw)
         self.Loss_curve_dw = QDockWidget(MainWindow)
         self.Loss_curve_dw.setObjectName(u"Loss_curve_dw")
         self.Loss_curve_dw.setBaseSize(QSize(0, 0))
@@ -389,7 +400,7 @@ class Ui_MainWindow(object):
         self.gridLayout_6.addWidget(self.Show_loss_f, 0, 0, 1, 1)
 
         self.Loss_curve_dw.setWidget(self.dockWidgetContents_4)
-        MainWindow.addDockWidget(Qt.RightDockWidgetArea, self.Loss_curve_dw)
+        MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.Loss_curve_dw)
         self.Args_dw = QDockWidget(MainWindow)
         self.Args_dw.setObjectName(u"Args_dw")
         self.Args_dw.setStyleSheet(u"")
@@ -397,7 +408,7 @@ class Ui_MainWindow(object):
         self.Args_dwc = QWidget()
         self.Args_dwc.setObjectName(u"Args_dwc")
         self.Args_dw.setWidget(self.Args_dwc)
-        MainWindow.addDockWidget(Qt.LeftDockWidgetArea, self.Args_dw)
+        MainWindow.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.Args_dw)
         self.Confusion_dw = QDockWidget(MainWindow)
         self.Confusion_dw.setObjectName(u"Confusion_dw")
         self.Confusion_dw.setStyleSheet(u"")
@@ -419,7 +430,7 @@ class Ui_MainWindow(object):
         self.gridLayout_2.addWidget(self.tabWidget, 0, 0, 1, 1)
 
         self.Confusion_dw.setWidget(self.dockWidgetContents_2)
-        MainWindow.addDockWidget(Qt.RightDockWidgetArea, self.Confusion_dw)
+        MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.Confusion_dw)
         self.Sift_image_dw = QDockWidget(MainWindow)
         self.Sift_image_dw.setObjectName(u"Sift_image_dw")
         self.Sift_image_dw.setStyleSheet(u"")
@@ -577,7 +588,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout.addWidget(self.Image_total_l)
 
-        self.horizontalSpacer_4 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalSpacer_4 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout.addItem(self.horizontalSpacer_4)
 
@@ -624,7 +635,7 @@ class Ui_MainWindow(object):
 
         self.gridLayout_3.addWidget(self.widget_5, 2, 0, 1, 1)
 
-        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.gridLayout_3.addItem(self.verticalSpacer, 3, 0, 1, 1)
 
@@ -636,7 +647,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_6.addWidget(self.Sift_f)
 
         self.Sift_image_dw.setWidget(self.dockWidgetContents_5)
-        MainWindow.addDockWidget(Qt.BottomDockWidgetArea, self.Sift_image_dw)
+        MainWindow.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.Sift_image_dw)
 
         self.menubar.addAction(self.menu.menuAction())
         self.menubar.addAction(self.Edit_menu.menuAction())

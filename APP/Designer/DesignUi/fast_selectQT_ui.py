@@ -3,33 +3,31 @@
 ################################################################################
 ## Form generated from reading UI file 'fast_selectQT.ui'
 ##
-## Created by: Qt User Interface Compiler version 5.15.2
+## Created by: Qt User Interface Compiler version 6.8.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
-
+from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
+    QMetaObject, QObject, QPoint, QRect,
+    QSize, QTime, QUrl, Qt)
+from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
+    QFont, QFontDatabase, QGradient, QIcon,
+    QImage, QKeySequence, QLinearGradient, QPainter,
+    QPalette, QPixmap, QRadialGradient, QTransform)
+from PySide6.QtWidgets import (QApplication, QComboBox, QFrame, QGridLayout,
+    QHBoxLayout, QLabel, QPushButton, QRadioButton,
+    QSizePolicy, QSlider, QSpacerItem, QSpinBox,
+    QStackedWidget, QVBoxLayout, QWidget)
 
 class Ui_Form(object):
     def setupUi(self, Form):
         if not Form.objectName():
             Form.setObjectName(u"Form")
-        Form.resize(483, 215)
+        Form.resize(533, 197)
         Form.setStyleSheet(u"")
         self.gridLayout_5 = QGridLayout(Form)
         self.gridLayout_5.setObjectName(u"gridLayout_5")
-        self.widget_2 = QWidget(Form)
-        self.widget_2.setObjectName(u"widget_2")
-        self.horizontalLayout = QHBoxLayout(self.widget_2)
-        self.horizontalLayout.setSpacing(3)
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
-
-        self.gridLayout_5.addWidget(self.widget_2, 0, 0, 1, 1)
-
         self.widget_5 = QWidget(Form)
         self.widget_5.setObjectName(u"widget_5")
         self.horizontalLayout_4 = QHBoxLayout(self.widget_5)
@@ -39,13 +37,22 @@ class Ui_Form(object):
 
         self.gridLayout_5.addWidget(self.widget_5, 0, 1, 1, 1)
 
+        self.widget_2 = QWidget(Form)
+        self.widget_2.setObjectName(u"widget_2")
+        self.horizontalLayout = QHBoxLayout(self.widget_2)
+        self.horizontalLayout.setSpacing(3)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
+
+        self.gridLayout_5.addWidget(self.widget_2, 0, 0, 1, 1)
+
         self.frame = QFrame(Form)
         self.frame.setObjectName(u"frame")
         self.frame.setFrameShape(QFrame.StyledPanel)
         self.frame.setFrameShadow(QFrame.Raised)
-        self.windows_vl = QVBoxLayout(self.frame)
-        self.windows_vl.setObjectName(u"windows_vl")
-        self.windows_vl.setContentsMargins(0, 0, 0, 0)
+        self.vboxLayout = QVBoxLayout(self.frame)
+        self.vboxLayout.setObjectName(u"vboxLayout")
+        self.vboxLayout.setContentsMargins(0, 0, 0, 0)
         self.frame_2 = QFrame(self.frame)
         self.frame_2.setObjectName(u"frame_2")
         self.frame_2.setFrameShape(QFrame.StyledPanel)
@@ -58,13 +65,13 @@ class Ui_Form(object):
         self.Fast_sel_methods_cbb.addItem("")
         self.Fast_sel_methods_cbb.setObjectName(u"Fast_sel_methods_cbb")
         font = QFont()
-        font.setFamily(u"Arial")
+        font.setFamilies([u"Arial"])
         font.setPointSize(11)
         self.Fast_sel_methods_cbb.setFont(font)
 
         self.horizontalLayout_5.addWidget(self.Fast_sel_methods_cbb)
 
-        self.horizontalSpacer_3 = QSpacerItem(97, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalSpacer_3 = QSpacerItem(122, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout_5.addItem(self.horizontalSpacer_3)
 
@@ -75,13 +82,13 @@ class Ui_Form(object):
         self.FF_color_ch_cbb.addItem("")
         self.FF_color_ch_cbb.setObjectName(u"FF_color_ch_cbb")
         font1 = QFont()
-        font1.setFamily(u"Arial")
+        font1.setFamilies([u"Arial"])
         font1.setPointSize(8)
         self.FF_color_ch_cbb.setFont(font1)
 
         self.horizontalLayout_5.addWidget(self.FF_color_ch_cbb)
 
-        self.horizontalSpacer_6 = QSpacerItem(96, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalSpacer_6 = QSpacerItem(121, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout_5.addItem(self.horizontalSpacer_6)
 
@@ -89,7 +96,7 @@ class Ui_Form(object):
         self.Finish_pb.setObjectName(u"Finish_pb")
         self.Finish_pb.setMaximumSize(QSize(40, 20))
         font2 = QFont()
-        font2.setFamily(u"Arial")
+        font2.setFamilies([u"Arial"])
         font2.setPointSize(9)
         self.Finish_pb.setFont(font2)
 
@@ -103,12 +110,12 @@ class Ui_Form(object):
         self.horizontalLayout_5.addWidget(self.Cancel_pb)
 
 
-        self.windows_vl.addWidget(self.frame_2)
+        self.vboxLayout.addWidget(self.frame_2)
 
         self.stackedWidget = QStackedWidget(self.frame)
         self.stackedWidget.setObjectName(u"stackedWidget")
         font3 = QFont()
-        font3.setFamily(u"Arial")
+        font3.setFamilies([u"Arial"])
         font3.setPointSize(10)
         self.stackedWidget.setFont(font3)
         self.Thred_args_page = QWidget()
@@ -153,7 +160,7 @@ class Ui_Form(object):
         self.horizontalLayout_3.setSpacing(0)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.horizontalSpacer = QSpacerItem(85, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalSpacer = QSpacerItem(85, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout_3.addItem(self.horizontalSpacer)
 
@@ -163,7 +170,7 @@ class Ui_Form(object):
 
         self.horizontalLayout_3.addWidget(self.Thre_cre_sel_pb)
 
-        self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout_3.addItem(self.horizontalSpacer_2)
 
@@ -178,7 +185,7 @@ class Ui_Form(object):
 
         self.gridLayout_2.addWidget(self.Thre_lo_th_hs, 0, 1, 1, 1)
 
-        self.verticalSpacer_2 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.verticalSpacer_2 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.gridLayout_2.addItem(self.verticalSpacer_2, 3, 0, 1, 1)
 
@@ -192,11 +199,11 @@ class Ui_Form(object):
 
         self.gridLayout_4.addWidget(self.GC_cre_mask_pb, 1, 3, 1, 1)
 
-        self.horizontalSpacer_7 = QSpacerItem(77, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalSpacer_7 = QSpacerItem(77, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.gridLayout_4.addItem(self.horizontalSpacer_7, 1, 0, 1, 1)
 
-        self.horizontalSpacer_9 = QSpacerItem(78, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalSpacer_9 = QSpacerItem(78, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.gridLayout_4.addItem(self.horizontalSpacer_9, 1, 2, 1, 1)
 
@@ -231,7 +238,7 @@ class Ui_Form(object):
 
         self.gridLayout_4.addWidget(self.widget, 0, 0, 1, 5)
 
-        self.horizontalSpacer_8 = QSpacerItem(77, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalSpacer_8 = QSpacerItem(77, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.gridLayout_4.addItem(self.horizontalSpacer_8, 1, 4, 1, 1)
 
@@ -240,7 +247,7 @@ class Ui_Form(object):
 
         self.gridLayout_4.addWidget(self.GC_cre_sel_pb, 1, 1, 1, 1)
 
-        self.verticalSpacer_3 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.verticalSpacer_3 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.gridLayout_4.addItem(self.verticalSpacer_3, 2, 2, 1, 1)
 
@@ -287,7 +294,7 @@ class Ui_Form(object):
         self.widget_3.setObjectName(u"widget_3")
         self.horizontalLayout_2 = QHBoxLayout(self.widget_3)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.horizontalSpacer_5 = QSpacerItem(71, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalSpacer_5 = QSpacerItem(71, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout_2.addItem(self.horizontalSpacer_5)
 
@@ -303,14 +310,14 @@ class Ui_Form(object):
 
         self.horizontalLayout_2.addWidget(self.FF_sel_seed_pb)
 
-        self.horizontalSpacer_4 = QSpacerItem(47, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalSpacer_4 = QSpacerItem(47, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout_2.addItem(self.horizontalSpacer_4)
 
 
         self.gridLayout_3.addWidget(self.widget_3, 2, 0, 2, 3)
 
-        self.verticalSpacer_4 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.verticalSpacer_4 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.gridLayout_3.addItem(self.verticalSpacer_4, 4, 0, 1, 1)
 
@@ -322,7 +329,7 @@ class Ui_Form(object):
 
         self.stackedWidget.addWidget(self.Floodfill_args_page)
 
-        self.windows_vl.addWidget(self.stackedWidget)
+        self.vboxLayout.addWidget(self.stackedWidget)
 
 
         self.gridLayout_5.addWidget(self.frame, 1, 0, 1, 2)

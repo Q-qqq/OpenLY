@@ -13,7 +13,7 @@ class DetectionPredictor(BasePredictor):
                 preds, 
                 self.args.conf, 
                 self.args.iou,
-                agnostic=self.agnostic_nms,
+                agnostic=self.args.agnostic_nms,
                 max_det=self.args.max_det,
                 classes=self.args.classes)
         else:
@@ -25,7 +25,7 @@ class DetectionPredictor(BasePredictor):
                 max_det=self.args.max_det,
                 classes=self.args.classes,
             )
-
+            
         if not isinstance(orig_imgs, list):
             orig_imgs = ops.convert_torch2numpy_batch(orig_imgs)
 

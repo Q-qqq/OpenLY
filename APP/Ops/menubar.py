@@ -1,4 +1,5 @@
 import copy
+import glob
 import shutil
 
 from PySide2.QtCore import *
@@ -7,10 +8,12 @@ from PySide2.QtWidgets import *
 
 from pathlib import Path
 
+from ultralytics.data.utils import IMG_FORMATS
 
-from APP import PROJ_SETTINGS, getExistDirectory, getOpenFileName, APP_SETTINGS, loadQssStyleSheet
+from APP import PROJ_SETTINGS, getExistDirectory, getOpenFileName, APP_SETTINGS, loadQssStyleSheet, getOpenFileNames, getExperimentPath, EXPERIMENT_SETTINGS
 from APP.Utils.filters import MenuFilter
 from APP.Make import VocToYolo, CocoToYolo, PngToYolo
+from ultralytics.utils import threaded
 
 
 class MenuTool(QObject):
@@ -36,7 +39,6 @@ class MenuTool(QObject):
         self.parent().Save_a.triggered.connect(self.file_save)
         self.parent().Save_as_a.triggered.connect(self.file_saveAs)
         self.parent().Exit_a.triggered.connect(self.file_exit)
-        self.parent().Load_model_a.triggered.connect(self.edit_loadModelAction)
         self.parent().Back_start_a.triggered.connect(self.file_showStart)
         self.parent().Voc_to_yolo_a.triggered.connect(self.tool_vocToYolo)
         self.parent().Coco_to_yolo_a.triggered.connect(self.tool_cocoToYolo)
@@ -44,6 +46,7 @@ class MenuTool(QObject):
         self.parent().Style_cute_a.triggered.connect(self.file_loadCuteStyle)
         self.parent().Style_technology_a.triggered.connect(self.file_loadTechnologyStyle)
         self.parent().Style_light_a.triggered.connect(self.file_loadLightStyle)
+        self.parent().Add_no_labels_a.triggered.connect(self.edit_addNolabels)
 
     def file_showStart(self):
         """显示开始界面"""
@@ -68,36 +71,37 @@ class MenuTool(QObject):
         """新建实验"""
         name, ok = QInputDialog.getText(self.parent(), "新建实验", "实验名称：", text="")
         if ok and name != "":
-            new_experiment = Path(PROJ_SETTINGS["name"]) / "experiments" / name
+            new_experiment = Path(getExperimentPath(name))
             if new_experiment.exists():
                 QMessageBox.warning(self.parent(), "提示", "实验已存在，请重新命名")
                 self.file_newExperiment()
                 return
-            self.parent().openExperiment(new_experiment)
+            self.parent().openExperiment(name)
         elif ok and name == "":
             QMessageBox.warning(self.parent(), "提示", "实验名称不能为空, 创建失败")
 
     def file_openExperiment(self):
         """打开实验"""
-        dir = getExistDirectory(self.parent(), "打开实验", dir=str(Path(PROJ_SETTINGS["name"])))
-        if dir != "":
-            self.parent().openExperiment(dir)
+        experiments = glob.glob(str(Path(PROJ_SETTINGS["name"]) / "experiments" / "*"))
+        experiments = [Path(e).name for e in experiments if Path(e).name != "expcache"]
+        experiment, ok = QInputDialog.getItem(self.parent(),"选择实验", "实验：",experiments,0,False)
+        if ok:
+            self.parent().openExperiment(experiment)
 
     def file_save(self):
         """保存实验"""
         self.parent().cfgs_widget.save()
-        if Path(self.parent().experiment).parent.name == "expcache":   #实验未命名，存储于缓存区
-            name, ok = QInputDialog.getText(self.parent(), "保存实验", "实验名称：", text=Path(PROJ_SETTINGS['current_experiment']).name)
+        if Path(getExperimentPath()).parent.name == "expcache":   #实验未命名，存储于缓存区
+            name, ok = QInputDialog.getText(self.parent(), "保存实验", "实验名称：", text=EXPERIMENT_SETTINGS["name"]+"_1")
             if ok and name != "":
-                exp_p = Path(f"{PROJ_SETTINGS['name']}//experiments//{name}")
+                exp_p = Path(getExperimentPath(name))  #新实验路径
                 if exp_p.exists():
                     QMessageBox.information(self.parent(), "提示", "实验已存在，请重新命名")
                     self.file_save()
                     return
-                shutil.copytree(PROJ_SETTINGS['current_experiment'], str(exp_p))
-                shutil.rmtree(PROJ_SETTINGS['current_experiment'])
+                shutil.copytree(getExperimentPath(), str(exp_p))
+                shutil.rmtree(getExperimentPath())
                 self.parent().openExperiment(exp_p)
-                PROJ_SETTINGS.updateExperiment(str(Path(f"{PROJ_SETTINGS['name']}//experiments//{name}")))
             elif ok and name == "":
                 QMessageBox.information(self.parent(), "提示", "保存失败，实验名称不能为空")
 
@@ -106,11 +110,15 @@ class MenuTool(QObject):
         """实验另存为"""
         name, ok = QInputDialog.getText(self.parent(), "实验另存为", "实验名称：", text="")
         if ok and name != "":
-            new_experiment = Path(PROJ_SETTINGS["name"]) / "experiments" / name
-            shutil.copytree(PROJ_SETTINGS["current_experiment"], new_experiment)
-            self.parent().openExperoment(new_experiment)
+            new_experiment = getExperimentPath(name)
+            if Path(new_experiment).exists():
+                QMessageBox.warning(self.parent(), "提示", "实验已存在，请重新命名")
+                self.file_saveAs()
+                return
+            shutil.copytree(getExperimentPath(), new_experiment)
+            self.parent().openExperoment(name)
         elif ok and name == "":
-            QMessageBox.warning(self.parent(), "提示", "实验名称不能为空, 创建失败")
+            QMessageBox.warning(self.parent(), "提示", "实验名称不能为空, 另存为失败")
 
     def file_exit(self):
         """退出"""
@@ -150,6 +158,20 @@ class MenuTool(QObject):
         data = self.parent().cfgs_widget.args["data"]
         if data != "":
             self.parent().buildDataset(data)
+    
+    def edit_addNolabels(self):
+        """添加图像数据到未标注"""
+        files,_ = getOpenFileNames(self.parent(), "选择需要添加的文件", filter=f"Image files (*.{' *.'.join(IMG_FORMATS)})")
+        if files:
+            exist_names = self.parent().sift_dataset.addNolabels(files)
+            _names = '\n'.join(exist_names)
+            QMessageBox.information(self.parent(), "提示",
+                                     f"添加成功，添加数量：{len(files) - len(exist_names)}\n" + 
+                                     f"识别到同名文件数量{len(exist_names)}，如下，已剔除\n{_names}" * (exist_names != []))
+            
+            
+
+
 
     def edit_showClasses(self):
         if not self.parent().sift_dataset:
@@ -168,7 +190,7 @@ class MenuTool(QObject):
         a1.setObjectName(cls)
         a2 = QAction("删除", cm)
         a1.triggered.connect(lambda: self.edit_renameClassAction(a1))
-        a2.triggered.connect(lambda: self.edit_deleteClassAction(a1))
+        a2.triggered.connect(lambda: self.edit_deleteClassAction(a2))
         cm.addActions([a1, a2])
         return cm
 
@@ -196,11 +218,6 @@ class MenuTool(QObject):
     def edit_initArgsAction(self):
         """参数初始化"""
         self.parent().cfgs_widget.initArgs()
-
-    def edit_loadModelAction(self):
-        file = getOpenFileName(self.parent(), "训练模型文件", filter="data file(*.yaml | *.pt)")
-        if file[0] != "":
-            self.parent().cfgs_widget.setValue("model", file[0])
 
     def tool_vocToYolo(self):
         vy = VocToYolo(self.parent())

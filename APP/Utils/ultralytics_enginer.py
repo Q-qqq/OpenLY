@@ -10,26 +10,28 @@ from APP.Utils.base import QInstances
 
 class Yolo(YOLO):
     @threaded
-    #@TryExcept(msg="Train error", verbose=True)
-    def lyTrain(self, trainer=None, threaded=True, **kwargs):
+    @TryExcept(msg="Train error", verbose=True)
+    def lyTrain(self, trainer=None, **kwargs):
         self.train(trainer, **kwargs)
 
-    #@threaded
+
+    @threaded
     @TryExcept(msg="Val error", verbose=True)
-    def lyVal(self, validator=None, threaded=True, **kwargs):
+    def lyVal(self, validator=None,  **kwargs):
         LOGGER.info("开始验证")
         self.val(validator, **kwargs)
 
     @TryExcept(msg="Predict Error", verbose=True)
-    def lyPredict(self, source=None, stream=False, predictor=None,threaded=True, **kwargs):
-        #results = None
+    def lyPredict(self, source=None, stream=False, predictor=None, **kwargs):
         try:
             PROGRESS_BAR.show("推理", "开始推理...")
-            PROGRESS_BAR.start(0, 0, False)
             results = self.predict(source, stream, predictor, **kwargs)
             labels = {}
-            for result in results:
-                boxes = result.boxes.xywhn if result.boxes is not None else None
+            for i, result in enumerate(results):
+                if i==0:
+                    PROGRESS_BAR.show("推理", "开始推理...")
+                    PROGRESS_BAR.start(0, len(source), True)
+                boxes = result.boxes.xywhn if result.boxes is not None else None   #取归一化参数
                 segments = result.masks.xyn if result.masks is not None else None
                 keypoints = result.keypoints.xyn if result.keypoints is not None else None
                 obbs = result.obb.xyxyxyxyn if result.obb is not None else None
@@ -64,11 +66,18 @@ class Yolo(YOLO):
                          "ndim": ndim,
                          "instances": instances}
                 labels[str(Path(result.path))] = label
-                PROGRESS_BAR.close()
+                PROGRESS_BAR.setValue(i+1, f"{result.path}: {result.speed['inference']:.1f}ms")
+                if PROGRESS_BAR.isStop():
+                    PROGRESS_BAR.close()
+                    return labels
+            PROGRESS_BAR.close()
         except Exception as e:
             LOGGER.error("Predict error:" + str(e))
             PROGRESS_BAR.stop()
             PROGRESS_BAR.close()
         return labels
 
-
+    @threaded
+    @TryExcept(msg="Export error", verbose=True)
+    def lyExport(self):
+        self.export()

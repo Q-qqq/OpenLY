@@ -6,13 +6,14 @@ from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 from pathlib import Path
+from APP.Utils import getcat
 from ultralytics.utils.instance import Bboxes,Instances,_formats
 from ultralytics.utils.ops import segments2boxes, xyxy2xywh
 from ultralytics.data.utils import img2label_paths, IMG_FORMATS
 import numpy as np
 import copy
 import torch
-from APP.Utils.ops import cvImg2Qpix, generate_distinct_colors,segmentArea
+from APP.Utils.ops import cvImg2Qpix, generate_distinct_colors, segment2Box,segmentArea, twoPoints2box
 
 
 
@@ -45,12 +46,19 @@ class QBboxes(Bboxes):
         self.setItem(box_i, min(ori_x, x), min(ori_y, y), max(ori_x, x),  max(ori_y, y), "xyxy")
 
     def moveBox(self,box_i, center_x, center_y):
-        old_format = self.format
         if self.format == "xywh":
             x, y, w, h = self.bboxes[box_i]
         else:
             x,y,w,h = xyxy2xywh(self.bboxes[box_i])
         self.setItem(box_i, center_x, center_y, w, h, "xywh")
+    
+    def addBox(self, box, format):
+        old_format = self.format
+        self.convert(format)
+        cat = getcat(box)
+        self.bboxes = cat(
+            (self.bboxes, box), 0) if len(self.bboxes) else box
+        self.convert(old_format)
 
     def __getitem__(self, index) -> "Bboxes":
         """
@@ -306,23 +314,23 @@ class QInstances(Instances):
             old_norm = self.normalized
             if not self.normalized:
                 self.normalize(w, h)  # 归一化
-                self._bboxes.convert("xywh")
-                texts = []
-                for i in range(len(self._bboxes)):
+            self._bboxes.convert("xywh")
+            texts = []
+            for i in range(len(self._bboxes)):
+                line = (cls[i], *(
+                    self.bboxes[i].view(-1) if isinstance(self.bboxes[i], torch.Tensor) else self.bboxes[i].reshape(
+                        -1)))
+                if self.segments:
                     line = (cls[i], *(
-                        self.bboxes[i].view(-1) if isinstance(self.bboxes[i], torch.Tensor) else self.bboxes[i].reshape(
-                            -1)))
-                    if self.segments:
-                        line = (cls[i], *(
-                            self.segments[i].view(-1) if isinstance(self.segments[i], torch.Tensor) else self.segments[
-                                i].reshape(-1)))
-                    elif self.keypoints:
-                        line = (cls[i], *(self.keypoints[i].view(-1) if isinstance(self.keypoints[i], torch.Tensor) else
-                                          self.keypoints[i].reshape(-1)))
-                    texts.append(("%g " * len(line)).rstrip() % line)
-                Path(label_file).parent.mkdir(parents=True, exist_ok=True)
-                with open(label_file, "w") as f:
-                    f.writelines(text + "\n" for text in texts)
+                        self.segments[i].view(-1) if isinstance(self.segments[i], torch.Tensor) else self.segments[
+                            i].reshape(-1)))
+                elif self.keypoints:
+                    line = (cls[i], *(self.keypoints[i].view(-1) if isinstance(self.keypoints[i], torch.Tensor) else
+                                        self.keypoints[i].reshape(-1)))
+                texts.append(("%g " * len(line)).rstrip() % line)
+            Path(label_file).parent.mkdir(parents=True, exist_ok=True)
+            with open(label_file, "w") as f:
+                f.writelines(text + "\n" for text in texts)
             if old_norm:
                 self.normalize(w, h)
             else:
@@ -354,7 +362,6 @@ class QSizeLabel(QLabel):
         scale_up_h(float): 显示图像以鼠标位置为基准进行缩放后，其顶边距离中心的距离
         image_rect(QRect): 显示图像矩形区域
         mouse_point(QPoint): 实时鼠标位置
-        rect_zoom(bool): 是否手动圈定区域缩放
         zoom_zone(list): 指定缩放区域[x1,y1,x2,y2]
         zoom_finish(bool): 放大区域绘制完成信号
         """
@@ -378,9 +385,8 @@ class QSizeLabel(QLabel):
         self.scale_up_h = 0
         self.image_rect = None
         self.mouse_point = QPoint(0,0)
-        self.rect_zoom = False
         self.zoom_zone = []
-        self.zoom_finish = False
+        self.zoom_finish = True
 
 
     # region 焦点事件
@@ -452,10 +458,11 @@ class QSizeLabel(QLabel):
         self.scale_down_h = h / 2
         self.scale_up_h = h / 2
 
-
+        if self.pix == None:
+            return
         painter = QPainter(self)
         painter.drawPixmap(self.image_rect, self.pix)  # 指定矩形范围rect绘制图像
-        if self.rect_zoom and not self.zoom_finish and self.zoom_zone:
+        if not self.zoom_finish and self.zoom_zone:
             zone_l = min(self.zoom_zone[0], self.zoom_zone[2])
             zone_u = min(self.zoom_zone[1], self.zoom_zone[3])
             zone_r = max(self.zoom_zone[0], self.zoom_zone[2])
@@ -470,21 +477,28 @@ class QSizeLabel(QLabel):
     def draw(self, painter):
         """绘制"""
         pass
-
+    
+    
+    def resizing(self, event: QMouseEvent):
+        """处于指定放大范围状态"""
+        return (event.modifiers() == Qt.KeyboardModifier.AltModifier and not self.zoom_finish) or event.modifiers() == Qt.KeyboardModifier.ControlModifier
+        
 
     def mousePressEvent(self, event: QMouseEvent):
         if event.button() == Qt.LeftButton:
             self.start = event.pos()
-            if self.rect_zoom:
-                self.zoom_zone = [event.x(), event.y(), event.x(), event.y()]
+            if event.modifiers() == Qt.KeyboardModifier.AltModifier:
+                self.zoom_zone = [self.start.x(), self.start.y(), event.x(), event.y()]
                 self.zoom_finish = False
 
     def mouseMoveEvent(self, event: QMouseEvent):
-        if self.rect_zoom and event.buttons() == Qt.LeftButton and event.modifiers() != Qt.ControlModifier:
+        if event.modifiers() == Qt.KeyboardModifier.AltModifier and event.buttons() == Qt.LeftButton and not self.zoom_finish:
             self.zoom_zone[2] = event.x()
             self.zoom_zone[3] = event.y()
             self.update()
-        elif event.buttons() == Qt.LeftButton and event.modifiers() == Qt.ControlModifier:
+        elif event.modifiers() != Qt.KeyboardModifier.AltModifier and event.button() == Qt.LeftButton and not self.zoom_finish:#未完成放大区域绘制就松开了alt键
+            self.finishZoom()
+        elif event.buttons() == Qt.LeftButton and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
             self.translate_x = event.x() - self.start.x()
             self.translate_y = event.y() - self.start.y()
             self.start = QPoint(event.x(), event.y())
@@ -495,22 +509,26 @@ class QSizeLabel(QLabel):
         self.mouse_point = QPoint(event.x(), event.y())
 
     def mouseReleaseEvent(self, ev:QMouseEvent) -> None:
-        if self.rect_zoom and ev.button() == Qt.LeftButton:
-            center_x = (self.zoom_zone[0] + self.zoom_zone[2]) / 2
-            center_y = (self.zoom_zone[1] + self.zoom_zone[3]) / 2
-            w = abs(self.zoom_zone[2] - self.zoom_zone[0])
-            h = abs(self.zoom_zone[3] - self.zoom_zone[1])
-            if w < 0.01 or h < 0.01:
-                self.zoom_finish = True
-                return
-            scale = max(w/self.width(), h/self.height())
-            half_w = self.pix_half_width / scale
-            half_h = self.pix_half_height / scale
-            self.scalePix(half_w, half_h, center_x, center_y)
-            self.zoom_finish =True
+        if ev.modifiers() == Qt.KeyboardModifier.AltModifier and ev.button() == Qt.LeftButton:
+            self.finishZoom()
 
-            self.update()
-
+            
+    
+    def finishZoom(self):
+        center_x = (self.zoom_zone[0] + self.zoom_zone[2]) / 2
+        center_y = (self.zoom_zone[1] + self.zoom_zone[3]) / 2
+        w = abs(self.zoom_zone[2] - self.zoom_zone[0])
+        h = abs(self.zoom_zone[3] - self.zoom_zone[1])
+        if w < 0.01 or h < 0.01:
+            self.zoom_finish = True
+            return  #不进行缩放
+        scale = max(w/self.width(), h/self.height())
+        half_w = self.pix_half_width / scale 
+        x = (half_w-self.pix_half_width)/self.pix_scale_x   #更新公式： pix_half_width + x*self.pix_scale_x = pix_half_width  逆推
+        half_h = self.pix_half_height + x * self.pix_scale_y # pix_half_height = pix_half_height + x *self.pix_scale_y
+        self.scalePix(half_w, half_h, center_x, center_y)
+        self.zoom_finish =True
+        self.update()
 
 
     def wheelEvent(self, event: QWheelEvent):
@@ -518,9 +536,8 @@ class QSizeLabel(QLabel):
             return
 
         if (self.pix_half_height > 24 and self.pix_half_width > 24) or event.angleDelta().y() > 0:  # 120/5=24，不能使得pix_half_width和pix_halg_height为负数
-
-            half_w = self.pix_half_width + int(event.angleDelta().y() / 5 * self.pix_scale_x)  #放大后的一半宽
-            half_h = self.pix_half_height + int(event.angleDelta().y() / 5 * self.pix_scale_y)  #放大后的一半高
+            half_w = self.pix_half_width + event.angleDelta().y() / 5 * self.pix_scale_x  #放大后的一半宽
+            half_h = self.pix_half_height + event.angleDelta().y() / 5 * self.pix_scale_y  #放大后的一半高
             x = event.x() if event.angleDelta().y() > 0  else self.width()/2  #放大以鼠标位置为缩放中心，缩小以label中心为缩放中心
             y = event.y() if event.angleDelta().y() > 0  else self.height()/2
             self.scalePix(half_w, half_h, x, y)
@@ -556,20 +573,18 @@ class QSizeLabel(QLabel):
 
     def contextMenuEvent(self, ev: QContextMenuEvent) -> None:
         main_menu = QMenu(self)
-        main_menu.setStyleSheet(
-            u"color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); selection-color: rgb(0, 0, 0); selection-background-color: rgb(144, 188, 255);")
+        main_menu.setObjectName("right_menu")
         auto_fit_a = QAction(text="自适应", parent=main_menu)
-        rect_zoom_a = QAction(text= "放大", parent=main_menu)
-        rect_zoom_a.setCheckable(True)
-        rect_zoom_a.setChecked(self.rect_zoom)
-        main_menu.addActions([auto_fit_a,rect_zoom_a])
+
+        main_menu.addActions([auto_fit_a])
         req = main_menu.exec_(self.mapToGlobal(ev.pos()))
         if req == auto_fit_a:
             self.fit()
-        elif req == rect_zoom_a:
-            self.rect_zoom = rect_zoom_a.isChecked()
-            self.zoom_finish = True
         self.update()
+
+
+
+    
 
 
 class QTransformerLabel(QSizeLabel):
@@ -580,6 +595,7 @@ class QTransformerLabel(QSizeLabel):
     Create_Select_Signal = Signal()  #创建选区完成信号
     Create_Mask_Signal = Signal()  #创建掩膜完成信号
     Show_Status_Signal = Signal(str) #显示图像坐标信号
+    Show_Classes_Signal = Signal()  #显示种类信号
     def __init__(self, parent):
         """
         Attriabute:
@@ -624,16 +640,23 @@ class QTransformerLabel(QSizeLabel):
         self.levels_img = None
         self.colors = []
 
+        
+
 
 
     def init(self):
         """初始化"""
+        self.img = None
         self.label = None
         self.im_file = ""
         self.pix = None
         self.paint = False
         self.painting = False
         self.update()
+
+    def generateColors(self):
+        """生成颜色"""
+        self.colors = generate_distinct_colors(len(self.label["names"])+1)[1:]
 
 
     def load_image(self, image: Union[str, Path], label=None):
@@ -646,16 +669,20 @@ class QTransformerLabel(QSizeLabel):
                 self.label["ndim"] = ndim
             self.label["instances"].denormalize(self.label["ori_shape"][1], self.label["ori_shape"][0])
             self.label["cls"] = [int(c) for c in self.label["cls"]]
-            self.colors = generate_distinct_colors(len(self.label["names"]))
+            self.generateColors()
             self.index = -1
             self.point_ind1 = -1
             self.point_ind2 = -1
             self.painting = False
             self.img = cv2.imread(image)
             self.levels_img = None
+            if self.cls >= len(self.label["names"]):
+                self.cls = self.cls - 1 if len(self.label["names"]) > 0 else 0
             super().load_image(image, label)
         else:
             self.init()
+
+
 
     def loadPredLabel(self, pred_label):
         """加载预测标签"""
@@ -702,35 +729,36 @@ class QTransformerLabel(QSizeLabel):
             painter.drawPixmap(self.image_rect, pix)
         if self.cross_cursor:
             self.drawCrossLine(painter)
-        if self.show_true and self.label:
-            true_instance = None
-            if self.label.get("instances") is not None:
-                true_instance = self.getInstance(self.label)
-            self.drawLabel(painter, true_instance)
-            if self.bounding_rect and true_instance:
-                self.drawBoxes(painter, true_instance)
-        if self.show_pred and self.pred_label:
-            pred_instance = None
-            if self.pred_label.get("instances"):
-                pred_instance = self.getInstance(self.pred_label)
-            if pred_instance:
-                self.drawLabel(painter, pred_instance, True)
+        if self.show_true and self.label:   #真实标签
+            true_label = copy.deepcopy(self.label)
+            if true_label.get("instances"):
+                true_label["instances"] = self.getInstance(self.label)
+            self.drawLabel(painter, true_label)
+            if self.bounding_rect and true_label:
+                self.drawBoxes(painter, true_label)
+        if self.show_pred and self.pred_label:  #预测标签
+            pred_label = copy.deepcopy(self.pred_label)
+            if pred_label.get("instances"):
+                pred_label["instances"] = self.getInstance(self.pred_label)
+                self.drawLabel(painter, pred_label, True)
                 if self.bounding_rect:
-                    self.drawBoxes(painter, pred_instance, True)
+                    self.drawBoxes(painter, pred_label, True)
 
     def getInstance(self, label):
         label["instances"].getBoundingRect()
         instance = copy.deepcopy(label["instances"])
         if instance._bboxes is not None and len(instance._bboxes) > 0:  #存在标签
             if not self.painting and self.cursor() == Qt.CrossCursor:
-                label["instances"].remove_zero_area_boxes()
+                good = label["instances"].remove_zero_area_boxes()
+                clss = np.array(label["cls"], dtype=np.int32)
+                label["cls"] = clss[good].tolist()
             label["instances"].clip(self.pix.width(), self.pix.height())
             instance.convert_bbox("xyxy")
             self.getLabelSizeInstance(instance)  # 将标签缩放移动至显示大小位置
         return instance
 
 
-    def drawLabel(self, painter, instance, pred=False):
+    def drawLabel(self, painter, label, pred=False):
         """
         绘制标签
         Args:
@@ -751,7 +779,7 @@ class QTransformerLabel(QSizeLabel):
         painter.drawLine(QLine(self.mouse_point.x(), 0, self.mouse_point.x(), self.height()))
         painter.drawLine(QLine(0, self.mouse_point.y(), self.width(), self.mouse_point.y()))
 
-    def drawBoxes(self, painter, instance, pred=False):
+    def drawBoxes(self, painter, label, pred=False):
         """
         绘制矩形
         Args:
@@ -759,11 +787,13 @@ class QTransformerLabel(QSizeLabel):
             instance(QInstance): 标签实例
             pred(bool): 是否预测标签
         """
+        instance = label["instances"]
         if instance._bboxes is not None and len(instance._bboxes):
             if instance._bboxes.format != "xyxy":
                 instance.convert_bbox("xyxy")
             boxes = instance.bboxes
-            cls = self.label["cls"] if not pred else self.pred_label["cls"]
+            cls = label["cls"]
+
             for i,(box,c) in enumerate(zip(boxes,cls)):
                 if isinstance(box, torch.Tensor):
                     box = box.tolist()
@@ -780,20 +810,23 @@ class QTransformerLabel(QSizeLabel):
                 painter.drawPoints([lu, ru, ld, rd])
                 if self.show_cls and self.task == "detect":
                     if not pred:
-                        self.drawText(painter, QPoint(box[0],box[1]-2), self.label["names"][int(c)], 12, color=Qt.green)
+                        self.drawText(painter, QPoint(box[0],box[1]-4), self.label["names"][int(c)], 12, color=Qt.green)
                     else:
                         self.drawText(painter, QPoint(box[2], box[3] + 12), self.pred_label["names"][int(c)] + f" {self.pred_label['conf'][i]:3.2f}", 12, color=Qt.white)
 
     def drawText(self, painter,point, text, font_size=8, color=Qt.green):
-        text_w = len(text) * font_size*3/4
-        text_h = font_size
+        font = QFont("幼圆", font_size)
+        # 计算文本宽度
+        font_metrics = QFontMetrics(font)
+        text_w= font_metrics.horizontalAdvance(text)
+        text_h = font_metrics.height()
         brush = QBrush(Qt.SolidPattern)
         brush.setColor(QColor(255, 0, 0, 150))
         painter.setBrush(brush)
         painter.setPen(Qt.NoPen)
-        painter.drawRect(QRect(point.x()-2, point.y() - font_size-1, text_w+4, text_h+5))
+        painter.drawRect(QRect(point.x()-2, point.y() -text_h, text_w+4, text_h+2))
         painter.setPen(QPen(color))
-        painter.setFont(QFont("幼圆", font_size))
+        painter.setFont(font)
         painter.drawText(point, text)
 
 
@@ -801,6 +834,12 @@ class QTransformerLabel(QSizeLabel):
 
     def mouseMoveEvent(self, event: QMouseEvent):
         super().mouseMoveEvent(event)
+        #显示种类
+        if self.label is not None:
+            rect = QRect(self.width()- 5, 0, 5, self.height())
+            if rect.contains(event.pos()):
+                self.Show_Classes_Signal.emit()
+        #显示像素值
         if self.img is not None:
             x = event.x()
             y = event.y()
@@ -843,19 +882,18 @@ class QTransformerLabel(QSizeLabel):
             self.Next_Image_Signal.emit()
         elif ev.key() == Qt.Key_Up:
             self.Last_Image_Signal.emit()
+        elif ev.key() in (Qt.Key.Key_0, Qt.Key.Key_1, Qt.Key.Key_2, Qt.Key.Key_3, Qt.Key.Key_4, Qt.Key.Key_5, Qt.Key.Key_6, Qt.Key.Key_7, Qt.Key.Key_8, Qt.Key.Key_9):
+            if int(ev.text()) < len(self.label["names"]):
+                self.cls = int(ev.text())
 
 
     def contextMenuEvent(self, ev: QContextMenuEvent) -> None:
         if not self.pix:
             return
         main_menu = QMenu(self)
-        main_menu.setStyleSheet(
-            u"color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); selection-color: rgb(0, 0, 0); selection-background-color: rgb(144, 188, 255);")
+        main_menu.setObjectName("right_menu")
         clear_all_a = QAction(text="清空", parent=main_menu)
         auto_fit_a = QAction(text="自适应", parent=main_menu)
-        rect_zoom_a = QAction(text="放大", parent=main_menu)
-        rect_zoom_a.setCheckable(True)
-        rect_zoom_a.setChecked(self.rect_zoom)
         paint_a = QAction(text="标注", parent=main_menu)
         paint_a.setCheckable(True)
         paint_a.setChecked(self.paint)
@@ -867,12 +905,14 @@ class QTransformerLabel(QSizeLabel):
         show_cls_a.setCheckable(True)
         show_cls_a.setChecked(self.show_cls)
 
-
+        show_area_a = QAction(text="显示面积", parent=main_menu)
+        show_area_a.setCheckable(True)
+        
 
         cross_a = QAction(text="十字线", parent=main_menu)
         cross_a.setCheckable(True)
         cross_a.setChecked(self.cross_cursor)
-        main_menu.addActions([auto_fit_a, rect_zoom_a, cross_a])
+        main_menu.addActions([auto_fit_a,  cross_a])
 
         # 种类
         if self.label:
@@ -886,25 +926,14 @@ class QTransformerLabel(QSizeLabel):
             if self.task != "classify":
                 main_menu.addAction(show_cls_a)
                 if self.task == "segment":
-                    show_area_a = QAction(text="显示面积", parent=main_menu)
-                    show_area_a.setCheckable(True)
                     show_area_a.setChecked(self.show_area)
                     main_menu.addAction(show_area_a)
 
         req = main_menu.exec_(self.mapToGlobal(ev.pos()))
         if req == auto_fit_a:
             self.fit()
-        elif req == rect_zoom_a:
-            self.rect_zoom = rect_zoom_a.isChecked()
-            if self.rect_zoom:
-                self.paint = False
-                self.painting = False
-            self.zoom_finish = True
         elif req == paint_a:
             self.paint = paint_a.isChecked()
-            if self.paint:
-                self.rect_zoom = False
-                self.zoom_finish = False
         elif req == bounding_rect_a:
             self.bounding_rect = bounding_rect_a.isChecked()
         elif req == show_cls_a:
@@ -922,3 +951,83 @@ class QTransformerLabel(QSizeLabel):
                     self.cls = i
         self.update()
 
+
+
+class QFastSelectLabel(QTransformerLabel):
+
+    Fast_Sel_Cop_Signal = Signal(list)
+    def __init__(self, parent):
+        super().__init__(parent)
+         # 快速选择
+        self.fast_cre_sel = False  # 创建选区
+        self.fast_rect = None   #快速选择的选区
+        self.fast_segment = None #存储快速选择的分割实例
+        self.fast_method = "threshold"  #快速选择方法
+        self.fast_seed_searching = False
+        self.seed = None
+    
+    def init(self):
+        super().init()
+        self.fast_cre_sel = False 
+        self.fast_rect = None 
+        self.fast_segment = None 
+        self.fast_seed_searching = False
+        self.seed = None
+        self.update()
+        self.Fast_Sel_Cop_Signal.emit()
+
+    def drawLabel(self, painter, label, pred=False):
+        if pred:
+            return
+        instance = label["instances"]
+        #显示快速选择搜索区域
+        if self.fast_cre_sel and self.fast_rect:
+            painter.setPen(QPen(Qt.yellow, 2, Qt.DashLine))
+            p1 = self.getLabelSizePoint(self.fast_rect[0], self.fast_rect[1])
+            p2 = self.getLabelSizePoint(self.fast_rect[2], self.fast_rect[3])
+            painter.drawRect(QRect(p1[0], p1[1], p2[0]-p1[0], p2[1]-p1[1]))
+        if self.fast_seed_searching:
+            painter.setPen(QPen(Qt.green, 8, Qt.SolidLine))
+            painter.drawPoint(self.mouse_point)
+
+        fast_segment = copy.deepcopy(self.fast_segment)
+        if self.fast_segment is not None and len(self.fast_segment) and (self.fast_cre_sel or self.fast_seed_searching):
+            self.getPixSizeInstance(instance)
+            if self.task == "segment":
+                if instance.segments is None:
+                    instance.segments = []
+                instance.segments.append(fast_segment)
+                instance.getBoundingRect()
+            else:
+                format = instance._bboxes.format if instance._bboxes else "xyxy"
+                box = segment2Box(fast_segment, format)
+                if instance._bboxes:
+                    instance._bboxes.addBox(box, format)
+                else:
+                    instance._bboxes = QBboxes(box, format=format)
+            self.getLabelSizeInstance(instance)
+            label["cls"].append(self.cls)
+    
+    @property
+    def fastCreate(self):
+        """创建快速选区中"""
+        return self.fast_cre_sel or self.fast_seed_searching
+
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+
+    
+    def mouseMoveEvent(self, event):
+        super().mouseMoveEvent(event)
+        if self.paint and event.buttons() == Qt.LeftButton and self.fast_cre_sel and not self.fast_seed_searching and not self.resizing(event):# 快速选择创建选区
+            p1 = self.getPixSizePoint(self.start.x(), self.start.y())
+            p2 = self.getPixSizePoint(event.x(), event.y())
+            self.fast_rect = twoPoints2box(p1, p2, "xyxy")[0].tolist()
+            self.update()
+    
+    def mouseReleaseEvent(self, ev):
+        super().mouseReleaseEvent(ev)
+        if self.paint and ev.button() == Qt.LeftButton and ((self.fast_cre_sel and self.fast_rect is not None) or (self.fast_method == "floodfill" and self.fast_seed_searching)) and not self.resizing(ev): 
+            self.seed  = self.getPixSizePoint(ev.x(), ev.y()).tolist()
+            self.Fast_Sel_Cop_Signal.emit(self.seed)
+    

@@ -1,22 +1,9 @@
 version: '洛业LY:2.0.0:'
 projects:
-- G:\project\p2
-- G:\project\p4
-- G:\project\p5
-- G:\project\p3
-- G:\project\p7
+- G:\project\try_segmentlabel
 - G:\project\p6
 - G:\project\p8
 current_project: G:\project\p8
-default_dir: G:/project/p6/experiments/e2_focus
-default_file: G:\project\p8\experiments\v5_acnhors\weights
+default_dir: G:/project/p8
+default_file: G:\project\p8\experiments\p1\weights
 style: technology
-name: .
-time: '2025-01-21 16:48:40'
-save_time: '2025-02-26 09:02:53'
-experiments:
-- G:\project\p8\experiments\expcache\untitled
-- G:\project\p8\experiments\p1
-- experiments\expcache\untitled
-current_experiment: experiments\expcache\untitled
-data: ''

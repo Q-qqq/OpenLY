@@ -1,13 +1,16 @@
 import copy
 
+
 from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
+
 from pathlib import Path
 from ultralytics.utils import yaml_load, yaml_save, LOGGER,ROOT, DEFAULT_CFG_DICT
 from ultralytics.cfg import get_cfg, cfg2dict, CFG_FLOAT_KEYS, CFG_BOOL_KEYS, CFG_FRACTION_KEYS, CFG_INT_KEYS, CFG_OTHER_KEYS
 from APP import APP_SETTINGS, EXPERIMENT_SETTINGS, PROJ_SETTINGS,getExistDirectory, getOpenFileName, APP_ROOT
 from APP.Utils import get_widget
+from APP.Data import guess_dataset_task
 import glob
 
 class CfgsTreeWidget(QTreeWidget):
@@ -34,7 +37,7 @@ class CfgsTreeWidget(QTreeWidget):
         self.setAlternatingRowColors(True)
 
         self.eventConnect()
-        self.args = DEFAULT_CFG_DICT
+        self.args = copy.deepcopy(DEFAULT_CFG_DICT)
         tips = yaml_load(ROOT / "cfg" / "cfg_status.yaml")
         if isinstance(tips, (str, Path)):
             tips = yaml_load(tips)
@@ -42,6 +45,7 @@ class CfgsTreeWidget(QTreeWidget):
         self.browse_args = tips.pop("可浏览参数")
         self.getWidgetMegs(tips)
         self.initTrees()
+        self.setRootColor()
         self.showArgs(False)
         self.expandAll()
         #self.setStyleSheet(u"QTreeWidget::branch:!has-children{background-color: rgb(221, 255, 238);}")
@@ -61,10 +65,6 @@ class CfgsTreeWidget(QTreeWidget):
         root_font = QFont("幼圆", 12)
         child_font = QFont("幼圆", 10)
 
-        root_color = QColor(200,200,200,150)
-
-        head_color = QColor(10,100,10)
-
         self.clear()
         self.setColumnCount(2)
         head_items = self.headerItem()
@@ -77,8 +77,6 @@ class CfgsTreeWidget(QTreeWidget):
             root = QTreeWidgetItem(self)
             root.setText(0, r)
             root.setFont(0, root_font)
-            #root.setBackgroundColor(0, root_color)
-            #root.setBackgroundColor(1, root_color)
             root.setSizeHint(0, QSize(0, 30))
             root.setSizeHint(1, QSize(0, 30))
             self.addTopLevelItem(root)
@@ -101,6 +99,16 @@ class CfgsTreeWidget(QTreeWidget):
             else:
                 child_a.setText(1, str(value))
 
+    def setRootColor(self):
+        if APP_SETTINGS["style"] == "cute":
+            color = QColor(205, 127, 50, 255)
+        elif APP_SETTINGS["style"] == "technology":
+            color = QColor(138, 43, 224, 255)
+        for i in range(self.topLevelItemCount()):
+            root = self.topLevelItem(i)
+            root.setBackgroundColor(0, color)
+            root.setBackgroundColor(1, color)
+
     def updateTrees(self, args, overrides=None):
         """初始化参数"""
         self.opt = args
@@ -118,9 +126,8 @@ class CfgsTreeWidget(QTreeWidget):
     def updateArgs(self, args, overrides=None):
         """更新所有参数"""
         args = cfg2dict(get_cfg(args, overrides))
-        exp = Path(PROJ_SETTINGS["current_experiment"])
-        proj = str(exp.parent)
-        name = str(exp.name)
+        proj = str(Path(PROJ_SETTINGS["name"]) / "experiments")
+        name = EXPERIMENT_SETTINGS["name"]
         for k,  v  in zip(["project", "name"],[proj, name]):
             if k in args.keys():
                 args[k] = v
@@ -213,7 +220,7 @@ class CfgsTreeWidget(QTreeWidget):
                     except:
                         pass
         except Exception as ex:
-            QMessageBox.warning(self.parent(),"警告", f"属性类型转换错误:{name}：{value}\n{str(ex)}")
+            QMessageBox.warning(self.parent(),"警告", f"属性类型转换错误:{name}：{value}\n{ex}")
         return value
 
     def setValue(self, name, value):
@@ -243,7 +250,7 @@ class CfgsTreeWidget(QTreeWidget):
         widget.setObjectName(name)
         widget.setStatusTip(widget_args["type"])
         hl = QHBoxLayout(widget)
-        hl.setMargin(0)
+        hl.setContentsMargins(0,0,0,0)
         hl.setSpacing(1)
 
         #浏览文件按钮
@@ -314,6 +321,7 @@ class CfgsTreeWidget(QTreeWidget):
             le.setFont(font)
             le.setObjectName(name + "_value")
             le.setText(str(value))
+            le.setEnabled(eval(widget_args.get("enable", "True")))
             le.textChanged.connect(lambda: self.changeEvents(le))
             hl.addWidget(le)
             if browse_bp:
@@ -331,7 +339,19 @@ class CfgsTreeWidget(QTreeWidget):
         elif isinstance(widget, (QDoubleSpinBox, QSpinBox)):
             self.args[name] = self.checkValue(name, widget.value())
         elif isinstance(widget, QLineEdit):
-            self.args[name] = self.checkValue(name, widget.text())
+            if name == "dataset":  #数据集参数
+                if widget.text() != "" and Path(widget.text()).exists():  #数据集存在
+                    task = guess_dataset_task(self.args[name])  #检查数据集任务类型
+                    if self.args["task"] not in task and task[0] != "null": #任务类型不匹配
+                        QMessageBox.warning(self.parent(), "警告", f"数据集类型{task}与当前任务类型{self.args['task']}不匹配")
+                        return
+                    else:   #任务类型匹配
+                        self.args[name] = self.checkValue(name, widget.text())
+                else:   #数据集不存在
+                    QMessageBox.warning(self.parent(), "警告", f"数据集{widget.text()}不存在")
+                    self.args[name] = ""
+            else:
+                self.args[name] = self.checkValue(name, widget.text())
         elif isinstance(widget, QCheckBox):
             self.args[name] = self.checkValue(name, str(widget.isChecked()))
         self.setTreeItemText(name, self.args[name])
@@ -359,15 +379,17 @@ class CfgsTreeWidget(QTreeWidget):
                 w = self.itemWidget(item, 1)
                 if w:
                     if self.widgets[w.objectName()]["widgetType"] != "cb":  #不是checkBox的删除
+                        item.setText(1, str(self.getWidgetValue(w)))
                         self.removeItemWidget(item, 1)
                         w.deleteLater()
-            return
+                return
         if self.last_click_item:  #去除上次点击的widget选中状态
             self.last_click_item.setBackgroundColor(0, self.last_click_color)
             self.last_click_item.setBackgroundColor(1, self.last_click_color)
             w = self.itemWidget(self.last_click_item, 1)
             if w:
                 if self.widgets[w.objectName()]["widgetType"] != "cb":
+                    self.last_click_item.setText(1, str(self.getWidgetValue(w)))
                     self.removeItemWidget(self.last_click_item,1)
                     w.deleteLater()
         self.last_click_color = item.backgroundColor(0)
@@ -384,6 +406,7 @@ class CfgsTreeWidget(QTreeWidget):
             else:
                 widget = self.createWidget(item.statusTip(0), item.text(1))
                 self.setItemWidget(item, 1, widget)
+                item.setText(1, "")
 
 
 
@@ -427,7 +450,8 @@ class CfgsTreeWidget(QTreeWidget):
         if APP_SETTINGS["style"] == "cute":
             color = ( QColor(216, 191, 216, 255), QColor(230, 224, 255, 255))
         elif APP_SETTINGS["style"] == "technology":
-            color = (QColor(14, 19, 33, 255), QColor(61, 122, 254, 200))
+            color = (QColor(14, 19, 33, 255), QColor(26,72,95, 255))
+        self.setRootColor()
         ci = 1
         for i in range(self.topLevelItemCount()):
             child = self.topLevelItem(i)

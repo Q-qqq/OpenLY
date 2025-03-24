@@ -133,16 +133,19 @@ class YOLODataset(BaseDataset):
                     msgs.append(f"{im_file}:{msg}")
                 if progress:
                     PROGRESS_BAR.setValue(i+1, f"数据集加载中...{im_file if im_file else msg}")
-            if msgs:
-                LOGGER.info("\n".join(msgs))
-            if progress:
-                PROGRESS_BAR.close()
-            assert nf != 0, f"在路径{path}上未找到标签"
-            x["hash"] = get_hash(self.im_files + self.label_files)
-            x["results"] = nf, nm, ne, nc, npc, len(self.im_files)
-            x["msgs"] = msgs
+        if msgs:
+            LOGGER.info("\n".join(msgs))
+        if progress:
+            PROGRESS_BAR.close()
+        assert nf != 0, f"在路径{path}上未找到标签"
+        x["hash"] = get_hash(im_files + label_files)
+        x["results"] = nf, nm, ne, nc, npc, len(im_files)
+        x["msgs"] = msgs
+        if len(im_files) != len(self.im_files):
+            x["version"] = DATASET_CACHE_VERSION
+        else:
             save_dataset_cache_file(path, x)
-            return x
+        return x
 
     def update_labels_info(self, label):
         """label : 单个图像标签"""

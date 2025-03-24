@@ -1,4 +1,5 @@
 import contextlib
+import inspect
 import os
 import re
 import threading
@@ -24,7 +25,7 @@ from PySide2.QtWidgets import *
 
 class Logger(QObject):
     """信息显示"""
-    Show_Mes_Signal = Signal(str)
+    Show_Mes_Signal = Signal(str, str)
     Start_Train_Signal = Signal(list)
     Batch_Finish_Signal = Signal(str)
     Epoch_Finish_Signal = Signal(list)
@@ -33,33 +34,29 @@ class Logger(QObject):
     Start_Val_Signal = Signal(str)
     Val_Finish_Signal = Signal(str)
     Error_Signal = Signal(str)
+    Interrupted_Error_Signal = Signal(str)
     def __init__(self, parent=None):
         super(Logger, self).__init__(parent)
-        self.errorFormat = '<font color="red" size="5">{}</font>'
-        self.warningFormat = '<font color="orange" size="5">{}</font>'
-        self.validFormat = '<font color="green" size="5">{}</font>'
         self.stop = False  #停止训练
 
+    def interruptError(self, msg):
+        self.Interrupted_Error_Signal.emit(msg)
 
     def error(self,msg):
         """错误信号"""
-        errorMsg = self.errorFormat.format(msg)
         self.Error_Signal.emit(msg)
-        self.Show_Mes_Signal.emit(errorMsg)
+        self.Show_Mes_Signal.emit("error", msg)
 
     def warning(self,msg):
         """警告信号"""
-        warningMsg = self.warningFormat.format(msg)
-        self.Show_Mes_Signal.emit(warningMsg)
+        self.Show_Mes_Signal.emit("warning", msg)
 
     def info(self,msg):
         """正常信号"""
-        validMsg = self.validFormat.format(msg)
-        self.Show_Mes_Signal.emit(validMsg)
+        self.Show_Mes_Signal.emit("info", msg)
 
     def startTrain(self, msg_epochs):
         """开始训练信号"""
-        msg_epochs[0] = self.validFormat.format(msg_epochs[0])
         self.Start_Train_Signal.emit(msg_epochs)
 
     def batchFinish(self, msg):
@@ -68,21 +65,17 @@ class Logger(QObject):
 
     def epochFinish(self, msg_epoch):
         """完成一个epoch信号"""
-        msg_epoch[0] = self.validFormat.format(msg_epoch[0])
         self.Epoch_Finish_Signal.emit(msg_epoch)
 
 
     def trainFinish(self, msg):
         """训练结束信号"""
-        self.Train_Finish_Signal.emit(self.validFormat.format(msg))
+        self.Train_Finish_Signal.emit(msg)
 
-    def trainInterrupt(self):
-        """训练停止信号"""
-        self.Train_Interrupt_Signal.emit()
 
     def startVal(self, msg):
         """开始验证信号"""
-        self.Start_Val_Signal.emit(self.validFormat.format(msg))
+        self.Start_Val_Signal.emit(msg)
 
     def valFinish(self, msg):
         """验证结束信号"""
@@ -105,16 +98,20 @@ class Progress(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._stop = False    #停止进度条对应的加载
+        self.loading = False
         self.permit_stop = False
 
     def stop(self):
-        self._stop = True
+        if self.permit_stop:
+            self.loading = False
+            self._stop = True
 
     def isStop(self):
         return self._stop
 
     def start(self, min, max,permit_stop=False):
         self._stop = False
+        self.loading=True
         self.permit_stop = permit_stop
         self.Start_Signal.emit([min, max])
 
@@ -123,12 +120,14 @@ class Progress(QObject):
 
     def reset(self):
         self._stop = False
+        self.loading = False
         self.Reset_Signal.emit()
 
     def show(self, title="加载", head_txt="开始加载"):
         self.Show_Signal.emit([title, head_txt])
 
     def close(self):
+        self.loading = False
         self.Close_Signal.emit()
 
 PROGRESS_BAR = Progress()
@@ -174,13 +173,17 @@ class TryExcept(contextlib.ContextDecorator):
 
     def __exit__(self, exc_type, value, traceback):
         """当退出‘with’代码块时运行"""
-        if self.verbose and value:
-            if str(value).startswith("中断"):
-                LOGGER.error(f"{value}")
-            else:
+        if value:
+            value = str(value).replace("：", ":")
+            if value.startswith("中断"):
+                LOGGER.interruptError(value.split(":")[1].strip())
+            elif self.verbose:
                 LOGGER.error(f"{self.msg}{':' if self.msg else ''}{value}\n"
                             f"error file:{traceback.tb_frame}\n"
                             f"error line:{traceback.tb_lineno}")
+            if PROGRESS_BAR.loading:
+                PROGRESS_BAR._stop = True
+                PROGRESS_BAR.close()
         return True
 
 
@@ -574,5 +577,16 @@ def cv2_readimg(img_path, color=cv2.IMREAD_COLOR):
     img = cv2.imdecode(np.fromfile(img_path,dtype=np.uint8), color)
     return img
 
+def get_default_args(func):
+    """
+    Returns a dictionary of default arguments for a function.
 
+    Args:
+        func (callable): The function to inspect.
+
+    Returns:
+        (dict): A dictionary where each key is a parameter name, and each value is the default value of that parameter.
+    """
+    signature = inspect.signature(func)
+    return {k: v.default for k, v in signature.parameters.items() if v.default is not inspect.Parameter.empty}
 

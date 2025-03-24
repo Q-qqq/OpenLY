@@ -108,7 +108,7 @@ class Model(nn.Module):
 
     def reset_weights(self):
         """重新将模型参数设置为随机初始值，有效地丢弃所有训练信息"""
-        self._check_is_pythorch_model()
+        self._check_is_pytorch_model()
         for m in self.model.modules():
             if hasattr(m, "reset_parameters"):
                 m.reset_parameters()
@@ -119,7 +119,7 @@ class Model(nn.Module):
     def load(self, weights="yolov8n.pt"):
         """加载指定权重到模型中
         该方法支持从一个文件或者文件夹中加载权重，通过名称和shape匹配参数进行加载"""
-        self._check_is_pythorch_model()
+        self._check_is_pytorch_model()
         if isinstance(weights, (str, Path)):
             weights, self.ckpt = attempt_load_one_weight(weights)
         self.model.load(weights)
@@ -127,7 +127,7 @@ class Model(nn.Module):
 
     def save(self, filename="model.pt"):
         """保存现在地模型状态到指定文件中"""
-        self._check_is_pythorch_model()
+        self._check_is_pytorch_model()
         import torch
         torch.save(self.ckpt, filename)
 
@@ -138,12 +138,12 @@ class Model(nn.Module):
             verbose(bool): 是否输出模型信息，如果为否，只返回模型信息
         Returns:
             (list): 多种类型的模型信息列表"""
-        self._check_is_pythorch_model()
+        self._check_is_pytorch_model()
         return self.model.info(detailed=detailed, verbose=verbose)
 
     def fuse(self):
         """将模型的Conv2d层和BatchNorm2d层进行混合，提高推理速度"""
-        self._check_is_pythorch_model()
+        self._check_is_pytorch_model()
         self.model.fuse()
 
 
@@ -177,7 +177,7 @@ class Model(nn.Module):
             Return:
                 (dict | None): 训练评估指标
             """
-        self._check_is_pythorch_model()
+        self._check_is_pytorch_model()
         overrides = yaml_load(checks.check_yaml(kwargs["cfg"]) if kwargs.get("cfg") else self.overrides)
         custom = {"data": DEFAULT_CFG_DICT["data"] or TASK2DATA[self.task]}   #*.pt
         args = {**overrides, **custom,  **kwargs, "mode": "train"}   #最高优先级的参数
@@ -208,7 +208,7 @@ class Model(nn.Module):
         custom = {"rect": True}
         args = {**self.overrides, **custom, **kwargs, "mode": "val"}  #最高优先级的参数
 
-        validator = (validator or self._smart_load("validator"))(save_dir= kwargs.get("save_dir"), args=args)
+        validator = (validator or self._smart_load("validator"))( args=args)
         validator(model=self.model)
         self.metrics = validator.metrics
         return validator.metrics
@@ -264,13 +264,16 @@ class Model(nn.Module):
         """
         将模型导出为适合部署的不同格式
         """
-        pass
+        self._check_is_pytorch_model()
+        from ultralytics.engine.exporter import Exporter
+
+        custom = {"imgsz": self.model.args["imgsz"], "batch": 1, "data": None, "verbose": False}  # method defaults
+        args = {**self.overrides, **custom, **kwargs, "mode": "export"}  # highest priority args on the right
+        return Exporter(overrides=args)(model=self.model)
 
 
 
-
-
-    def _check_is_pythorch_model(self):
+    def _check_is_pytorch_model(self):
         """如果self.model不是Pytorch模型，报类型错误"""
         pt_str = isinstance(self.model, (str, Path)) and Path(self.model).suffix ==".pt"   #pt路径
         pt_model = isinstance(self.model, nn.Module) #pt模型

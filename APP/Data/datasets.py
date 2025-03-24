@@ -1,4 +1,5 @@
 import glob
+from itertools import repeat
 import os
 from pathlib import Path
 from multiprocessing.pool import ThreadPool
@@ -6,9 +7,9 @@ import shutil
 from PIL import Image
 import numpy as np
 
-from ultralytics.data.utils import img2label_paths,resample_segments,IMG_FORMATS
-from ultralytics.data.dataset import YOLODataset, ClassificationDataset
-from ultralytics.utils import DEFAULT_CFG, yaml_save, yaml_load,NUM_THREADS, LOGGER
+from ultralytics.data.utils import get_hash, img2label_paths,IMG_FORMATS, verify_image, verify_image_label
+from ultralytics.data.dataset import DATASET_CACHE_VERSION, YOLODataset, ClassificationDataset, load_dataset_cache_file, save_dataset_cache_file
+from ultralytics.utils import DEFAULT_CFG, LOCAL_RANK, PROGRESS_BAR,yaml_save, yaml_load,NUM_THREADS, LOGGER
 from ultralytics.data.augment import classify_transforms
 
 
@@ -18,6 +19,7 @@ from APP.Data import format_im_files,readLabelFile,writeLabelFile
 
 
 def get_im_files(img_pathes):
+    """获取所有图像文件路径"""
     f = []
     with open(img_pathes) as t:
         t = t.read().strip().splitlines()
@@ -27,6 +29,7 @@ def get_im_files(img_pathes):
     return im_files
 
 def write_im_files(img_paths, im_files):
+    """将图像文件路径写入txt文件"""
     parent = str(Path(img_paths).parent)
     im_files = ["." + f.replace(parent, "").replace("\\", "/") for f in im_files]
     with open(img_paths, "w") as f:
@@ -66,6 +69,67 @@ class DetectDataset(YOLODataset):
             im_files = im_files[: round(len(im_files) * self.fraction)]
         im_files = [str(Path(f)) for f in im_files]
         return im_files
+    
+    def cache_labels(self,path, im_files, progress=True):
+        path = Path(path)
+        x = {"labels":[]}
+        nm,nf,ne,nc,npc,msgs = 0,0,0,0,np.array([0]*len(self.data["names"])),[] #miss found empty corrupt messages
+        total = len(im_files)
+        nkpt,ndim = self.data.get("kpt_shape",(0,0))
+        label_files = img2label_paths(im_files)
+        if self.use_keypoints and (nkpt <= 0 or ndim not in (2,3)):
+            raise ValueError(
+                "'kpt_shape' in data.yaml missing or incorrect. Should be a list with [number of "
+                "keypoints, number of dims (2 for x,y or 3 for x,y,visible)], i.e. 'kpt_shape: [17, 3]'"
+            )
+        if progress:
+            PROGRESS_BAR.show("DataLoader", "Start")
+            PROGRESS_BAR.start( 0, total, False)
+        with ThreadPool(NUM_THREADS ) as pool:
+            results = pool.imap(
+                verify_image_label,
+                zip(im_files,
+                    label_files,
+                    repeat(self.use_keypoints),
+                    repeat(len(self.data["names"])),
+                    repeat(nkpt),
+                    repeat(ndim))
+            )
+            for i, (im_file, lb, shape, segments, keypoint, nm_f,nf_f, ne_f,nc_f,npc_f,msg) in enumerate(results):
+                nm += nm_f
+                nf += nf_f
+                ne += ne_f
+                nc += nc_f
+                npc += npc_f
+                if im_file:
+                    x["labels"].append(
+                        dict(
+                            im_file = im_file,
+                            shape=shape,
+                            cls=lb[:,0:1],    #[n,1]
+                            bboxes=lb[:,1:],  #[n,4]
+                            segments=segments,
+                            keypoints=keypoint,
+                            normalized=True,
+                            bbox_format="xywh"
+                        )
+                    )
+                if msg:
+                    msgs.append(f"{im_file}:{msg}")
+                if progress:
+                    PROGRESS_BAR.setValue(i+1, f"数据集加载中...{im_file if im_file else msg}")
+            if msgs:
+                LOGGER.info("\n".join(msgs))
+            if progress:
+                PROGRESS_BAR.close()
+        x["hash"] = get_hash(im_files + label_files)
+        x["results"] = nf, nm, ne, nc, npc, len(im_files)
+        x["msgs"] = msgs
+        if len(im_files) != len(self.im_files):
+            x["version"] = DATASET_CACHE_VERSION
+        else:
+            save_dataset_cache_file(path, x)
+        return x
     
 
     def getLabel(self, im_file):
@@ -119,6 +183,8 @@ class DetectDataset(YOLODataset):
                     Path(new_label_file).parent.mkdir(parents=True, exist_ok=True)
                 shutil.move(label_file, Path(new_label_file).parent)  #已存在，移动标签至数据集路径
             else:
+                if not Path(new_label_file).parent.exists():
+                    Path(new_label_file).parent.mkdir(parents=True, exist_ok=True)
                 with open(new_label_file, "w") as f:  #新建空白txt
                     pass
             self.label_files.append(str(label_file))
@@ -129,7 +195,7 @@ class DetectDataset(YOLODataset):
         labels = self.cache_labels(cache_path, new_im_files, False)
         [labels.pop(k) for k in ("hash", "version", "msgs")]  # 去除没用的项
         self.labels += labels["labels"]
-        self.shapes += labels["shapes"]
+        #self.shapes += labels["shapes"]
         write_im_files(self.img_path, exist_im_files)  #重新写入总图像文件路径
         #重置参数
         self.ni = len(self.labels)
@@ -155,7 +221,7 @@ class DetectDataset(YOLODataset):
                 self.im_files.pop(ind)
                 label_file = self.label_files.pop(ind)
                 self.labels.pop(ind)
-                self.shapes.pop(ind)
+                #self.shapes.pop(ind)
                 if Path(im_file).exists():
                     if no_label_path and no_label_path != "":
                         shutil.move(im_file, no_label_path)  # 图像移动至未标注
@@ -201,7 +267,8 @@ class DetectDataset(YOLODataset):
                         if b[0] > cls:
                             b[0] -= 1
                         new_lb.append(b)
-                writeLabelFile(label_file, new_lb)
+                if len(new_lb) != len(lb):
+                    writeLabelFile(label_file, new_lb)
         #数据集更新标签
         self.labels = self.get_labels() if self.im_files else []
         self.ni = len(self.labels)  # number of images
@@ -253,6 +320,50 @@ class ClassifyDataset(ClassificationDataset):
         self.labels = {}
         self.im_files = [str(Path(x[0])) for x in self.samples]
         self.names = names
+    
+    def verify_images(self, im_cls, progress=True):
+        """Verify all images in dataset."""
+        desc = f"{self.prefix}Scanning {self.root}..."
+        path = Path(self.root).with_suffix(".cache")  # *.cache file path
+
+        try:
+            cache = load_dataset_cache_file(path)  # attempt to load a *.cache file
+            assert cache["version"] == DATASET_CACHE_VERSION  # matches current version
+            assert cache["hash"] == get_hash([x[0] for x in self.samples])  # identical hash
+            nf, nc, n, samples = cache.pop("results")  # found, missing, empty, corrupt, total
+            if LOCAL_RANK in {-1, 0}:
+                d = f"{desc} {nf} images, {nc} corrupt"
+                LOGGER.info(d)
+                if cache["msgs"]:
+                    LOGGER.info("\n".join(cache["msgs"]))  # display warnings
+            return samples
+
+        except (FileNotFoundError, AssertionError, AttributeError):
+            # Run scan if *.cache retrieval failed
+            nf, nc, msgs, samples, x = 0, 0, [], [], {}
+            if progress:
+                PROGRESS_BAR.show("Classify dataset Load", "Start",)
+                PROGRESS_BAR.start( 0,len(im_cls), False)
+            with ThreadPool(NUM_THREADS) as pool:
+                results = pool.imap(func=verify_image, iterable=zip(self.samples, repeat(self.prefix)))
+                for i, sample, nf_f, nc_f, msg in enumerate(results):
+                    if nf_f:
+                        samples.append(sample)
+                    if msg:
+                        msgs.append(msg)
+                    nf += nf_f
+                    nc += nc_f
+                    if progress:
+                        PROGRESS_BAR.setValue(i+1, f"数据集加载中...{sample[0]}, {sample[1]}")
+            if msgs:
+                LOGGER.info("\n".join(msgs))
+            if progress:
+                PROGRESS_BAR.close()
+            x["hash"] = get_hash([x[0] for x in self.samples])
+            x["results"] = nf, nc, len(samples), samples
+            x["msgs"] = msgs  # warnings
+            save_dataset_cache_file(self.prefix, path, x, DATASET_CACHE_VERSION)
+            return samples
 
     def addData(self, im_files, classes):
         """

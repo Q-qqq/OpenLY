@@ -346,6 +346,10 @@ class ClassificationModel(BaseModel):
 
     def init_criterion(self):
         return v8ClassificationLoss()
+    
+
+
+
 
 
 class Ensemble(nn.ModuleList):
@@ -598,6 +602,8 @@ def parse_model(d, ch, verbose=True): #model_dict, input_channels
     #Args
     max_channels = float("inf")
     nc, act, scales, anchors = (d.get(x) for x in ("nc", "activation", "scales","anchors"))
+    na = (len(anchors[0]) // 2) if isinstance(anchors, list) else anchors  # number of anchors
+    no = na * (nc + 5)   # number of outputs = anchors * (classes + 5)
     depth, width, kpt_shape = (d.get(x, 1.0) for x in ("depth_multiple", "width_multiple", "kpt_shape"))
     if scales:
         scale = d.get("scale")
@@ -645,7 +651,7 @@ def parse_model(d, ch, verbose=True): #model_dict, input_channels
             RepC3,
         ):
             c1, c2 = ch[f], args[0]    #input_channels output_channels
-            if c2 != nc:
+            if c2 != nc and c2 != no:
                 c2 = make_divisible(min(c2, max_channels) * width, 8)
 
             args = [c1, c2, *args[1:]]
@@ -671,7 +677,7 @@ def parse_model(d, ch, verbose=True): #model_dict, input_channels
             if isinstance(args[1], int) and m in (V5Segment, V5Detect):  # number of anchors
                 args[1] = [list(range(args[1] * 2))] * len(f)
             if m in (V5Segment, Segment):
-                args[2] = make_divisible(min(args[2], max_channels) * width, 8)
+                args[2] = make_divisible(min(args[2], max_channels) * width, 8) #number of masks
         #elif m is RTDETRDecoder:
         #    args.insert(1, [ch[x] for x in f])
         else:

@@ -1,13 +1,15 @@
 import copy
 from pathlib import Path
 
+from PySide2.QtWidgets import *
+
 from ultralytics.data.utils import check_det_dataset
 from ultralytics.utils import IterableSimpleNamespace,  yaml_save, LOGGER, yaml_load
 
 
 from APP.Data import check_cls_val_dataset, check_cls_train_dataset, getDefaultDataset
 from APP.Data.datasets import ClassifyDataset, DetectDataset
-from APP import PROJ_SETTINGS
+from APP  import PROJ_SETTINGS
 
 
 
@@ -31,9 +33,21 @@ def build_dataset(root, task, args):
         if not Path(root).exists():
             yaml_save(root, getDefaultDataset())
         data = yaml_load(root)
+        if not Path(data["path"]).is_absolute():
+            path = (Path(root).parent / data["path"]).resolve()
+            if path.exists():
+                data["path"] = str(path)
+            else:
+                raise FileNotFoundError(f"数据集路径{data['path']}和{path}不存在,请检查数据集参数：dataset.yaml")
+        elif not Path(data["path"]).exists():
+            if Path(root.parent / "train.txt").exists and Path(root.parent / "val.txt").exists():
+                data["path"] = str(root.parent)
+            else:
+                raise FileNotFoundError(f"数据集路径{data['path']}不存在,请检查数据集参数：dataset.yaml")
         if len(data["names"]):
             data = check_det_dataset(root)
         else:
+            data["names"] = {}
             data["train"] = (Path(data["path"]) / data["train"]).resolve()
             data["val"] = (Path(data["path"])/ data["val"]).resolve()
 
@@ -45,7 +59,7 @@ def build_dataset(root, task, args):
             with open(data["val"], "w") as f:
                 pass
 
-        train_dataset = buildDetectDataset(data["train"], task, args,data)
+        train_dataset = buildDetectDataset(data["train"], task, args, data)
         val_dataset = buildDetectDataset(data["val"] or data["test"], task, args, data)
         train_path = str(Path(train_dataset.im_files[0]).parent) if train_dataset.im_files else str(
             Path(train_dataset.img_path).parent / "images" / "train")  # 训练集图像文件路径

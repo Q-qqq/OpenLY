@@ -1,3 +1,4 @@
+import copy
 import os
 import time
 
@@ -12,10 +13,10 @@ import numpy as np
 import pandas as pd
 import threading
 
-from ultralytics.utils import yaml_save, DEFAULT_CFG_DICT, DEFAULT_CFG, LOGGER, yaml_load
+from ultralytics.utils import yaml_save, DEFAULT_CFG_DICT, DEFAULT_CFG, LOGGER, yaml_load, PROGRESS_BAR
 
 
-from APP import  PROJ_SETTINGS, getOpenFileName, EXPERIMENT_SETTINGS, APP_ROOT, loadQssStyleSheet
+from APP import  PROJ_SETTINGS, getExperimentPath, getOpenFileName, EXPERIMENT_SETTINGS, APP_ROOT, loadQssStyleSheet
 from APP.Make.startM import Start
 from APP.Utils.base import QInstances, QTransformerLabel
 from APP.Utils.label import (DetectTransformerLabel,
@@ -26,6 +27,7 @@ from APP.Utils.label import (DetectTransformerLabel,
                              ConfusionMatrixLabel,
                              ShowLabel)
 from APP.Ops.cfgs import CfgsTreeWidget
+from APP.Ops.classes_show import ClassesView
 from APP.Utils.scroll import ImageScroll
 from APP.Utils.plotting import PgPlotLossWidget
 from APP.Ops import SiftDataset, LabelOps, MenuTool, RunMes
@@ -42,13 +44,12 @@ class Train(QMainWindow, trainUI.Ui_MainWindow):
         self.setStatusBar(QStatusBar())
         self.app = app
 
-        self.project = ""
-        self.experiment = ""
         self.cfg_path = ""
         self.pred_labels = {}
         self.img_label = None
         self.image_scroll=None
         self.label_ops = LabelOps(self)
+        self.classes_view = ClassesView(self.Classes_lv)
         self.setUI()
         self.setPlot()
         self.sift_dataset = SiftDataset(self.Sift_f)
@@ -114,10 +115,10 @@ class Train(QMainWindow, trainUI.Ui_MainWindow):
             self.img_label.deleteLater()
         self.img_label = transformerLabel(self.Source_show_f)
         self.img_label.setObjectName(u"image_label")
-        #self.img_label.setStyleSheet(u"background-color: rgb(254, 255, 246);")
         self.img_label.Show_Status_Signal.connect(self.showStatusMessage)
         self.show_img_gl.addWidget(self.img_label, 0, 0, 1, 1)
         self.show_img_gl.setMargin(2)
+        self.classes_view.setImgLabel(self.img_label)
 
         if self.label_ops:
             self.label_ops.updateImgLabel(self.img_label)
@@ -141,11 +142,12 @@ class Train(QMainWindow, trainUI.Ui_MainWindow):
         self.Train_a.triggered.connect(self.startTrain)
         self.Val_a.triggered.connect(self.startVal)
         self.Predict_a.triggered.connect(self.startPredict)
+        self.Export_a.triggered.connect(self.startExport)
         self.confusion_norm_label.Select_signal.connect(self.ConfusionImagesSlot)
         self.confusion_denorm_label.Select_signal.connect(self.ConfusionImagesSlot)
 
         self.images_label.Click_Signal.connect(self.selectImageSlot)
-        #self.centralwidget.installEventFilter(CentralWidgetFilter(self.centralwidget))
+
 
 
 
@@ -155,7 +157,7 @@ class Train(QMainWindow, trainUI.Ui_MainWindow):
             LOGGER.stop = False
             self.cfgs_widget.save()
             model = Yolo(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
-            results = Path(self.experiment) / "results.csv"
+            results = Path(getExperimentPath()) / "results.csv"
             if results.exists():
                 data = pd.read_csv(results)
                 x = data.values[:, 0]
@@ -166,9 +168,10 @@ class Train(QMainWindow, trainUI.Ui_MainWindow):
                     else:
                         return
 
-            DEFAULT_CFG.save_dir = self.experiment
+            DEFAULT_CFG.save_dir = getExperimentPath()
             if isinstance(self.cfgs_widget.args["pretrained"], str):
                 model.load(self.cfgs_widget.args["pretrained"])
+            self.cfgs_widget.args["exist_ok"] = False  #覆盖当前实验
             model.lyTrain(cfg=self.cfg_path, data=self.cfgs_widget.args["data"])
             self.Train_a.setText("停止")
             self.Train_a.setEnabled(False)
@@ -182,7 +185,9 @@ class Train(QMainWindow, trainUI.Ui_MainWindow):
         self.Progress_dw.raise_()
         self.cfgs_widget.save()
         yolo = Yolo(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
-        yolo.lyVal(save_dir=self.experiment, **self.cfgs_widget.args)
+        args = copy.deepcopy(self.cfgs_widget.args)
+        args["save_dir"] = getExperimentPath()
+        yolo.lyVal( **args)
 
     def startPredict(self):
         self.cfgs_widget.save()
@@ -191,12 +196,17 @@ class Train(QMainWindow, trainUI.Ui_MainWindow):
         else:
             source = self.cfgs_widget.args["source"]
         yolo = Yolo(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
-        yolo.overrides = self.cfgs_widget.args
-        self.pred_labels = yolo.lyPredict(source=source, save_dir=self.experiment,conf=self.cfgs_widget.args["conf"])
+        yolo.overrides = {**self.cfgs_widget.args, **yolo.overrides}
+        self.pred_labels = yolo.lyPredict(source=source, stream=True, save_dir=getExperimentPath(),conf=self.cfgs_widget.args["conf"])
         if self.pred_labels is None:
             self.pred_labels = {}
         if self.img_label.im_file in self.pred_labels.keys():
             self.img_label.loadPredLabel(self.pred_labels[self.img_label.im_file])
+    
+    def startExport(self):
+        yolo = Yolo(self.cfgs_widget.args["model"], self.cfgs_widget.args["task"])
+        yolo.overrides = {**self.cfgs_widget.args, **yolo.overrides}
+        yolo.lyExport()
 
 
     #SLOT 外部槽
@@ -238,69 +248,58 @@ class Train(QMainWindow, trainUI.Ui_MainWindow):
     def showStatusMessage(self, str):
         self.statusBar().showMessage(str)
 
-
-
-    def loadImage(self):
-        file = getOpenFileName(self,"ss")
-        if file[0] != "":
-            segment = [np.array([[0, 0], [0, 30], [30, 30], [30, 0]], dtype=np.float32)]
-            box = torch.Tensor([2, 2, 4, 4])
-            keypoint = torch.Tensor([[[10,10,1], [20,3,1], [30,40,1], [0,1,1],[ 50,0,1]]])
-            label = {"instance": QInstances(bboxes=None, segments=segment, keypoints=None, bbox_format="xywh", normalized=False),
-                     "cls": [0], "names": ["a", "b"], "nkpt":5, "ndim":3}
-            self.img_label.load_image(file[0], label)
-
     def buildDataset(self, data):
-        try:
-            self.sift_dataset.build(data, self.cfgs_widget.args["task"], self.cfgs_widget.args)
-            self.cfgs_widget.setValue("data", self.sift_dataset.data)
-            self.cfgs_widget.save()
-            self.label_ops.updateDataset(self.sift_dataset.train_set,
-                                         self.sift_dataset.val_set,
-                                         self.sift_dataset.train_path,
-                                         self.sift_dataset.val_path)
-            self.sift_dataset.initLoadDataset()
-            self.sift_dataset.sift_tool.initSifter()  #初始化筛选器
-            self.image_scroll.horBarValueChangedSlot()
-        except Exception as ex:
-            QMessageBox.warning(self, "加载数据集出错", str(ex))
+        self.sift_dataset.build(data, self.cfgs_widget.args["task"], self.cfgs_widget.args)
+        self.cfgs_widget.setValue("data", self.sift_dataset.data)
+        self.cfgs_widget.save()
+        self.label_ops.updateDataset(self.sift_dataset.train_set,
+                                        self.sift_dataset.val_set,
+                                        self.sift_dataset.train_path,
+                                        self.sift_dataset.val_path)
+        self.sift_dataset.initLoadDataset()
+        self.sift_dataset.sift_tool.initSifter()  #初始化筛选器
+        self.image_scroll.horBarValueChangedSlot()
 
-    def openExperiment(self, experiment_path):
-        experiment_path = Path(experiment_path)
+
+    def openExperiment(self, experiment):
+        experiment_path = Path(getExperimentPath(experiment))
+        cfg_path = experiment_path / "cfgs" / "cfg.yaml"
         #检查实验是否存在,不存在则创建新实验
         if not experiment_path.exists():
             experiment_path.mkdir(parents=True,exist_ok=True)
         if not (experiment_path / "cfgs"/ "cfg.yaml").exists():
             (experiment_path / "cfgs").mkdir(parents=True, exist_ok=True)
-            if self.cfg_path != "":
+            if self.cfg_path != "": #复制前一个实验参数
                 shutil.copy(self.cfg_path, experiment_path / "cfgs")
-            else:
-                yaml_save(experiment_path / "cfgs" / "cfg.yaml", DEFAULT_CFG_DICT)
+            else:  #新建默认参数
+                cfg = copy.deepcopy(DEFAULT_CFG_DICT)
+                yaml_save(cfg_path, DEFAULT_CFG_DICT)
 
-        self.experiment = str(experiment_path)
-        if (experiment_path / "SETTINGS.yaml").exists():
-            EXPERIMENT_SETTINGS.load(experiment_path)
 
-        PROJ_SETTINGS.updateExperiment(self.experiment)
-        args = self.experiment + "//cfgs//cfg.yaml"
-        self.cfg_path = args
-        self.cfgs_widget.updateTrees(args)
+        EXPERIMENT_SETTINGS.load(experiment)
+
+        self.cfg_path = cfg_path
+        self.cfgs_widget.updateTrees(self.cfg_path)
         self.changeTaskSlot(self.cfgs_widget.args["task"])
-        self.setWindowTitle(str(self.experiment))
+        self.setWindowTitle(str(experiment_path))
         self.buildDataset(self.cfgs_widget.args["data"])
         self.run.updateConfusion()
         self.run.updateLoss()
 
+    
+    def keyPressEvent(self, event):
+        self.img_label.keyPressEvent(event)
+
 
     def closeEvent(self, event: QCloseEvent):
-        if Path(self.experiment).parent.name == "expcache":
+        if Path(getExperimentPath()).parent.name == "expcache":
             ans = QMessageBox.information(self, "关闭提示", "实验未保存，请问是否保存实验", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
             if ans == QMessageBox.Yes:
-                name, ok = QInputDialog.getText(self, "保存实验", "实验名称：",text=Path(self.experiment).name)
+                name, ok = QInputDialog.getText(self, "保存实验", "实验名称：",text=Path(getExperimentPath()).name)
                 if ok and name != "":
-                    shutil.copytree(self.experiment, str(Path(f"{PROJ_SETTINGS['name']}//experiments//{name}")))
-                    shutil.rmtree(self.experiment)
-                    PROJ_SETTINGS.updateExperiment(str(Path(f"{PROJ_SETTINGS['name']}//experiments//{name}")))
+                    shutil.copytree(getExperimentPath(), getExperimentPath(name))
+                    shutil.rmtree(getExperimentPath())
+                    PROJ_SETTINGS.update({"current_experiment":name})
                 elif ok and name == "":
                     QMessageBox.information(self, "提示", "实验名称不能为空")
                     event.ignore()
@@ -309,10 +308,9 @@ class Train(QMainWindow, trainUI.Ui_MainWindow):
             elif ans == QMessageBox.Cancel:
                 event.ignore()
             else:
-                shutil.rmtree(self.experiment)
+                shutil.rmtree(getExperimentPath())
                 event.accept()
-        else:
-            PROJ_SETTINGS.updateExperiment(self.experiment)
+
 
 
 

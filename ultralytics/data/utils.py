@@ -387,7 +387,7 @@ def check_det_dataset(dataset, autodownload=True):
     #绝对路径
     path = Path (extract_dir or data.get("path") or Path(data.get("yaml_file","")).parent) #数据集根目录
     if not path.is_absolute():
-        path = (DATASETS_DIR/path).resolve()
+        path = (Path(file).parent/path).resolve()
 
     #获取训练集、验证集、测试集的绝对路径
     data["path"] = path

@@ -70,6 +70,9 @@ class ImageScroll(QScrollArea):
             self.images_label.clickImage(all_ind)
             v = self.horizontalScrollBar().value()
             self.horizontalScrollBar().setValue(max(0,v - self.images_label.widths[all_ind] - self.images_label.spacing))
+    
+    def keyPressEvent(self, event):
+        self.images_label.keyPressEvent(event)
 
 
 

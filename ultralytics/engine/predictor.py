@@ -110,77 +110,68 @@ class BasePredictor:
             self.setup_model(model)
 
         with self._lock: #线程安全推理
-            try:
-                self.setup_source(source if source is not None else self.args.source)
-                if self.args.save or self.args.save_txt:
-                    (self.save_dir / "labels" if self.args.save_txt else self.save_dir).mkdir(parents=True, exist_ok=True)
+            
+            self.setup_source(source if source is not None else self.args.source)
+            if self.args.save or self.args.save_txt:
+                (self.save_dir / "labels" if self.args.save_txt else self.save_dir).mkdir(parents=True, exist_ok=True)
 
-                #Warmup model
-                if not self.done_warmup:
-                    self.model.warmup(imgsz=(1 if self.model.pt or self.model.triton else self.dataset.bs, 3, *self.imgsz))  #color or gray
-                    self.done_warmup = True
-                self.seen, self.windows, self.batch = 0, [], None
-                profilers = (
-                    ops.Profile(device=self.device),
-                    ops.Profile(device=self.device),
-                    ops.Profile(device=self.device)
-                )
-                PROGRESS_BAR.show("预测中")
-                PROGRESS_BAR.start(0, len(self.dataset), True)
-                for batch in self.dataset: #sources, images. videocaptrue, s
-                    self.batch = batch
-                    path, im0s, vid_cap, s = batch
+            #Warmup model
+            if not self.done_warmup:
+                self.model.warmup(imgsz=(1 if self.model.pt or self.model.triton else self.dataset.bs, 3, *self.imgsz))  #color or gray
+                self.done_warmup = True
+            self.seen, self.windows, self.batch = 0, [], None
+            profilers = (
+                ops.Profile(device=self.device),
+                ops.Profile(device=self.device),
+                ops.Profile(device=self.device)
+            )
+            for batch in self.dataset: #sources, images. videocaptrue, s
+                self.batch = batch
+                path, im0s, vid_cap, s = batch
 
-                    with profilers[0]:
-                        im = self.preprocess(im0s)  #缩放归一化转Tensor
+                with profilers[0]:
+                    im = self.preprocess(im0s)  #缩放归一化转Tensor
 
-                    #推理
-                    with profilers[1]:
-                        preds = self.inference(im, *args, **kwargs)
-                        if self.args.embed:
-                            yield from [preds] if isinstance(preds, torch.Tensor) else preds  #返回每个推理直接结果
-                            continue
+                #推理
+                with profilers[1]:
+                    preds = self.inference(im, *args, **kwargs)
+                    if self.args.embed:
+                        yield from [preds] if isinstance(preds, torch.Tensor) else preds  #返回每个推理直接结果
+                        continue
 
-                    #后处理
-                    with profilers[2]:
-                        self.results = self.postprocess(preds, im, im0s)
+                #后处理
+                with profilers[2]:
+                    self.results = self.postprocess(preds, im, im0s)
 
-                    #可视化，保存
-                    n = len(im0s)
-                    for i in range(n):
-                        self.seen += 1
-                        self.results[i] = self.results[i].cpu()
-                        self.results[i].speed = {
-                            "preprocess": profilers[0].dt * 1e3 /n,
-                            "inference": profilers[1].dt * 1e3 / n,
-                            "postprocess": profilers[2].dt * 1e3 / n,
-                        }    #批次内平均速度
-                        p, im0 = path[i], None if self.source_type.tensor else im0s[i].copy()
-                        p = Path(p)
+                #可视化，保存
+                n = len(im0s)
+                for i in range(n):
+                    self.seen += 1
+                    self.results[i] = self.results[i].cpu()
+                    self.results[i].speed = {
+                        "preprocess": profilers[0].dt * 1e3 /n,
+                        "inference": profilers[1].dt * 1e3 / n,
+                        "postprocess": profilers[2].dt * 1e3 / n,
+                    }    #批次内平均速度
+                    p, im0 = path[i], None if self.source_type.tensor else im0s[i].copy()
+                    p = Path(p)
 
-                        if self.args.verbose or self.args.save or self.args.save_txt or self.args.show:
-                            s += self.write_results(i, self.results, (p,im,im0))
-                        if self.args.save or self.args.save_txt:
-                            self.results[i].save_dir = self.save_dir.__str__()
-                        if self.args.show and self.plotted_img is not None:
-                            self.show(p)
-                        if self.args.save and self.plotted_img is not None:
-                            self.save_preds(vid_cap, i, str(self.save_dir / p.name))
-                    torch.cuda.empty_cache()
-                    yield from self.results
-                    PROGRESS_BAR.setValue(self.seen, f"{s} {profilers[1].dt *1e3:.1f}ms")
-                    if PROGRESS_BAR.isStop():
-                        PROGRESS_BAR.close()
-                        raise ProcessLookupError("中断：预测中断成功")
-            except Exception as ex:
-                PROGRESS_BAR.stop()
-                PROGRESS_BAR.close()
-                raise ProcessLookupError(f"预测失败：{ex}")
+                    if self.args.verbose or self.args.save or self.args.save_txt or self.args.show:
+                        s += self.write_results(i, self.results, (p,im,im0))
+                    if self.args.save or self.args.save_txt:
+                        self.results[i].save_dir = self.save_dir.__str__()
+                    if self.args.show and self.plotted_img is not None:
+                        self.show(p)
+                    if self.args.save and self.plotted_img is not None:
+                        self.save_preds(vid_cap, i, str(self.save_dir / p.name))
+                torch.cuda.empty_cache()
+                yield from self.results
+                
                     
         #Release assets
         if isinstance(self.vid_writer[-1], cv2.VideoWriter):
             self.vid_writer[-1].release()
-
+        PROGRESS_BAR.close()
         #Print results
         if self.args.verbose and self.seen:
             t = tuple(x.t / self.seen * 1e3 for x in profilers) #所有图像的平均速度

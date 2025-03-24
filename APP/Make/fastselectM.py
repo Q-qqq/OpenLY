@@ -7,7 +7,12 @@ from PySide2.QtWidgets import *
 
 import numpy as np
 
+from APP.Utils.ops import segment2Box
+from ultralytics.utils import threaded
+
 from APP.Designer import fast_selectUI
+from APP import debounce
+from ultralytics.utils.ops import segments2boxes, xywh2xyxy
 
 
 def clip(n, min, max):
@@ -26,9 +31,7 @@ class FastSelect(QWidget, fast_selectUI.Ui_Form):
         self.Finish_pb.setVisible(False)
         self.Cancel_pb.setVisible(False)
         # 初始化GrabCut参数
-        self.bgd_model = np.zeros((1, 65), np.float64)
-        self.fgd_model = np.zeros((1, 65), np.float64)
-        self.mask = None
+        
         #初始化FF参数
         self.rgb_lo = 0
         self.rgb_up = 0
@@ -39,7 +42,7 @@ class FastSelect(QWidget, fast_selectUI.Ui_Form):
         self.g_lo = 0
         self.g_up = 0
         self.eventConnect()
-
+    
 
 
     def eventConnect(self):
@@ -53,15 +56,20 @@ class FastSelect(QWidget, fast_selectUI.Ui_Form):
         self.Finish_pb.clicked.connect(self.finish)
         self.Cancel_pb.clicked.connect(self.cancel)
 
+        self.Thre_lo_th_hs.valueChanged.connect(lambda: self.compute(self.img_label.seed))
+        self.Thre_up_th_hs.valueChanged.connect(lambda: self.compute(self.img_label.seed))
+
+
     def show(self):
         self.img_label.Fast_Sel_Cop_Signal.connect(self.compute)
         super().show()
-
-
+    
+    def closeEvent(self, event):
+        self.cancel()
+        return super().closeEvent(event)
+        
 
     def methodSelectedSlot(self):
-        self.Finish_pb.setVisible(False)
-        self.Cancel_pb.setVisible(False)
         if self.Fast_sel_methods_cbb.currentText() == "threshold":
             self.FF_color_ch_cbb.setVisible(False)
         elif self.Fast_sel_methods_cbb.currentText() == "grabcut":
@@ -70,6 +78,7 @@ class FastSelect(QWidget, fast_selectUI.Ui_Form):
             self.FF_color_ch_cbb.setVisible(True)
             self.ffValueChangedSlot()
         self.img_label.fast_method = self.Fast_sel_methods_cbb.currentText()
+        self.compute(self.img_label.seed)
 
 
 
@@ -86,13 +95,13 @@ class FastSelect(QWidget, fast_selectUI.Ui_Form):
         elif self.FF_color_ch_cbb.currentText() == "B":
             self.b_lo = self.FF_lo_diff_hs.value()
             self.b_up = self.FF_up_diff_hs.value()
+        self.compute(self.img_label.seed)
 
 
     def createSelectSpace(self):
         """开始创建选区"""
         self.img_label.fast_cre_sel = True
         self.img_label.fast_seed_searching = False
-        self.Fast_sel_methods_cbb.setEnabled(False)
         self.Finish_pb.setVisible(True)
         self.Cancel_pb.setVisible(True)
 
@@ -109,16 +118,19 @@ class FastSelect(QWidget, fast_selectUI.Ui_Form):
         self.img_label.fast_rect = None
         self.img_label.fast_seed_searching = False
         if self.img_label.fast_segment is not None and isinstance(self.img_label.fast_segment,np.ndarray):
-            if self.img_label.use_pencil:
-                if self.img_label.pencil_mode == "add":
+            if self.img_label.task == "segment":
+                if self.img_label.use_pencil:
+                    if self.img_label.pencil_mode == "add":
+                        self.img_label.addSegment(self.img_label.fast_segment, self.img_label.cls)
+                    else:
+                        self.img_label.removeSegment(self.img_label.fast_segment)
+                else:  # 钢笔只有添加功能
                     self.img_label.addSegment(self.img_label.fast_segment, self.img_label.cls)
-                else:
-                    self.img_label.removeSegment(self.img_label.fast_segment)
-            else:  # 钢笔只有添加功能
-                self.img_label.addSegment(self.img_label.fast_segment, self.img_label.cls)
+            else:
+                box = segment2Box(self.img_label.fast_segment, "xywh")
+                self.img_label.addBox(box, self.img_label.cls, "xywh")
             self.img_label.Change_Label_Signal.emit()
         self.img_label.fast_segment = None
-        self.Fast_sel_methods_cbb.setEnabled(True)
         self.img_label.update()
 
     def cancel(self):
@@ -128,7 +140,6 @@ class FastSelect(QWidget, fast_selectUI.Ui_Form):
         self.img_label.fast_rect = None
         self.img_label.fast_seed_searching = False
         self.img_label.fast_segment = None
-        self.Fast_sel_methods_cbb.setEnabled(True)
         self.img_label.update()
 
 
@@ -146,23 +157,16 @@ class FastSelect(QWidget, fast_selectUI.Ui_Form):
             mask = mb+mg+mr
         return mask
 
-    def getMask(self, h ,w):
-        if self.mask is None:
-            self.mask = np.zeros((h,w), dtype=np.uint8)
-        else:
-            mh,mw = self.mask.shape[:2]
-            if h != mh or w != mw:
-                self.mask = np.zeros((h,w), dtype=np.uint8)
-        return self.mask.copy()
 
     def rectOpt(self, rect, h, w):
         """处理矩形框"""
-        rect[0] = clip(math.floor(rect[0]),0, w)
-        rect[1] = clip(math.ceil(rect[1]), 0, h)
-        rect[2] = clip(math.floor(rect[2]), 0, w)
-        rect[3] = clip(math.ceil(rect[3]), 0, h)
+        new_rect = [0,0,0,0]
+        new_rect[0] = clip(math.floor(rect[0]),0, w)
+        new_rect[1] = clip(math.ceil(rect[1]), 0, h)
+        new_rect[2] = clip(math.floor(rect[2]), 0, w)
+        new_rect[3] = clip(math.ceil(rect[3]), 0, h)
         area = (rect[3] - rect[1]) * (rect[2]-rect[0])
-        return rect, area
+        return new_rect, area
 
 
     def thresholdGetObject(self):
@@ -201,6 +205,10 @@ class FastSelect(QWidget, fast_selectUI.Ui_Form):
             if len(c_):
                 lc = [len(mc) for mc in c_]
                 c = c_[lc.index(max(lc))]
+            else:
+                c =[]
+        else:
+            c = []
         return c
 
 
@@ -214,13 +222,14 @@ class FastSelect(QWidget, fast_selectUI.Ui_Form):
             img = self.img_label.img.copy()
         h, w = img.shape[:2]
 
-        rect, area = self.rectOpt(self.img_label.fast_rect, h, w)
+        rect, area = self.rectOpt(self.img_label.fast_rect, h-1, w-1)
         if area == 0:
             return []
 
-
-        temp_mask = self.getMask(h, w)
-        cv2.grabCut(img, temp_mask, rect, self.bgd_model, self.fgd_model, 3, cv2.GC_INIT_WITH_RECT)
+        bgd_model = np.zeros((1, 65), np.float64)
+        fgd_model = np.zeros((1, 65), np.float64)
+        temp_mask = np.zeros((h,w), dtype=np.uint8)
+        cv2.grabCut(img, temp_mask, rect, bgd_model, fgd_model, 3, cv2.GC_INIT_WITH_RECT)
         # 生成最终蒙版（前景和可能的前景）
         final_mask = np.where((temp_mask == 1) | (temp_mask == 3), 255, 0).astype(np.uint8)
         _, final_mask = cv2.threshold(final_mask,128,255,cv2.THRESH_BINARY)
@@ -233,6 +242,10 @@ class FastSelect(QWidget, fast_selectUI.Ui_Form):
             if len(c):
                 lc = [len(mc) for mc in c]
                 c = c[lc.index(max(lc))]
+            else:
+                return []
+        else:
+            c = []
         return c
 
 
@@ -282,21 +295,24 @@ class FastSelect(QWidget, fast_selectUI.Ui_Form):
             if len(c):
                 lc = [len(mc) for mc in c]
                 c = c[lc.index(max(lc))]
+            else:
+                return []
+        else:
+            c = []
         return c
 
-
-    def compute(self,point=[0,0]):
-        if self.Fast_sel_methods_cbb.currentText() == "threshold":
-            obj = self.thresholdGetObject()
-        elif self.Fast_sel_methods_cbb.currentText() == "grabcut":
-            obj = self.grabcutGetObject()
-        else:
-            obj = self.floodfillGetObject(point)
-        if len(obj):
+    @debounce(10)
+    @threaded
+    def compute(self,point=None):
+        if self.img_label.fast_rect:
+            obj = []
+            if self.Fast_sel_methods_cbb.currentText() == "threshold":
+                obj = self.thresholdGetObject()
+            elif self.Fast_sel_methods_cbb.currentText() == "grabcut":
+                obj = self.grabcutGetObject()
+            elif point:
+                obj = self.floodfillGetObject(point)
             self.img_label.fast_segment = obj
             self.img_label.update()
-
-
-
-
-
+        elif self.Finish_pb.isVisible():
+            self.cancel()

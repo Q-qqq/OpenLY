@@ -48,7 +48,7 @@
 - pretrained
 - source
 全局参数:
-  任务: task：训练任务，可选detect、segment、classif、pose$widgetType~cbb$type~bool$default~True$edit~False$items~detect,segment,classify,pose,obb
+  任务: task：训练任务，detect、segment、classify、pose$widgetType~cbb$type~string$default~detect$edit~True$items~detect,segment,obb,pose,classify
 训练参数:
   模型: model：模型文件，可以是后缀pt的模型文件（预训练权重），也可以是后缀yaml的模型结构参数文件（从0开始）$widgetType~cbb$type~string$default~$edit~True
   数据集: data：数据集参数配置文件（.yaml）,包含训练集、验证集/测试集文件路径、种类数量和种类名称等参数$widgetType~le$type~string$default~
@@ -56,8 +56,7 @@
   训练时间（h）: time：学习周期和训练时间其中之一决定训练时长，训练时间的优先级高于学习周期$widgetType~dsb$type~单位：h$default~0$min~0.0$max~10000.0$decimal~3
   早停周期数: patience：当patience个周期模型效果没有明显提高触发早停，停止训练$widgetType~sb$type~int$default~100$min~0$max~10000
   批大小: batch：每一次迭代的样本数量，增多可增强泛化能力，但太大会引起内存爆炸；过小的batch会使得模型梯度下降不准确，需要降低学习率$widgetType~sb$type~int$default~8$min~0$max~10000
-  图像大小: imgsz：模型输入图像的尺寸大小，不是导入图像的尺寸大小；尺寸分宽度和高度，当训练和验证时，尺寸大小取长边，推理和导出时尺寸正常使用（w,h）$widgetType~le$type~int
-    | list$default~640
+  图像大小: imgsz：模型输入图像的尺寸大小，不是导入图像的尺寸大小；尺寸分宽度和高度，当训练和验证时，尺寸大小取长边，推理和导出时尺寸正常使用（w,h）$widgetType~le$type~int|list$default~640
   保存: save：是否保存训练节点和推理结果$widgetType~cb$type~bool$default~True
   保存周期: save_period：保存周期，每save_period个学习周期单独保存一次训练节点，当小于-1时，不使能此功能。保存周期与每一次epoch保存是分开的$widgetType~sb$type~int$default~-1$min~-1$max~10000
   缓存: cache：是否对数据集进行缓存，可提高训练速度，True等同ram；$widgetType~cbb$type~bool$default~True$edit~False$items~False,True,ram,disk
@@ -65,7 +64,6 @@
   加载线程数: workers：数据加载线程数，如果是多GPU训练，则表示每个RANK的数据加载线程数，越大的workers需求内存越多$widgetType~sb$type~int$default~0$min~0$max~10000
   项目名称: project：项目名称$widgetType~le$type~str,optional$default~
   实验名称: name：实验名称，训练结果保存于目录‘project/name’$widgetType~le$type~str,optional$default~
-  覆盖已有实验: exist_ok：是否覆盖已存在的实验$widgetType~cb$type~bool$default~True
   预训练: pretrained：是否进行预训练（bool），或者给定一个预训练模型进行训练（str）$widgetType~cbb$type~bool$default~True$edit~True$items~True,False
   优化器: optimizer：优化器$widgetType~cbb$type~bool,str$default~True$edit~False$items~SGD,Adam,Adamax,AdamW,NAdam,RAdam,RMSProp,auto
   详细输出: verbose：是否输出显示详细的训练过程$widgetType~cb$type~bool$default~True
@@ -166,6 +164,5 @@ V5参数:
   置信度损失权值: obj：通过网络预测出的置信度计算该位置有无目标的损失，该损失再乘以此权值为最终置信度损失$widgetType~dsb$type~float$default~0.7$min~0.0$max~1000.0$decimal~3
   置信度正例权值: obj_pw：计算置信度损失时，给到正样本目标的权重$widgetType~dsb$type~float$default~1$min~0.0$max~1000.0$decimal~3
   置信度iou比值: gr：置信度损失占iou比值 (1-gr) + gr*iou$widgetType~dsb$type~float$default~0.4$min~0.0$max~1.0$decimal~3
-  训练IoU: iou_t：训练时使用的iou阈值，计算真实框与先验框的iou，给真实框划分先验框，不使用，使用anchor_t$widgetType~dsb$type~float$default~0.2$min~0.0$max~1.0$decimal~3
   先验框阈值: anchor_t：通过计算真实框和先验框的长度比和宽度比，若最大的比小于此阈值，则该先验框属于此真实框$widgetType~dsb$type~float$default~4$min~0.0$max~1000.0$decimal~3
   fl_gamma: fl_gamma：当fl_gamma大于0时，计算种类和置信度损失的算法由BCELoss换成FocalLoss,FocalLoss通过使用alpha和gamma参数修改BCEWithLogitsLoss算法来克服类不平衡和难分样本问题，gamma值越大，难分样本损失重要性越大，大于0时默认值为1.5$widgetType~dsb$type~float$default~0$min~0.0$max~1000.0$decimal~3

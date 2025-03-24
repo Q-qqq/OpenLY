@@ -247,7 +247,7 @@ def v5_non_max_suppression(
 
     t = time.time()
     mi = 5 + nc  # mask start index
-    output = [torch.zeros((0, 6), device=prediction.device)] * prediction.shape[0]
+    output = [torch.zeros((0, 6+nm), device=prediction.device)] * bs
     for img_i,x in enumerate(prediction):   #image index,  pred in a image
         x = x[xc[img_i]]
 
@@ -271,10 +271,10 @@ def v5_non_max_suppression(
 
         #[box conf cls]
         if multi_label:
-            i, j = (x[:,5:mi] > conf_thres).nonzero(as_tuple=False).t()
-            x = torch.cat((box[i], x[i,5+j, None], j[:, None].float(), mask[i]), 1)
+            i, j = (x[:, 5:mi] > conf_thres).nonzero(as_tuple=False).T
+            x = torch.cat((box[i], x[i, 5+j, None], j[:, None].float(), mask[i]), 1)
         else:
-            conf,j = x[:,5:mi].max(1,keepdim = True)    #最大的置信度   类别索引
+            conf,j = x[:, 5:mi].max(1,keepdim = True)    #最大的置信度   类别索引
             x = torch.cat((box, conf, j.float(), mask),1)[conf.view(-1) > conf_thres]      #置信度大于阈值的[box conf cls]  box - xyxy
 
         #Filter by class

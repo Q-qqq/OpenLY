@@ -20,23 +20,23 @@
    <enum>QTabWidget::Rounded</enum>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout_7">
+   <layout class="QGridLayout" name="gridLayout" columnstretch="0,0">
     <property name="leftMargin">
-     <number>1</number>
+     <number>2</number>
     </property>
     <property name="topMargin">
-     <number>1</number>
+     <number>2</number>
     </property>
     <property name="rightMargin">
-     <number>1</number>
+     <number>2</number>
     </property>
     <property name="bottomMargin">
-     <number>1</number>
+     <number>2</number>
     </property>
     <property name="spacing">
      <number>1</number>
     </property>
-    <item row="0" column="0">
+    <item row="0" column="0" colspan="2">
      <widget class="QFrame" name="Painter_tool_f">
       <property name="minimumSize">
        <size>
@@ -305,6 +305,47 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="Tool_pred_to_true_pb">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Segoe UI</family>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="text">
+          <string>P-&gt;T</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="line_3">
+         <property name="lineWidth">
+          <number>1</number>
+         </property>
+         <property name="midLineWidth">
+          <number>20</number>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer name="horizontalSpacer_3">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
@@ -338,19 +379,6 @@
           <property name="bottomMargin">
            <number>1</number>
           </property>
-          <item>
-           <widget class="Line" name="line_3">
-            <property name="lineWidth">
-             <number>1</number>
-            </property>
-            <property name="midLineWidth">
-             <number>20</number>
-            </property>
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-           </widget>
-          </item>
           <item>
            <widget class="QRadioButton" name="Tool_train_rb">
             <property name="enabled">
@@ -435,7 +463,25 @@
       <property name="frameShadow">
        <enum>QFrame::Raised</enum>
       </property>
-      <layout class="QGridLayout" name="gridLayout"/>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QListView" name="Classes_lv">
+      <property name="maximumSize">
+       <size>
+        <width>0</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Plain</enum>
+      </property>
+      <property name="isWrapping" stdset="0">
+       <bool>false</bool>
+      </property>
      </widget>
     </item>
    </layout>
@@ -510,7 +556,7 @@
      </property>
      <addaction name="Load_dataset_a"/>
      <addaction name="Load_zip_a"/>
-     <addaction name="Add_no_label_a"/>
+     <addaction name="Add_no_labels_a"/>
     </widget>
     <widget class="QMenu" name="menu_2">
      <property name="title">
@@ -683,7 +729,7 @@
         <number>100</number>
        </property>
        <property name="value">
-        <number>100</number>
+        <number>0</number>
        </property>
       </widget>
      </item>
@@ -1259,10 +1305,6 @@ QFrame[frameShape=&quot;StyledPanel&quot;]::title {
    </widget>
   </widget>
   <action name="Train_a">
-   <property name="icon">
-    <iconset>
-     <normaloff>:/aa/F:/Download_icon/MdiBulma.svg</normaloff>:/aa/F:/Download_icon/MdiBulma.svg</iconset>
-   </property>
    <property name="text">
     <string>训练</string>
    </property>
@@ -1462,7 +1504,7 @@ QFrame[frameShape=&quot;StyledPanel&quot;]::title {
     <string>导入压缩包</string>
    </property>
   </action>
-  <action name="Add_no_label_a">
+  <action name="Add_no_labels_a">
    <property name="text">
     <string>添加</string>
    </property>

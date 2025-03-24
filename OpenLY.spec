@@ -7,6 +7,8 @@ def find_py_paths(root_dir):
     return [os.path.join(root_dir, d) for d in os.listdir(root_dir)
             if os.path.isdir(os.path.join(root_dir,  d))]
 
+
+
 datas = collect_data_files('ultralytics')
 a = Analysis(
     ['OpenLY.py'],
@@ -41,6 +43,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon="APP/resources/images/title.ico",
 )
 coll = COLLECT(
     exe,

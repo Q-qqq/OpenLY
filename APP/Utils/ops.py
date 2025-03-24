@@ -1,3 +1,4 @@
+import colorsys
 from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
@@ -9,7 +10,7 @@ import numpy as np
 import cv2
 from PIL import Image
 
-from ultralytics.utils.ops import xywhr2xyxyxyxy
+from ultralytics.utils.ops import segments2boxes, xywh2xyxy, xywhr2xyxyxyxy
 
 def distPointToLine(point1, point2, point):
     """点到直线的距离"""
@@ -218,34 +219,35 @@ def cvImg2Qpix(img):
 
 import colorsys
 
-
 def generate_distinct_colors(n, saturation=0.9, value=0.9):
     """
     生成n个视觉可区分的颜色（HEX格式）
-
-    Args：
+    
+    参数：
     n : int - 需要生成的颜色数量
     saturation : float (0-1) - 饱和度，默认90%
     value : float (0-1) - 明度，默认90%
-
-    Returns：
+    
+    返回：
     list - 包含n个HEX颜色代码的列表
     """
     colors = []
     hue_step = 360 / n  # 色相间隔
-
+    
     for i in range(n):
         # 计算HSV值（色相转换为角度制）
         hue = i * hue_step
-        r, g, b = colorsys.hsv_to_rgb(hue / 360, saturation, value)
-
+        r, g, b = colorsys.hsv_to_rgb(hue/360,  saturation, value)
+        
         # 转换为HEX格式
-        hex_code = [int(r * 255),
-            int(g * 255),
+        hex_code = [int(r * 255), 
+            int(g * 255), 
             int(b * 255)]
-        colors.append(hex_code)
-
+        colors.append(hex_code) 
+    
     return colors
+
+
 
 def segmentArea(segment):
     "计算分割多边形面积"
@@ -259,7 +261,11 @@ def segmentArea(segment):
             A2 += segment[i + 1][0] * segment[i][1]  # x_i+1 * y_i
     return abs((A1 - A2) / 2)
 
-
+def segment2Box(segment, format):
+    box = segments2boxes([segment])
+    if format == "xyxy":
+        box = xywh2xyxy(box)
+    return box
 
 
 
