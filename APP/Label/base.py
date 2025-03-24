@@ -524,8 +524,9 @@ class QSizeLabel(QLabel):
             self.update()
             return
         scale = max(w/self.width(), h/self.height())
-        half_w = self.pix_half_width / scale
-        half_h = self.pix_half_height / scale
+        half_w = self.pix_half_width / scale 
+        x = (half_w-self.pix_half_width)/self.pix_scale_x   #更新公式： pix_half_width + x*self.pix_scale_x = pix_half_width  逆推
+        half_h = self.pix_half_height + x * self.pix_scale_y # pix_half_height = pix_half_height + x *self.pix_scale_y
         self.scalePix(half_w, half_h, center_x, center_y)
         self.zoom_finish =True
         self.update()
@@ -535,8 +536,8 @@ class QSizeLabel(QLabel):
             return
 
         if (self.pix_half_height > 24 and self.pix_half_width > 24) or event.angleDelta().y() > 0:  # 120/5=24，不能使得pix_half_width和pix_halg_height为负数
-            half_w = self.pix_half_width + int((event.angleDelta().y() / 5) * self.pix_scale_x)  #放大后的一半宽
-            half_h = self.pix_half_height + int((event.angleDelta().y() / 5) * self.pix_scale_y)  #放大后的一半高
+            half_w = self.pix_half_width + event.angleDelta().y() / 5 * self.pix_scale_x  #放大后的一半宽
+            half_h = self.pix_half_height + event.angleDelta().y() / 5 * self.pix_scale_y  #放大后的一半高
             x = event.position().x() if event.angleDelta().y() > 0  else self.width()/2  #放大以鼠标位置为缩放中心，缩小以label中心为缩放中心
             y = event.position().y() if event.angleDelta().y() > 0  else self.height()/2
             self.scalePix(half_w, half_h, x, y)
