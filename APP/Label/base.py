@@ -722,14 +722,14 @@ class QTransformerLabel(QSizeLabel):
             self.drawCrossLine(painter)
         if self.show_true and self.label:   #真实标签
             true_label = copy.deepcopy(self.label)
-            if true_label.get("instances"):
+            if true_label.get("instances") is not None:
                 true_label["instances"] = self.getInstance(self.label)
             self.drawLabel(painter, true_label)
             if self.bounding_rect and true_label:
                 self.drawBoxes(painter, true_label)
         if self.show_pred and self.pred_label:  #预测标签
             pred_label = copy.deepcopy(self.pred_label)
-            if pred_label.get("instances"):
+            if pred_label.get("instances") is not None:
                 pred_label["instances"] = self.getInstance(self.pred_label)
                 self.drawLabel(painter, pred_label, True)
                 if self.bounding_rect:
@@ -740,7 +740,10 @@ class QTransformerLabel(QSizeLabel):
         instance = copy.deepcopy(label["instances"])
         if instance._bboxes is not None and len(instance._bboxes) > 0:  #存在标签
             if not self.painting and self.cursor().shape() == Qt.CrossCursor:
-                label["instances"].remove_zero_area_boxes()
+                good = label["instances"].remove_zero_area_boxes()
+                good = np.array(good) if isinstance(good, torch.Tensor) else good
+                clss = np.array(label["cls"], dtype=np.int32)
+                label["cls"] = clss[good].tolist()
             label["instances"].clip(self.pix.width(), self.pix.height())
             instance.convert_bbox("xyxy")
             self.getLabelSizeInstance(instance)  # 将标签缩放移动至显示大小位置

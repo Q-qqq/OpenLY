@@ -333,12 +333,18 @@ class CfgsTreeWidget(QTreeWidget):
                 task = self.args[name]
                 model = self.args["model"]
                 models = get_models(task)
-                if Path(model).suffix == ".pt" and not check_pt_task(model, task):  #pt模型并且pt任务与现在任务不匹配
-                    QMessageBox.information(self.parent(), "提示", f"模型{model}不兼容{task}, 已选择默认模型{models[0]}")
+                if Path(model).suffix == ".pt":
+                    if not check_pt_task(model, task):  #pt模型并且pt任务与现在任务不匹配
+                        QMessageBox.information(self.parent(), "提示", f"模型{model}不兼容{task}, 已选择默认模型{models[0]}")
+                        self.setValue("model", models[0])
                 elif self.args["model"] not in models:
                     QMessageBox.information(self.parent(), "提示", f"模型{model}可能不兼容{task}, 已选择默认模型{models[0]}")
                     self.setValue("model", models[0])
                 self.Task_Change_Signal.emit(self.args[name])
+            elif name == "model":
+                pass
+            elif name == "dataset":
+                pass
         elif isinstance(widget, (QDoubleSpinBox, QSpinBox)):
             self.args[name] = self.checkValue(name, widget.value())
         elif isinstance(widget, QLineEdit):

@@ -56,7 +56,7 @@ class Train(QMainWindow, trainQT_ui.Ui_MainWindow):
         self.classes_view = ClassesView(self.Classes_lv)
         self.setUI()
         self.setPlot()
-        self.sift_dataset = SiftDataset(self.Sift_f)
+        self.sift_dataset = SiftDataset(self)
         self.eventConnect()
         self.start_w.show()
 

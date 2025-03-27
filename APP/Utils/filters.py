@@ -31,9 +31,9 @@ class CentralWidgetFilter(QObject):
 class CbbFilter(QObject):
     """parent： sift_dataset"""
     def eventFilter(self, watched, event):
-        select_dataset_cbb = get_widget(self.parent().parent(), "Select_dataset_cbb")
-        select_class_cbb = get_widget(self.parent().parent(), "Select_class_cbb")
-        sift_dataset = self.parent()
+        select_dataset_cbb = self.parent().Select_dataset_cbb
+        select_class_cbb = self.parent().Select_class_cbb
+        sift_dataset = self.parent().sift_dataset
         if event.type() == QEvent.MouseButtonPress:
             if watched == select_dataset_cbb:
                 dataset_items = sift_dataset.getItems()

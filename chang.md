@@ -230,7 +230,6 @@ class Progress(QObject):
         """设置进度条的值"""
         self.Set_Value_Signal.emit(value, text)
     
-
     def reset(self):
         """重置进度条"""
         self._stop = False
@@ -460,7 +459,7 @@ def checkImgs(self, ims):
 ```python
 def __call__(self, model=None) -> str:
         """Returns list of exported files/dirs after running callbacks."""
-        PROGRESS_BAR.start("模型导出， ”导出中", 0, 0, False)
+        PROGRESS_BAR.start("模型导出， ”导出中", [0, 0], False)
         self.run_callbacks("on_export_start")
         ...
         ...

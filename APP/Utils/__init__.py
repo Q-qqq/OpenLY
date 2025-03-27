@@ -127,16 +127,15 @@ def check_pt_task(model, task):
         ckpt = torch.load(pt_model, map_location="cpu")
         args = ckpt["train_args"]
         if args["task"] != task:
+            QMessageBox.information(None, "提示", f"模型{model}执行的任务{args["task"]}与当前任务{task}不符")
             return False
         return True
     if Path(model).exists() and Path(model).suffix == ".pt":
         if judge_pt_task(model, task):
             return  True
-        else:
-            QMessageBox.information(None, "提示", f"模型{model}执行任务{task}与现在任务{task}不符")
     else:
         QMessageBox.information(None, "提示", f"模型{model}不可用，请选择一个可用的pt模型")
-    items = glob.glob(str(Path(getExperimentPath()) / "**" / "*.pt"), recursize=True)
+    items = glob.glob(str(Path(getExperimentPath()) / "**" / "*.pt"), recursive=True)
     if len(items):
         model, ok = QInputDialog.getItem(None, "pt模型", "model:", items, 0, True)
         if ok and model != "":

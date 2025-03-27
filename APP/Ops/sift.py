@@ -30,7 +30,7 @@ class SiftDataset(QObject):
     """筛选数据集"""
     def __init__(self,parent):
         super().__init__(parent)
-        """parent:Sift_f"""
+        """parent:trainM"""
         self.task = ""
         self.args = None
         self.data = ""
@@ -248,19 +248,18 @@ class SiftTool(QObject):
     def __init__(self,parent):
         """parent: SiftDataset"""
         super().__init__(parent)
-        parent = self.parent().parent()   #Sift_f
-        self.image_scroll = get_widget(parent, "image_scroll")
-        self.images_label = get_widget(parent, "images_label")
-        self.image_num_le = get_widget(parent, "Image_num_le")
-        self.image_total_l = get_widget(parent, "Image_total_l")
-        self.select_dataset_cbb = get_widget(parent, "Select_dataset_cbb")
-        self.select_class_cbb = get_widget(parent, "Select_class_cbb")
-        self.select_search_le = get_widget(parent, "Select_search_le")
-        self.select_ops_cbb = get_widget(parent, "Select_ops_cbb")
-        self.select_all_pb = get_widget(parent, "Select_all_pb")
-        self.select_batch_ops_pb = get_widget(parent, "Select_batch_ops_pb")
-        self.select_update_pb = get_widget(parent, "Select_update_pb")
-        self.sift_image_dw = parent.parent().parent()  #sift_f -> dockWidgetContent-> dockWidget
+        parent = self.parent().parent()   #trainM
+        self.image_scroll = parent.image_scroll
+        self.images_label = parent.images_label
+        self.image_num_le = parent.Image_num_le
+        self.image_total_l = parent.Image_total_l
+        self.select_dataset_cbb = parent.Select_dataset_cbb
+        self.select_class_cbb = parent.Select_class_cbb
+        self.select_search_le = parent.Select_search_le
+        self.select_ops_cbb = parent.Select_ops_cbb
+        self.select_all_pb = parent.Select_all_pb
+        self.select_batch_ops_pb = parent.Select_batch_ops_pb
+        self.sift_image_dw = parent.Sift_image_dw  #dockWidget
         self.eventConnect()
 
     def eventConnect(self):
@@ -269,9 +268,9 @@ class SiftTool(QObject):
         self.select_search_le.textChanged.connect(self.siftImageSignal)
         self.select_batch_ops_pb.clicked.connect(self.batchOps)
         self.select_all_pb.clicked.connect(self.selectAll)
-        self.select_dataset_cbb.installEventFilter(CbbFilter(self.parent()))
-        self.select_class_cbb.installEventFilter(CbbFilter(self.parent()))
-        self.select_ops_cbb.installEventFilter(CbbFilter(self.parent()))
+        self.select_dataset_cbb.installEventFilter(CbbFilter(self.parent().parent()))
+        self.select_class_cbb.installEventFilter(CbbFilter(self.parent().parent()))
+        self.select_ops_cbb.installEventFilter(CbbFilter(self.parent().parent()))
 
     @debounce(500)
     @threaded

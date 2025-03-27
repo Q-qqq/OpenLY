@@ -18,9 +18,9 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QDockWidget, QFrame,
     QGridLayout, QGroupBox, QHBoxLayout, QLabel,
-    QLayout, QLineEdit, QListView, QMainWindow,
-    QMenu, QMenuBar, QProgressBar, QPushButton,
-    QRadioButton, QSizePolicy, QSpacerItem, QSplitter,
+    QLineEdit, QListView, QMainWindow, QMenu,
+    QMenuBar, QProgressBar, QPushButton, QRadioButton,
+    QScrollArea, QSizePolicy, QSpacerItem, QSplitter,
     QStatusBar, QTabWidget, QTextEdit, QToolBar,
     QVBoxLayout, QWidget)
 
@@ -28,7 +28,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1082, 804)
+        MainWindow.resize(1077, 639)
         MainWindow.setWindowOpacity(1.000000000000000)
         MainWindow.setStyleSheet(u"")
         MainWindow.setTabShape(QTabWidget.TabShape.Rounded)
@@ -269,14 +269,6 @@ class Ui_MainWindow(object):
 
         self.gridLayout.addWidget(self.Painter_tool_f, 0, 0, 1, 2)
 
-        self.Source_show_f = QFrame(self.centralwidget)
-        self.Source_show_f.setObjectName(u"Source_show_f")
-        self.Source_show_f.setStyleSheet(u"")
-        self.Source_show_f.setFrameShape(QFrame.Shape.Box)
-        self.Source_show_f.setFrameShadow(QFrame.Shadow.Plain)
-
-        self.gridLayout.addWidget(self.Source_show_f, 1, 0, 1, 1)
-
         self.Classes_lv = QListView(self.centralwidget)
         self.Classes_lv.setObjectName(u"Classes_lv")
         self.Classes_lv.setMaximumSize(QSize(0, 16777215))
@@ -285,10 +277,18 @@ class Ui_MainWindow(object):
 
         self.gridLayout.addWidget(self.Classes_lv, 1, 1, 1, 1)
 
+        self.Source_show_f = QFrame(self.centralwidget)
+        self.Source_show_f.setObjectName(u"Source_show_f")
+        self.Source_show_f.setStyleSheet(u"")
+        self.Source_show_f.setFrameShape(QFrame.Shape.Box)
+        self.Source_show_f.setFrameShadow(QFrame.Shadow.Plain)
+
+        self.gridLayout.addWidget(self.Source_show_f, 1, 0, 1, 1)
+
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 1082, 21))
+        self.menubar.setGeometry(QRect(0, 0, 1077, 21))
         self.menubar.setStyleSheet(u"")
         self.menu = QMenu(self.menubar)
         self.menu.setObjectName(u"menu")
@@ -444,9 +444,8 @@ class Ui_MainWindow(object):
         self.Sift_f.setObjectName(u"Sift_f")
         self.Sift_f.setFrameShape(QFrame.Shape.StyledPanel)
         self.Sift_f.setFrameShadow(QFrame.Shadow.Raised)
-        self.gridLayout_8 = QGridLayout(self.Sift_f)
-        self.gridLayout_8.setObjectName(u"gridLayout_8")
-        self.gridLayout_8.setContentsMargins(1, 1, 1, 1)
+        self.gridLayout_5 = QGridLayout(self.Sift_f)
+        self.gridLayout_5.setObjectName(u"gridLayout_5")
         self.Select_image_spliter = QSplitter(self.Sift_f)
         self.Select_image_spliter.setObjectName(u"Select_image_spliter")
         self.Select_image_spliter.setOrientation(Qt.Orientation.Horizontal)
@@ -464,10 +463,64 @@ class Ui_MainWindow(object):
         self.Sift_gb.setStyleSheet(u"")
         self.Sift_gb.setFlat(True)
         self.Sift_gb.setCheckable(False)
-        self.gridLayout_3 = QGridLayout(self.Sift_gb)
+        self.gridLayout_4 = QGridLayout(self.Sift_gb)
+        self.gridLayout_4.setSpacing(0)
+        self.gridLayout_4.setObjectName(u"gridLayout_4")
+        self.gridLayout_4.setContentsMargins(0, 0, 0, 0)
+        self.scrollArea = QScrollArea(self.Sift_gb)
+        self.scrollArea.setObjectName(u"scrollArea")
+        self.scrollArea.setFrameShape(QFrame.Shape.NoFrame)
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollAreaWidgetContents = QWidget()
+        self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 299, 197))
+        self.gridLayout_3 = QGridLayout(self.scrollAreaWidgetContents)
+        self.gridLayout_3.setSpacing(2)
         self.gridLayout_3.setObjectName(u"gridLayout_3")
-        self.gridLayout_3.setSizeConstraint(QLayout.SizeConstraint.SetDefaultConstraint)
-        self.widget_2 = QWidget(self.Sift_gb)
+        self.gridLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.widget = QWidget(self.scrollAreaWidgetContents)
+        self.widget.setObjectName(u"widget")
+        self.horizontalLayout = QHBoxLayout(self.widget)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.horizontalLayout.setContentsMargins(2, 2, 2, 2)
+        self.label_3 = QLabel(self.widget)
+        self.label_3.setObjectName(u"label_3")
+        self.label_3.setFont(font)
+
+        self.horizontalLayout.addWidget(self.label_3)
+
+        self.Image_num_le = QLineEdit(self.widget)
+        self.Image_num_le.setObjectName(u"Image_num_le")
+        self.Image_num_le.setFont(font)
+        self.Image_num_le.setReadOnly(True)
+
+        self.horizontalLayout.addWidget(self.Image_num_le)
+
+        self.label = QLabel(self.widget)
+        self.label.setObjectName(u"label")
+        self.label.setFont(font)
+
+        self.horizontalLayout.addWidget(self.label)
+
+        self.Image_total_l = QLabel(self.widget)
+        self.Image_total_l.setObjectName(u"Image_total_l")
+        self.Image_total_l.setFont(font)
+
+        self.horizontalLayout.addWidget(self.Image_total_l)
+
+        self.horizontalSpacer_4 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout.addItem(self.horizontalSpacer_4)
+
+        self.horizontalLayout.setStretch(0, 1)
+        self.horizontalLayout.setStretch(1, 2)
+        self.horizontalLayout.setStretch(2, 1)
+        self.horizontalLayout.setStretch(3, 1)
+        self.horizontalLayout.setStretch(4, 2)
+
+        self.gridLayout_3.addWidget(self.widget, 0, 0, 1, 2)
+
+        self.widget_2 = QWidget(self.scrollAreaWidgetContents)
         self.widget_2.setObjectName(u"widget_2")
         self.gridLayout_9 = QGridLayout(self.widget_2)
         self.gridLayout_9.setObjectName(u"gridLayout_9")
@@ -523,51 +576,9 @@ class Ui_MainWindow(object):
         self.gridLayout_9.setColumnStretch(0, 1)
         self.gridLayout_9.setColumnStretch(1, 6)
 
-        self.gridLayout_3.addWidget(self.widget_2, 1, 0, 1, 1)
+        self.gridLayout_3.addWidget(self.widget_2, 1, 0, 1, 2)
 
-        self.widget = QWidget(self.Sift_gb)
-        self.widget.setObjectName(u"widget")
-        self.horizontalLayout = QHBoxLayout(self.widget)
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.horizontalLayout.setContentsMargins(2, 2, 2, 2)
-        self.label_3 = QLabel(self.widget)
-        self.label_3.setObjectName(u"label_3")
-        self.label_3.setFont(font)
-
-        self.horizontalLayout.addWidget(self.label_3)
-
-        self.Image_num_le = QLineEdit(self.widget)
-        self.Image_num_le.setObjectName(u"Image_num_le")
-        self.Image_num_le.setFont(font)
-        self.Image_num_le.setReadOnly(True)
-
-        self.horizontalLayout.addWidget(self.Image_num_le)
-
-        self.label = QLabel(self.widget)
-        self.label.setObjectName(u"label")
-        self.label.setFont(font)
-
-        self.horizontalLayout.addWidget(self.label)
-
-        self.Image_total_l = QLabel(self.widget)
-        self.Image_total_l.setObjectName(u"Image_total_l")
-        self.Image_total_l.setFont(font)
-
-        self.horizontalLayout.addWidget(self.Image_total_l)
-
-        self.horizontalSpacer_4 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-
-        self.horizontalLayout.addItem(self.horizontalSpacer_4)
-
-        self.horizontalLayout.setStretch(0, 1)
-        self.horizontalLayout.setStretch(1, 2)
-        self.horizontalLayout.setStretch(2, 1)
-        self.horizontalLayout.setStretch(3, 1)
-        self.horizontalLayout.setStretch(4, 2)
-
-        self.gridLayout_3.addWidget(self.widget, 0, 0, 1, 1)
-
-        self.widget_5 = QWidget(self.Sift_gb)
+        self.widget_5 = QWidget(self.scrollAreaWidgetContents)
         self.widget_5.setObjectName(u"widget_5")
         self.horizontalLayout_5 = QHBoxLayout(self.widget_5)
         self.horizontalLayout_5.setSpacing(5)
@@ -591,24 +602,27 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_5.addWidget(self.Select_all_pb)
 
-        self.Select_batch_ops_pb = QPushButton(self.widget_5)
-        self.Select_batch_ops_pb.setObjectName(u"Select_batch_ops_pb")
-        self.Select_batch_ops_pb.setFont(font)
-
-        self.horizontalLayout_5.addWidget(self.Select_batch_ops_pb)
-
         self.horizontalLayout_5.setStretch(0, 10)
-        self.horizontalLayout_5.setStretch(2, 5)
 
         self.gridLayout_3.addWidget(self.widget_5, 2, 0, 1, 1)
 
+        self.Select_batch_ops_pb = QPushButton(self.scrollAreaWidgetContents)
+        self.Select_batch_ops_pb.setObjectName(u"Select_batch_ops_pb")
+        self.Select_batch_ops_pb.setFont(font)
+
+        self.gridLayout_3.addWidget(self.Select_batch_ops_pb, 2, 1, 1, 1)
+
         self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
-        self.gridLayout_3.addItem(self.verticalSpacer, 3, 0, 1, 1)
+        self.gridLayout_3.addItem(self.verticalSpacer, 3, 0, 1, 2)
+
+        self.scrollArea.setWidget(self.scrollAreaWidgetContents)
+
+        self.gridLayout_4.addWidget(self.scrollArea, 0, 0, 1, 1)
 
         self.Select_image_spliter.addWidget(self.Sift_gb)
 
-        self.gridLayout_8.addWidget(self.Select_image_spliter, 0, 0, 1, 1)
+        self.gridLayout_5.addWidget(self.Select_image_spliter, 0, 0, 1, 1)
 
 
         self.horizontalLayout_6.addWidget(self.Sift_f)
@@ -860,6 +874,9 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.Confusion_norm_w), QCoreApplication.translate("MainWindow", u"Normalized", None))
         self.Sift_image_dw.setWindowTitle(QCoreApplication.translate("MainWindow", u"\u56fe\u50cf\u7b5b\u9009\u5668", None))
         self.Sift_gb.setTitle(QCoreApplication.translate("MainWindow", u"\u7b5b\u9009", None))
+        self.label_3.setText(QCoreApplication.translate("MainWindow", u"\u5e8f\u53f7\uff1a", None))
+        self.label.setText(QCoreApplication.translate("MainWindow", u"   /", None))
+        self.Image_total_l.setText(QCoreApplication.translate("MainWindow", u"nn", None))
         self.Select_dataset_cbb.setItemText(0, QCoreApplication.translate("MainWindow", u"\u603b\u6837\u672c\u96c6", None))
         self.Select_dataset_cbb.setItemText(1, QCoreApplication.translate("MainWindow", u"\u8bad\u7ec3\u96c6", None))
         self.Select_dataset_cbb.setItemText(2, QCoreApplication.translate("MainWindow", u"\u9a8c\u8bc1\u96c6", None))
@@ -872,9 +889,6 @@ class Ui_MainWindow(object):
         self.label_5.setText(QCoreApplication.translate("MainWindow", u"\u6570\u636e\u96c6\uff1a", None))
         self.Select_search_le.setInputMask("")
         self.label_6.setText(QCoreApplication.translate("MainWindow", u"\u641c\u7d22\uff1a", None))
-        self.label_3.setText(QCoreApplication.translate("MainWindow", u"\u5e8f\u53f7\uff1a", None))
-        self.label.setText(QCoreApplication.translate("MainWindow", u"   /", None))
-        self.Image_total_l.setText(QCoreApplication.translate("MainWindow", u"nn", None))
         self.Select_ops_cbb.setItemText(0, QCoreApplication.translate("MainWindow", u"\u5220\u9664", None))
         self.Select_ops_cbb.setItemText(1, QCoreApplication.translate("MainWindow", u"\u8f6c\u8bad\u7ec3\u96c6", None))
         self.Select_ops_cbb.setItemText(2, QCoreApplication.translate("MainWindow", u"\u8f6c\u9a8c\u8bc1\u96c6", None))

@@ -232,7 +232,7 @@ class Exporter:
 
     def __call__(self, model=None) -> str:
         """Return list of exported files/dirs after running callbacks."""
-        PROGRESS_BAR.start("模型导出， ”导出中", 0, 0, False)
+        PROGRESS_BAR.start("模型导出， ”导出中", [0, 0], False)
         self.run_callbacks("on_export_start")
         t = time.time()
         fmt = self.args.format.lower()  # to lowercase
