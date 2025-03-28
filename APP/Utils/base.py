@@ -750,6 +750,7 @@ class QTransformerLabel(QSizeLabel):
         if instance._bboxes is not None and len(instance._bboxes) > 0:  #存在标签
             if not self.painting and self.cursor() == Qt.CrossCursor:
                 good = label["instances"].remove_zero_area_boxes()
+                good = np.array(good) if isinstance(good, torch.Tensor) else good
                 clss = np.array(label["cls"], dtype=np.int32)
                 label["cls"] = clss[good].tolist()
             label["instances"].clip(self.pix.width(), self.pix.height())

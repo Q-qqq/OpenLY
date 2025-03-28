@@ -56,15 +56,12 @@ class CfgsTreeWidget(QTreeWidget):
         self.itemClicked.connect(self.clickedSlot)
 
 
-        
-        
 
     def initTrees(self):
         """对参数树进行初始化设置"""
         assert len(self.roots), f"未获得参数树根目录"
         root_font = QFont("幼圆", 12)
         child_font = QFont("幼圆", 10)
-
         self.clear()
         self.setColumnCount(2)
         head_items = self.headerItem()
