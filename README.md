@@ -36,3 +36,8 @@ The YOLO series is interfaced with PySide2 to realize functions such as training
 git clone https://github.com/Q-qqq/OpenLY.git
 cd your-project
 ```
+
+## APP download
+```
+https://pan.baidu.com/s/1C0HVH4BXlJsR5t_wH8gAMg?pwd=dux4 提取码: dux4
+```
